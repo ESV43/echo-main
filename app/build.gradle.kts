@@ -9,8 +9,8 @@ plugins {
 }
 
 val hasGoogleServices = file("google-services.json").exists()
-val gitHash = execute("git", "rev-parse", "HEAD").take(7)
-val gitCount = execute("git", "rev-list", "--count", "HEAD").toInt()
+val gitHash = runCatching { execute("git", "rev-parse", "HEAD").take(7) }.getOrDefault("unknown")
+val gitCount = runCatching { execute("git", "rev-list", "--count", "HEAD").toInt() }.getOrDefault(0)
 val version = "3.0.$gitCount"
 
 android {
@@ -21,7 +21,7 @@ android {
         applicationId = "dev.brahmkshatriya.echo"
         minSdk = 24
         targetSdk = 36
-        versionCode = gitCount
+        versionCode = if (gitCount > 0) gitCount else 1
         versionName = "v${version}_$gitHash($gitCount)"
     }
 
@@ -60,11 +60,10 @@ java {
 }
 
 kotlin {
-    
+    jvmToolchain(17)
 }
 
 dependencies {
-    implementation("io.coil-kt:coil:2.6.0")
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-database-ktx")
     implementation(project(":common"))

@@ -5,6 +5,8 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import dev.brahmkshatriya.echo.BuildConfig
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.Extension
@@ -362,9 +364,15 @@ class UnifiedExtension(
         return feed<SearchFeedClient> { loadSearchFeed(query) }
     }
 
+    private val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS `HistoryEntity` (`id` TEXT NOT NULL, `extId` TEXT NOT NULL, `playCount` INTEGER NOT NULL, `lastPlayed` INTEGER NOT NULL, `data` TEXT NOT NULL, PRIMARY KEY(`id`, `extId`))")
+        }
+    }
+
     val db = Room.databaseBuilder(
         context, UnifiedDatabase::class.java, "unified-db"
-    ).fallbackToDestructiveMigration(true).build()
+    ).addMigrations(MIGRATION_6_7).fallbackToDestructiveMigration(true).build()
 
     private suspend fun getCached() = cache.keys.mapNotNull {
         val key = context.getFromCache<String>(it, "player")
@@ -399,6 +407,8 @@ class UnifiedExtension(
         extension?.getFeedData<LibraryFeedClient> { loadLibraryFeed() } ?: run {
             PagedData.Single {
                 cachedTracks = getCached()
+                val mostPlayed = db.getMostPlayed(50)
+                val recentlyPlayed = db.getRecentlyPlayed(50)
                 listOfNotNull(
                     Shelf.Category(
                         "saved",
@@ -410,6 +420,16 @@ class UnifiedExtension(
                         context.getString(R.string.downloads),
                         context.getFeed(downloadFeed.value)
                     ),
+                    if (mostPlayed.isNotEmpty()) Shelf.Category(
+                        "most_played",
+                        context.getString(R.string.most_played),
+                        context.getFeed(mostPlayed)
+                    ) else null,
+                    if (recentlyPlayed.isNotEmpty()) Shelf.Category(
+                        "recently_played",
+                        context.getString(R.string.recently_played),
+                        context.getFeed(recentlyPlayed)
+                    ) else null,
                     cachePlaylist()?.toShelf()
                 ) + db.getCreatedPlaylists().map { it.toShelf() }
             }.toFeedData()
@@ -623,6 +643,7 @@ class UnifiedExtension(
         val id = details.track.extras.extensionId
         val extension = extensions().get(id)
         extension.clientOrNull<TrackerMarkClient, Unit> { onMarkAsPlayed(details) }
+        db.updateHistory(details.track)
     }
 
     override suspend fun onPlayingStateChanged(details: TrackDetails?, isPlaying: Boolean) {

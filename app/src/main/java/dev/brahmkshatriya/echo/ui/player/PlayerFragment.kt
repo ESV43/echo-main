@@ -76,7 +76,7 @@ import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.animateVisibility
 import dev.brahmkshatriya.echo.utils.ui.AutoClearedValue.Companion.autoClearedNullable
 import dev.brahmkshatriya.echo.utils.ui.CheckBoxListener
 import dev.brahmkshatriya.echo.utils.ui.SimpleItemSpan
-import dev.brahmkshatriya.echo.utils.ui.UiUtils.dpToPx
+import dev.brahmkshatriya.echo.utils.ui.UiUtils.hapticFeedback
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.hideSystemUi
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.isLandscape
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.isRTL
@@ -84,6 +84,7 @@ import dev.brahmkshatriya.echo.utils.ui.UiUtils.marquee
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.toTimeString
 import dev.brahmkshatriya.echo.utils.ui.ViewPager2Utils.registerOnUserPageChangeCallback
 import dev.brahmkshatriya.echo.utils.ui.ViewPager2Utils.supportBottomSheetBehavior
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import kotlin.math.abs
@@ -283,9 +284,11 @@ class PlayerFragment : Fragment() {
         }
         binding.bgPanel.configureClicking(adapterListener, uiViewModel)
         binding.playerCollapsedContainer.playerClose.setOnClickListener {
+            it.hapticFeedback()
             uiViewModel.changePlayerState(STATE_HIDDEN)
         }
         binding.expandedToolbar.setNavigationOnClickListener {
+            it.hapticFeedback()
             uiViewModel.collapsePlayer()
         }
     }
@@ -310,11 +313,29 @@ class PlayerFragment : Fragment() {
         }
 
         override fun onStartDoubleClick() {
+            val binding = binding ?: return
+            binding.root.hapticFeedback()
             viewModel.seekToAdd(-10000)
+            showSeekOverlay(binding.playerSeekStartOverlay)
         }
 
         override fun onEndDoubleClick() {
+            val binding = binding ?: return
+            binding.root.hapticFeedback()
             viewModel.seekToAdd(10000)
+            showSeekOverlay(binding.playerSeekEndOverlay)
+        }
+
+        private fun showSeekOverlay(view: View) {
+            lifecycleScope.launch {
+                view.animate().alpha(1f).setDuration(200).withStartAction {
+                    view.isVisible = true
+                }.start()
+                delay(600)
+                view.animate().alpha(0f).setDuration(200).withEndAction {
+                    view.isVisible = false
+                }.start()
+            }
         }
     }
 
@@ -337,7 +358,10 @@ class PlayerFragment : Fragment() {
         }
 
         val binding = binding!!
-        binding.playerControls.trackHeart.addOnCheckedStateChangedListener(likeListener)
+        binding.playerControls.trackHeart.addOnCheckedStateChangedListener { btn, checked ->
+            btn.hapticFeedback()
+            likeListener.onCheckedChanged(btn, checked)
+        }
         observe(viewModel.playerState.current) {
             uiViewModel.run {
                 if (it == null) return@run changePlayerState(STATE_HIDDEN)
@@ -354,11 +378,17 @@ class PlayerFragment : Fragment() {
 
         observe(viewModel.queueFlow) { submit() }
 
-        val playPauseListener = CheckBoxListener { viewModel.setPlaying(it) }
+        val playPauseListener = CheckBoxListener {
+            binding.playerControls.trackPlayPause.hapticFeedback()
+            viewModel.setPlaying(it)
+        }
         binding.playerControls.trackPlayPause
             .addOnCheckedStateChangedListener(playPauseListener)
         binding.playerCollapsedContainer.collapsedTrackPlayPause
-            .addOnCheckedStateChangedListener(playPauseListener)
+            .addOnCheckedStateChangedListener { btn, checked ->
+                btn.hapticFeedback()
+                playPauseListener.onCheckedChanged(btn, checked)
+            }
         observe(viewModel.isPlaying) {
             binding.run {
                 playPauseListener.enabled = false
@@ -437,25 +467,34 @@ class PlayerFragment : Fragment() {
                     if (fromUser) trackCurrentTime.text = value.toLong().toTimeString()
                 }
                 addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
-                    override fun onStartTrackingTouch(slider: Slider) = Unit
-                    override fun onStopTrackingTouch(slider: Slider) =
+                    override fun onStartTrackingTouch(slider: Slider) {
+                        slider.hapticFeedback()
+                    }
+                    override fun onStopTrackingTouch(slider: Slider) {
+                        slider.hapticFeedback()
                         viewModel.seekTo(slider.value.toLong())
+                    }
                 })
             }
 
             trackNext.setOnClickListener {
+                it.hapticFeedback()
                 viewModel.next()
                 (trackNext.icon as Animatable).start()
             }
             observe(viewModel.nextEnabled) { trackNext.isEnabled = it }
 
             trackPrevious.setOnClickListener {
+                it.hapticFeedback()
                 viewModel.previous()
                 (trackPrevious.icon as Animatable).start()
             }
             observe(viewModel.previousEnabled) { trackPrevious.isEnabled = it }
 
-            val shuffleListener = CheckBoxListener { viewModel.setShuffle(it) }
+            val shuffleListener = CheckBoxListener {
+                binding.playerControls.trackShuffle.hapticFeedback()
+                viewModel.setShuffle(it)
+            }
             trackShuffle.addOnCheckedStateChangedListener(shuffleListener)
             observe(viewModel.shuffleMode) {
                 shuffleListener.enabled = false
@@ -464,6 +503,7 @@ class PlayerFragment : Fragment() {
             }
 
             trackRepeat.setOnClickListener {
+                it.hapticFeedback()
                 val mode = when (viewModel.repeatMode.value) {
                     REPEAT_MODE_OFF -> REPEAT_MODE_ALL
                     REPEAT_MODE_ALL -> REPEAT_MODE_ONE
@@ -475,6 +515,7 @@ class PlayerFragment : Fragment() {
             observe(viewModel.repeatMode) { changeRepeatDrawable(it) }
 
             trackSubtitle.setOnClickListener {
+                it.hapticFeedback()
                 QualitySelectionBottomSheet().show(parentFragmentManager, null)
             }
             observe(viewModel.serverAndTracks) { (tracks, server, index) ->

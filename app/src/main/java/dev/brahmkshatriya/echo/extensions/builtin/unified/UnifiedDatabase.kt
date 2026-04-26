@@ -34,8 +34,9 @@ import java.util.Calendar
         UnifiedDatabase.PlaylistEntity::class,
         UnifiedDatabase.PlaylistTrackEntity::class,
         UnifiedDatabase.SavedEntity::class,
+        UnifiedDatabase.HistoryEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class UnifiedDatabase : RoomDatabase() {
@@ -62,6 +63,22 @@ abstract class UnifiedDatabase : RoomDatabase() {
 
     suspend fun deleteSaved(item: EchoMediaItem) {
         dao.deleteSaved(item.toEntity())
+    }
+
+    suspend fun getRecentlyPlayed(limit: Int = 50): List<Track> {
+        return dao.getRecentlyPlayed(limit).map { it.item }
+    }
+
+    suspend fun getMostPlayed(limit: Int = 50): List<Track> {
+        return dao.getMostPlayed(limit).map { it.item }
+    }
+
+    suspend fun updateHistory(track: Track) {
+        val extId = track.extras.extensionId
+        val history = dao.getHistory(track.id, extId)
+        val playCount = (history?.playCount ?: 0) + 1
+        val lastPlayed = System.currentTimeMillis()
+        dao.insertHistory(HistoryEntity(track.id, extId, playCount, lastPlayed, track.toJson()))
     }
 
     private fun getDateNow(): Date {
@@ -246,6 +263,9 @@ abstract class UnifiedDatabase : RoomDatabase() {
         @Query("SELECT * FROM SavedEntity")
         suspend fun getSaved(): List<SavedEntity>
 
+        @Query("SELECT * FROM SavedEntity WHERE id = :id AND extId = :extId")
+        suspend fun getSaved(id: String, extId: String): SavedEntity?
+
         @Query("SELECT EXISTS(SELECT 1 FROM SavedEntity WHERE id = :id AND extId = :extId)")
         suspend fun isSaved(id: String, extId: String): Boolean
 
@@ -254,6 +274,18 @@ abstract class UnifiedDatabase : RoomDatabase() {
 
         @Delete
         suspend fun deleteSaved(saved: SavedEntity)
+
+        @Query("SELECT * FROM HistoryEntity ORDER BY lastPlayed DESC LIMIT :limit")
+        suspend fun getRecentlyPlayed(limit: Int): List<HistoryEntity>
+
+        @Query("SELECT * FROM HistoryEntity ORDER BY playCount DESC LIMIT :limit")
+        suspend fun getMostPlayed(limit: Int): List<HistoryEntity>
+
+        @Query("SELECT * FROM HistoryEntity WHERE id = :id AND extId = :extId")
+        suspend fun getHistory(id: String, extId: String): HistoryEntity?
+
+        @Insert(onConflict = REPLACE)
+        suspend fun insertHistory(history: HistoryEntity): Long
 
         @Query("SELECT * FROM PlaylistTrackEntity WHERE eid = :eid")
         suspend fun getTrack(eid: Long?): PlaylistTrackEntity?
@@ -352,5 +384,16 @@ abstract class UnifiedDatabase : RoomDatabase() {
                 return SavedEntity(id, extId, this.toJson())
             }
         }
+    }
+
+    @Entity(primaryKeys = ["id", "extId"])
+    data class HistoryEntity(
+        val id: String,
+        val extId: String,
+        val playCount: Long,
+        val lastPlayed: Long,
+        val data: String,
+    ) {
+        val item by lazy { data.toData<Track>().getOrThrow() }
     }
 }

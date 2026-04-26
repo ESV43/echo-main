@@ -6,6 +6,7 @@ import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.content.res.Configuration.UI_MODE_NIGHT_MASK
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.text.TextUtils
+import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.WindowManager
 import android.widget.TextView
@@ -23,6 +24,10 @@ import kotlin.math.max
 import kotlin.math.roundToLong
 
 object UiUtils {
+
+    fun View.hapticFeedback() {
+        performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+    }
 
     fun Activity.hideSystemUi(hide: Boolean) {
         val controller = WindowCompat.getInsetsController(window, window.decorView)
