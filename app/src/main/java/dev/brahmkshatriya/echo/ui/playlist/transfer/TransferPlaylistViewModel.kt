@@ -8,6 +8,7 @@ import dev.brahmkshatriya.echo.common.clients.SearchFeedClient
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Feed.Companion.loadAll
 import dev.brahmkshatriya.echo.common.models.Playlist
+import dev.brahmkshatriya.echo.common.models.Shelf
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.extensions.ExtensionLoader
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getAs
@@ -61,9 +62,13 @@ class TransferPlaylistViewModel(
                     
                     val query = "${track.title} ${track.artists.firstOrNull()?.name ?: ""}"
                     val searchResult = targetExt.getAs<SearchFeedClient, List<EchoMediaItem>> {
-                        loadSearchFeed(query).loadAll().mapNotNull { shelf ->
-                            shelf.list.filterIsInstance<EchoMediaItem>()
-                        }.flatten()
+                        this@getAs.loadSearchFeed(query).loadAll().flatMap { shelf: Shelf ->
+                            when (shelf) {
+                                is Shelf.Lists<*> -> shelf.list.filterIsInstance<EchoMediaItem>()
+                                is Shelf.Item -> listOf(shelf.media)
+                                else -> emptyList()
+                            }
+                        }
                     }.getOrNull()
 
                     val match = searchResult?.filterIsInstance<Track>()?.firstOrNull()

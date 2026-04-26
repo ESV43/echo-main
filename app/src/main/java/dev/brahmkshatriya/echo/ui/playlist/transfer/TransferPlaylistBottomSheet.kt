@@ -17,6 +17,7 @@ import dev.brahmkshatriya.echo.extensions.ExtensionLoader
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.isClient
 import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
 import dev.brahmkshatriya.echo.ui.media.MediaFragment
+import dev.brahmkshatriya.echo.playback.MediaItemUtils.extensionId
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.Serializer.getSerialized
 import dev.brahmkshatriya.echo.utils.Serializer.putSerialized
@@ -99,12 +100,12 @@ class TransferPlaylistBottomSheet : BottomSheetDialogFragment() {
                 is TransferPlaylistViewModel.State.Transferring -> {
                     binding.progressIndicator.max = state.total
                     binding.progressIndicator.progress = state.current
-                    binding.status_text.text = getString(R.string.transferring_x_of_y, state.current, state.total)
-                    binding.current_track_text.text = getString(R.string.searching_for_x, state.currentTrack)
+                    binding.statusText.text = getString(R.string.transferring_x_of_y, state.current, state.total)
+                    binding.currentTrackText.text = getString(R.string.searching_for_x, state.currentTrack)
                 }
                 is TransferPlaylistViewModel.State.Complete -> {
-                    binding.resultSummary_text.text = getString(R.string.matched_x_of_y, state.matched, state.total)
-                    binding.btn_viewPlaylist.setOnClickListener {
+                    binding.resultSummaryText.text = getString(R.string.matched_x_of_y, state.matched, state.total)
+                    binding.btnViewPlaylist.setOnClickListener {
                         requireActivity().openFragment<MediaFragment>(
                             null, MediaFragment.getBundle(state.newPlaylist.extras.extensionId, state.newPlaylist, true)
                         )

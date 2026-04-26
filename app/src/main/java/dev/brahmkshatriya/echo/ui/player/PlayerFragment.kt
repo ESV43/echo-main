@@ -316,14 +316,14 @@ class PlayerFragment : Fragment() {
             val binding = binding ?: return
             binding.root.hapticFeedback()
             viewModel.seekToAdd(-10000)
-            showSeekOverlay(binding.playerSeekStartOverlay)
+            binding.playerSeekStartOverlay.let { showSeekOverlay(it!!) }
         }
 
         override fun onEndDoubleClick() {
             val binding = binding ?: return
             binding.root.hapticFeedback()
             viewModel.seekToAdd(10000)
-            showSeekOverlay(binding.playerSeekEndOverlay)
+            binding.playerSeekEndOverlay.let { showSeekOverlay(it!!) }
         }
 
         private fun showSeekOverlay(view: View) {
@@ -358,9 +358,9 @@ class PlayerFragment : Fragment() {
         }
 
         val binding = binding!!
-        binding.playerControls.trackHeart.addOnCheckedStateChangedListener { btn, checked ->
+        binding.playerControls.trackHeart.addOnCheckedStateChangedListener { btn, state ->
             btn.hapticFeedback()
-            likeListener.onCheckedChanged(btn, checked)
+            likeListener.onCheckedStateChanged(btn, state)
         }
         observe(viewModel.playerState.current) {
             uiViewModel.run {
@@ -385,9 +385,9 @@ class PlayerFragment : Fragment() {
         binding.playerControls.trackPlayPause
             .addOnCheckedStateChangedListener(playPauseListener)
         binding.playerCollapsedContainer.collapsedTrackPlayPause
-            .addOnCheckedStateChangedListener { btn, checked ->
+            .addOnCheckedStateChangedListener { btn, state ->
                 btn.hapticFeedback()
-                playPauseListener.onCheckedChanged(btn, checked)
+                playPauseListener.onCheckedStateChanged(btn, state)
             }
         observe(viewModel.isPlaying) {
             binding.run {
