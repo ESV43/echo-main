@@ -86,9 +86,10 @@ class PlayerService : MediaLibraryService() {
         super.onCreate()
         setListener(MediaSessionServiceListener(this, getPendingIntent(this)))
 
-        val player = ShufflePlayer(exoPlayer)
+        val shufflePlayer = ShufflePlayer(exoPlayer)
+        val player = FadePlayer(shufflePlayer)
         scope.launch(Dispatchers.Main) {
-            mediaChangeFlow.collect { (o, n) -> player.onMediaItemChanged(o, n) }
+            mediaChangeFlow.collect { (o, n) -> shufflePlayer.onMediaItemChanged(o, n) }
         }
 
         val callback = PlayerCallback(

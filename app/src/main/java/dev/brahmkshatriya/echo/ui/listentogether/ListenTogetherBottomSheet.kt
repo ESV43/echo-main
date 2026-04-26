@@ -13,7 +13,7 @@ import android.widget.LinearLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import coil.load
+import coil3.load
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -56,7 +56,6 @@ class ListenTogetherBottomSheet : BottomSheetDialogFragment() {
 
         binding.btnCreate.setOnClickListener {
             val trackId = arguments?.getString("trackId")
-            if (!trackId.isNullOrBlank()) playerVm.browser.value?.clearMediaItems()
             vm.createSession(trackId, arguments?.getString("extensionId"), getActiveUsername(), getActiveAvatar())
         }
 
@@ -136,13 +135,15 @@ class ListenTogetherBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun getActiveUsername(): String {
-        val name = loginVm.currentUser.value?.name
-        return if (!name.isNullOrBlank()) name else "Guest"
+        val name = ListenTogetherSettingsFragment.getUsername(requireContext())
+        if (name.isNotBlank()) return name
+        val loginName = loginVm.currentUser.value?.name
+        return if (!loginName.isNullOrBlank()) loginName else "Guest"
     }
 
     private fun getActiveAvatar(): String? {
-        val cover = loginVm.currentUser.value?.cover ?: return null
-        return if (cover is ImageHolder.NetworkRequestImageHolder) cover.request.url else null
+        val loginAvatar = loginVm.currentUser.value?.cover
+        return if (loginAvatar is ImageHolder.NetworkRequestImageHolder) loginAvatar.request.url else null
     }
 
     inner class ParticipantAdapter : androidx.recyclerview.widget.RecyclerView.Adapter<ParticipantAdapter.VH>() {
@@ -155,7 +156,7 @@ class ListenTogetherBottomSheet : BottomSheetDialogFragment() {
             h.tvName.text = item.name
             h.badgeHost.isVisible = item.isHost
             h.ivAvatar.load(item.avatarUrl ?: "https://api.dicebear.com/7.x/identicon/png?seed=${item.name}") {
-                transformations(coil.transform.CircleCropTransformation())
+                transformations(coil3.transform.CircleCropTransformation())
             }
         }
         inner class VH(v: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(v) {

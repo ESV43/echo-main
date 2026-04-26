@@ -45,6 +45,7 @@ class ListenTogetherViewModel(application: Application) : AndroidViewModel(appli
     private var lastSeenQueueIds = listOf<String>()
     private var lastSeenTrackId: String? = null
     private var lastSeenPosition: Long = 0L
+    private var lastSeenIsPlaying: Boolean = false
     private var isApplyingRemoteState = false
 
     fun createSession(trackId: String?, extId: String?, name: String, avatar: String?) {
@@ -55,6 +56,10 @@ class ListenTogetherViewModel(application: Application) : AndroidViewModel(appli
         firebase.send(code, WsMessage("JOIN", senderId = firebase.clientId, senderName = name, senderAvatar = avatar), true)
         firebase.setPermission(code, 3)
         startObserving(code)
+
+        if (!trackId.isNullOrBlank() && !extId.isNullOrBlank()) {
+            playAction?.invoke(extId, Track(id = trackId, title = "Sync", extras = emptyMap()), false)
+        }
     }
 
     fun joinSession(code: String, name: String, avatar: String?) {
@@ -113,7 +118,8 @@ class ListenTogetherViewModel(application: Application) : AndroidViewModel(appli
                 // FIXED: Deteksi lagu masuk secara lebih detail (Play Next/Add to Queue)
                 val currentQueueIds = (0 until browser.mediaItemCount).mapNotNull { browser.getMediaItemAt(it).track?.id }
                 if (currentQueueIds.size > lastSeenQueueIds.size && lastSeenQueueIds.isNotEmpty()) {
-                    val addedIds = currentQueueIds.filter { it !in lastSeenQueueIds }
+                    val addedIds = currentQueueIds.toMutableList()
+                    lastSeenQueueIds.forEach { addedIds.remove(it) }
                     addedIds.forEach { newId ->
                         val newTrack = (0 until browser.mediaItemCount).map { browser.getMediaItemAt(it) }.find { it.track?.id == newId }?.track
                         if (newTrack != null) {
@@ -123,10 +129,22 @@ class ListenTogetherViewModel(application: Application) : AndroidViewModel(appli
                 }
                 lastSeenQueueIds = currentQueueIds
                 
-                if (item.track.id != lastSeenTrackId || abs(browser.currentPosition - lastSeenPosition) > 3000) {
+                val isPlaying = browser.isPlaying
+                val expectedPosition = if (isPlaying && lastSeenTrackId == item.track.id && lastSeenIsPlaying) {
+                    lastSeenPosition + 1000
+                } else {
+                    lastSeenPosition
+                }
+                
+                val positionDiff = abs(browser.currentPosition - expectedPosition)
+                
+                if (item.track.id != lastSeenTrackId || positionDiff > 3000 || lastSeenIsPlaying != isPlaying) {
                     firebase.send(s.sessionCode, WsMessage("SYNC", item.track.id, item.extensionId, browser.currentPosition, browser.isPlaying, firebase.clientId, timestamp = System.currentTimeMillis(), trackTitle = item.track.title), s.isHost)
                     lastSeenTrackId = item.track.id
                     lastSeenPosition = browser.currentPosition
+                    lastSeenIsPlaying = isPlaying
+                } else {
+                    lastSeenPosition = expectedPosition
                 }
             }
         }

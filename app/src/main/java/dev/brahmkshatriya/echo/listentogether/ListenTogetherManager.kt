@@ -32,7 +32,7 @@ class ListenTogetherManager(context: Context) {
         val roomId = currentRoomId ?: return
         if (!isHost) return
         scope.launch {
-            val ref = db.getReference("sessions/\$roomId/messages").push()
+            val ref = db.getReference("sessions/$roomId/messages").push()
             ref.setValue(WsMessage(
                 type = "SYNC",
                 trackId = track.id,

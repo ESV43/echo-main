@@ -15,8 +15,8 @@ import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import coil.load
-import coil.transform.CircleCropTransformation
+import coil3.load
+import coil3.transform.CircleCropTransformation
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.databinding.ItemPlaylistTrackBinding
@@ -27,6 +27,7 @@ import dev.brahmkshatriya.echo.playback.MediaItemUtils.addedByAvatar
 import dev.brahmkshatriya.echo.ui.feed.viewholders.MediaViewHolder.Companion.subtitle
 import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadInto
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.applyTranslationYAnimation
+import dev.brahmkshatriya.echo.utils.ui.UiUtils.dpToPx
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.marquee
 import dev.brahmkshatriya.echo.utils.ui.scrolling.ScrollAnimViewHolder
 
@@ -160,8 +161,8 @@ class QueueAdapter(
 
                         val avatarView = ImageView(root.context).apply {
                             tag = "added_by_avatar"
-                            layoutParams = LinearLayout.LayoutParams(40, 40).apply {
-                                rightMargin = 12
+                            layoutParams = LinearLayout.LayoutParams(20.dpToPx(context), 20.dpToPx(context)).apply {
+                                marginEnd = 6.dpToPx(context)
                             }
                         }
                         addView(avatarView)

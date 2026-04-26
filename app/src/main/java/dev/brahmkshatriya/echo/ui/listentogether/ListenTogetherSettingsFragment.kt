@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import coil.load
+import coil3.load
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.databinding.FragmentListenTogetherSettingsBinding
 
@@ -53,7 +53,7 @@ class ListenTogetherSettingsFragment : Fragment() {
                 binding.ivIdenticonPreview.visibility = View.VISIBLE
                 binding.ivIdenticonPreview.load("https://api.dicebear.com/7.x/identicon/png?seed=$name") {
                     crossfade(true)
-                    transformations(coil.transform.CircleCropTransformation())
+                    transformations(coil3.transform.CircleCropTransformation())
                 }
             } else {
                 binding.tvAvatarInitial.visibility = View.VISIBLE
