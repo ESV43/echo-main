@@ -16,6 +16,8 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil3.load
+import coil3.request.crossfade
+import coil3.request.transformations
 import coil3.transform.CircleCropTransformation
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.Track
