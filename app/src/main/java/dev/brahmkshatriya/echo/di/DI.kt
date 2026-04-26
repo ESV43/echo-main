@@ -25,6 +25,7 @@ import dev.brahmkshatriya.echo.ui.playlist.create.CreatePlaylistViewModel
 import dev.brahmkshatriya.echo.ui.playlist.delete.DeletePlaylistViewModel
 import dev.brahmkshatriya.echo.ui.playlist.edit.EditPlaylistViewModel
 import dev.brahmkshatriya.echo.ui.playlist.save.SaveToPlaylistViewModel
+import dev.brahmkshatriya.echo.ui.playlist.transfer.TransferPlaylistViewModel
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
 import org.koin.android.ext.koin.androidApplication
 import org.koin.androidx.workmanager.dsl.workerOf
@@ -80,6 +81,7 @@ object DI {
         viewModelOf(::DeletePlaylistViewModel)
         viewModelOf(::SaveToPlaylistViewModel)
         viewModelOf(::EditPlaylistViewModel)
+        viewModelOf(::TransferPlaylistViewModel)
 
         viewModelOf(::DownloadViewModel)
     }

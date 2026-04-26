@@ -36,6 +36,7 @@ import dev.brahmkshatriya.echo.ui.player.sleep.SleepTimerBottomSheet
 import dev.brahmkshatriya.echo.ui.playlist.delete.DeletePlaylistBottomSheet
 import dev.brahmkshatriya.echo.ui.playlist.edit.EditPlaylistBottomSheet
 import dev.brahmkshatriya.echo.ui.playlist.edit.EditPlaylistFragment
+import dev.brahmkshatriya.echo.ui.playlist.transfer.TransferPlaylistBottomSheet
 import dev.brahmkshatriya.echo.ui.listentogether.ListenTogetherBottomSheet
 import dev.brahmkshatriya.echo.ui.playlist.save.SaveToPlaylistBottomSheet
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
@@ -214,6 +215,12 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
                 EditPlaylistBottomSheet.newInstance(
                     extensionId, itemContext as Playlist, tabId, pos
                 ).show(parentFragmentManager, null)
+            } else null,
+            if (item is Playlist) button(
+                "transfer_playlist", R.string.transfer_playlist, R.drawable.ic_autorenew
+            ) {
+                TransferPlaylistBottomSheet.newInstance(extensionId, item)
+                    .show(parentFragmentManager, null)
             } else null
         )
     }

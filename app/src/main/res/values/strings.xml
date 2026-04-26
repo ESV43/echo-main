@@ -471,4 +471,15 @@
     <string name="listen_together_username">Username</string>
     <string name="listen_together_username_hint">Enter your username</string>
     <string name="listen_together_save">Save</string>
+
+    <string name="transfer_playlist">Transfer Playlist</string>
+    <string name="transfer_playlist_desc">Transfer this playlist to another extension by matching tracks.</string>
+    <string name="select_target_extension">Select Target Extension</string>
+    <string name="transferring_x_of_y">Transferring %1$d of %2$d…</string>
+    <string name="searching_for_x">Searching for: %1$s</string>
+    <string name="matched_x_of_y">Matched %1$d of %2$d tracks.</string>
+    <string name="transfer_complete">Transfer Complete</string>
+    <string name="view_playlist">View Playlist</string>
+    <string name="failed_to_load_tracks">Failed to load tracks from source playlist.</string>
+    <string name="no_target_extensions">No extensions found that support playlist creation and search.</string>
 </resources>
