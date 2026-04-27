@@ -411,7 +411,7 @@ class UnifiedExtension(
                             }.getOrNull()
                         }
                     }
-                    val shelves = deferreds.awaitAll().filterNotNull()
+                    val shelves: List<Shelf> = deferreds.awaitAll().filterNotNull()
                     PagedData.Single { shelves }.toFeedData()
                 }
             } else {

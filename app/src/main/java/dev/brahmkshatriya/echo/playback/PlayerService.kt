@@ -39,6 +39,7 @@ import dev.brahmkshatriya.echo.playback.listener.MediaSessionServiceListener
 import dev.brahmkshatriya.echo.playback.listener.PlayerEventListener
 import dev.brahmkshatriya.echo.playback.listener.PlayerRadio
 import dev.brahmkshatriya.echo.playback.listener.TrackingListener
+import dev.brahmkshatriya.echo.playback.renderer.EqAudioProcessor
 import dev.brahmkshatriya.echo.playback.renderer.PlayerBitmapLoader
 import dev.brahmkshatriya.echo.playback.renderer.RenderersFactory
 import dev.brahmkshatriya.echo.playback.source.StreamableMediaSource

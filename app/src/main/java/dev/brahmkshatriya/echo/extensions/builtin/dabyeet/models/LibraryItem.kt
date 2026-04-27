@@ -5,7 +5,7 @@ import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toImageHolder
 import dev.brahmkshatriya.echo.common.models.Playlist
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 @Serializable
@@ -21,6 +21,7 @@ data class LibraryItem(
     val tracks: List<Track>? = emptyList(),
     val pagination: Pagination? = null
 ) {
+    @OptIn(ExperimentalTime::class)
     fun toPlaylist(): Playlist {
         return Playlist(
             id = id,

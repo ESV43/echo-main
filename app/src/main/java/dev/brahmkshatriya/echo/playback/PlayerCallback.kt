@@ -156,25 +156,27 @@ class PlayerCallback(
             return Futures.immediateFuture(SessionResult(RESULT_SUCCESS))
         }
 
-        val time = if (ms == Long.MAX_VALUE) {
-            player.with { (duration - currentPosition).coerceAtLeast(0) }
-        } else ms
+        return scope.future {
+            val time = if (ms == Long.MAX_VALUE) {
+                player.with { (duration - currentPosition).coerceAtLeast(0) }
+            } else ms
 
-        state.sleepTimerMillis.value = time
-        tickerJob = scope.launch {
-            while (state.sleepTimerMillis.value != null && state.sleepTimerMillis.value!! > 0) {
-                delay(1000)
-                val current = state.sleepTimerMillis.value ?: break
-                state.sleepTimerMillis.value = (current - 1000).coerceAtLeast(0)
+            state.sleepTimerMillis.value = time
+            tickerJob = scope.launch {
+                while (state.sleepTimerMillis.value != null && state.sleepTimerMillis.value!! > 0) {
+                    delay(1000)
+                    val current = state.sleepTimerMillis.value ?: break
+                    state.sleepTimerMillis.value = (current - 1000).coerceAtLeast(0)
+                }
+                state.sleepTimerMillis.value = null
             }
-            state.sleepTimerMillis.value = null
-        }
 
-        timerJob = scope.launch {
-            delay(time)
-            player.with { pause() }
+            timerJob = scope.launch {
+                delay(time)
+                player.with { pause() }
+            }
+            SessionResult(RESULT_SUCCESS)
         }
-        return Futures.immediateFuture(SessionResult(RESULT_SUCCESS))
     }
 
     private fun setRepeat(player: Player, repeat: Int) = run {
