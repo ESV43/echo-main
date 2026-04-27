@@ -35,7 +35,6 @@ android {
         }
         create("nightly") {
             initWith(getByName("release"))
-            applicationIdSuffix = ".dev"
             resValue("string", "app_name", "Echo Nightly")
         }
         create("stable") {
