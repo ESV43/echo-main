@@ -76,6 +76,7 @@ import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.animateVisibility
 import dev.brahmkshatriya.echo.utils.ui.AutoClearedValue.Companion.autoClearedNullable
 import dev.brahmkshatriya.echo.utils.ui.CheckBoxListener
 import dev.brahmkshatriya.echo.utils.ui.SimpleItemSpan
+import dev.brahmkshatriya.echo.utils.ui.UiUtils.dpToPx
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.hapticFeedback
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.hideSystemUi
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.isLandscape
