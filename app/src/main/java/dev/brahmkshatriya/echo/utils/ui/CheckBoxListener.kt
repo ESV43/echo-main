@@ -11,7 +11,7 @@ class CheckBoxListener(private val block: (Boolean) -> Unit) :
         block(isChecked)
     }
 
-    override fun onCheckedStateChanged(checkBox: MaterialCheckBox, state: Int) {
+    override fun onCheckedStateChangedListener(checkBox: MaterialCheckBox, state: Int) {
         val isChecked = checkBox.isChecked
         if (enabled) check(isChecked)
         checked = isChecked
