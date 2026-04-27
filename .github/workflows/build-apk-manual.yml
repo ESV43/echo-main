@@ -22,6 +22,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
+          # Pinned to last known-good commit before TransferPlaylistBottomSheet
+          # and CheckBoxListener Kotlin compilation errors were introduced.
+          # To update: find a passing CI run at https://github.com/brahmkshatriya/echo/actions
+          # and replace this with that commit SHA.
+          ref: bb731bbe06e70862d77b07a2e04c3b8a4e91e5aa
           fetch-depth: 0
 
       - name: Setup JDK 17
@@ -41,7 +46,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
-        run: ./gradlew assemble${{ github.event.inputs.build_type }}
+        run: ./gradlew assemble${{ github.event.inputs.build_type }} --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
