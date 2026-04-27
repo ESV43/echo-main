@@ -17,7 +17,6 @@ import dev.brahmkshatriya.echo.extensions.ExtensionLoader
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.isClient
 import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
 import dev.brahmkshatriya.echo.ui.media.MediaFragment
-import dev.brahmkshatriya.echo.playback.MediaItemUtils.extensionId
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.Serializer.getSerialized
 import dev.brahmkshatriya.echo.utils.Serializer.putSerialized
@@ -107,7 +106,7 @@ class TransferPlaylistBottomSheet : BottomSheetDialogFragment() {
                     binding.resultSummaryText.text = getString(R.string.matched_x_of_y, state.matched, state.total)
                     binding.btnViewPlaylist.setOnClickListener {
                         requireActivity().openFragment<MediaFragment>(
-                            null, MediaFragment.getBundle(state.newPlaylist.extras.extensionId, state.newPlaylist, true)
+                            null, MediaFragment.getBundle(state.newPlaylist.extras["extensionId"] ?: "", state.newPlaylist, true)
                         )
                         dismiss()
                     }
