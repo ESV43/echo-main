@@ -76,6 +76,7 @@ class PlayerCallback(
     private val throwableFlow: MutableSharedFlow<Throwable>,
     private val extensions: ExtensionLoader,
     private val radioFlow: MutableStateFlow<PlayerState.Radio>,
+    private val state: PlayerState,
     override val downloadFlow: StateFlow<List<Downloader.Info>>,
 ) : AndroidAutoCallback(app, scope, extensions.music, downloadFlow) {
 
@@ -146,12 +147,27 @@ class PlayerCallback(
     }
 
     private var timerJob: Job? = null
+    private var tickerJob: Job? = null
     private fun onSleepTimer(player: Player, ms: Long): ListenableFuture<SessionResult> {
         timerJob?.cancel()
-        val time = when (ms) {
-            0L -> return Futures.immediateFuture(SessionResult(RESULT_SUCCESS))
-            Long.MAX_VALUE -> player.run { duration - currentPosition }
-            else -> ms
+        tickerJob?.cancel()
+        if (ms == 0L) {
+            state.sleepTimerMillis.value = null
+            return Futures.immediateFuture(SessionResult(RESULT_SUCCESS))
+        }
+
+        val time = if (ms == Long.MAX_VALUE) {
+            player.with { (duration - currentPosition).coerceAtLeast(0) }
+        } else ms
+
+        state.sleepTimerMillis.value = time
+        tickerJob = scope.launch {
+            while (state.sleepTimerMillis.value != null && state.sleepTimerMillis.value!! > 0) {
+                delay(1000)
+                val current = state.sleepTimerMillis.value ?: break
+                state.sleepTimerMillis.value = (current - 1000).coerceAtLeast(0)
+            }
+            state.sleepTimerMillis.value = null
         }
 
         timerJob = scope.launch {

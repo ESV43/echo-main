@@ -28,6 +28,7 @@ import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.get
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getOrThrow
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.inject
+import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.DabYeetExtension
 import dev.brahmkshatriya.echo.extensions.builtin.offline.OfflineExtension
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension
 import dev.brahmkshatriya.echo.extensions.db.ExtensionDatabase
@@ -78,6 +79,7 @@ class ExtensionLoader(
         scope, app.context, fileIgnoreFlow, parser,
         UnifiedExtension.metadata to unified,
         OfflineExtension.metadata to lazy { OfflineExtension(app.context) },
+        DabYeetExtension.metadata to lazy { DabYeetExtension() },
 //        TestExtension.metadata to lazy { TestExtension() },
 //        DownloadExtension.metadata to lazy { DownloadExtension(app.context) }
 //        TrackerTestExtension.metadata to Injectable { TrackerTestExtension() },

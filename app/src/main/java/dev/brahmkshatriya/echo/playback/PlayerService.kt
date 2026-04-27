@@ -56,6 +56,7 @@ class PlayerService : MediaLibraryService() {
 
     private val extensionLoader by inject<ExtensionLoader>()
     private val extensions by lazy { extensionLoader }
+    private val eqAudioProcessor = EqAudioProcessor()
     private val exoPlayer by lazy { createExoplayer() }
 
     private var mediaSession: MediaLibrarySession? = null
@@ -74,7 +75,14 @@ class PlayerService : MediaLibraryService() {
                     .buildUpon()
                     .setAudioOffloadPreferences(offloadPreferences(prefs.getBoolean(key, false)))
                     .build()
+            EQ_GAINS -> updateEqGains(prefs)
         }
+    }
+
+    private fun updateEqGains(prefs: SharedPreferences) {
+        val gainsStr = prefs.getString(EQ_GAINS, null) ?: return
+        val gains = gainsStr.split(",").mapNotNull { it.toFloatOrNull() }.toFloatArray()
+        eqAudioProcessor.setGains(gains)
     }
     private val effects by lazy { EffectsListener(exoPlayer, this, state.session) }
 
@@ -93,7 +101,7 @@ class PlayerService : MediaLibraryService() {
         }
 
         val callback = PlayerCallback(
-            app, scope, app.throwFlow, extensions, state.radio, downloadFlow
+            app, scope, app.throwFlow, extensions, state.radio, state, downloadFlow
         )
 
         val session = MediaLibrarySession.Builder(this, player, callback)
@@ -163,7 +171,7 @@ class PlayerService : MediaLibraryService() {
         )
 
         ExoPlayer.Builder(this, factory)
-            .setRenderersFactory(RenderersFactory(this))
+            .setRenderersFactory(RenderersFactory(this, eqAudioProcessor))
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
             .setAudioAttributes(audioAttributes, true)
@@ -175,6 +183,7 @@ class PlayerService : MediaLibraryService() {
                     .build()
                 it.preloadConfiguration = ExoPlayer.PreloadConfiguration(C.TIME_UNSET)
                 it.skipSilenceEnabled = app.settings.getBoolean(SKIP_SILENCE, true)
+                updateEqGains(app.settings)
             }
     }
 
@@ -189,6 +198,7 @@ class PlayerService : MediaLibraryService() {
         const val MORE_BRAIN_CAPACITY = "offload"
         const val CLOSE_PLAYER = "close_player"
         const val SKIP_SILENCE = "skip_silence"
+        const val EQ_GAINS = "eq_gains"
 
         const val CACHE_SIZE = "cache_size"
 

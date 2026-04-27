@@ -42,6 +42,7 @@ import dev.brahmkshatriya.echo.ui.playlist.save.SaveToPlaylistBottomSheet
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.Serializer.getSerialized
 import dev.brahmkshatriya.echo.utils.Serializer.putSerialized
+import dev.brahmkshatriya.echo.utils.ui.UiUtils.toTimeString
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -109,13 +110,18 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
             headerAdapter.onCurrentChanged(it)
         }
         val actionFlow =
-            combine(vm.downloadsFlow, vm.uiResultFlow) { _, _ -> }
+            combine(
+                vm.downloadsFlow,
+                vm.uiResultFlow,
+                playerViewModel.playerState.sleepTimerMillis
+            ) { _, _, _ -> }
         observe(actionFlow) {
             val client = vm.extensionFlow.value?.instance?.value()?.getOrNull()
             val result = vm.uiResultFlow.value?.getOrNull()
             val downloads = vm.downloadsFlow.value.filter { it.download.finalFile != null }
             val loaded = if (result != null) true else loaded
-            val list = getButtons(client, result, loaded, downloads)
+            val sleepTimer = playerViewModel.playerState.sleepTimerMillis.value
+            val list = getButtons(client, result, loaded, downloads, sleepTimer)
             actionAdapter.submitList(list)
             headerAdapter.item = result?.item ?: item
         }
@@ -138,19 +144,25 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
         client: ExtensionClient?,
         state: MediaState.Loaded<*>?,
         loaded: Boolean,
-        downloads: List<Downloader.Info>
-    ) = getPlayerButtons() +
+        downloads: List<Downloader.Info>,
+        sleepTimer: Long?
+    ) = getPlayerButtons(sleepTimer) +
             getPlayButtons(client, state?.item ?: item, loaded) +
             getPlaylistEditButtons(client, state, loaded) +
             getDownloadButtons(client, state, downloads) +
             getActionButtons(state) +
             getItemButtons(state?.item ?: item)
 
-    private fun getPlayerButtons() = if (fromPlayer) listOf(
+    private fun getPlayerButtons(sleepTimer: Long?) = if (fromPlayer) listOf(
         button("audio_fx", R.string.audio_fx, R.drawable.ic_equalizer) {
             AudioEffectsBottomSheet().show(parentFragmentManager, null)
         },
-        button("sleep_timer", R.string.sleep_timer, R.drawable.ic_snooze) {
+        button(
+            "sleep_timer",
+            R.string.sleep_timer,
+            R.drawable.ic_snooze,
+            sleepTimer?.toTimeString()
+        ) {
             SleepTimerBottomSheet().show(parentFragmentManager, null)
         },
         button("quality_selection", R.string.quality_selection, R.drawable.ic_high_quality) {

@@ -1,5 +1,8 @@
 package dev.brahmkshatriya.echo.ui.media.more
 
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.RelativeSizeSpan
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
@@ -23,7 +26,18 @@ class MoreButtonAdapter
         )
     ) : ScrollAnimViewHolder(binding.root) {
         fun bind(item: MoreButton) = with(binding.root) {
-            text = item.title
+            val textValue = if (item.subtitle != null) {
+                val span = SpannableString("${item.title}\n${item.subtitle}")
+                span.setSpan(
+                    RelativeSizeSpan(0.8f),
+                    item.title.length + 1,
+                    span.length,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                span
+            } else SpannableString(item.title)
+            
+            text = textValue
             setOnClickListener { item.onClick() }
             setIconResource(item.icon)
         }

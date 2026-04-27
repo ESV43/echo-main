@@ -124,11 +124,7 @@ class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
         }
 
         fun Fragment.onEqualizerClicked() {
-            val viewModel by activityViewModel<PlayerViewModel>()
-            val sessionId = viewModel.playerState.session.value
-            runCatching { openEqualizer(requireActivity(), sessionId) }.getOrElse {
-                viewModel.run { viewModelScope.launch { app.throwFlow.emit(it) } }
-            }
+            EqualizerBottomSheet().show(childFragmentManager, null)
         }
     }
 }

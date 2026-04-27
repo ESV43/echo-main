@@ -37,11 +37,19 @@ jobs:
             echo '{"project_info":{"project_number":"0","project_id":"echo-dummy","storage_bucket":"echo-dummy.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:0:android:0","android_client_info":{"package_name":"dev.brahmkshatriya.echo"}},"api_key":[{"current_key":"dummy"}],"services":{"appinvite_service":{"status":1}}}]}' > app/google-services.json
           fi
 
+      - name: Cook KeyStore
+        run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > $GITHUB_WORKSPACE/signing-key.jks
+
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
-        run: ./gradlew assemble${{ github.event.inputs.build_type }} --stacktrace
+        run: |
+          ./gradlew assemble${{ github.event.inputs.build_type }} --stacktrace \
+          -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
+          -Pandroid.injected.signing.store.password=${{ secrets.PASSWORD }} \
+          -Pandroid.injected.signing.key.alias=key0 \
+          -Pandroid.injected.signing.key.password=${{ secrets.PASSWORD }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

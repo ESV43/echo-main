@@ -23,6 +23,7 @@ import dev.brahmkshatriya.echo.common.clients.LyricsClient
 import dev.brahmkshatriya.echo.common.clients.PlaylistClient
 import dev.brahmkshatriya.echo.common.clients.PlaylistEditClient
 import dev.brahmkshatriya.echo.common.clients.PlaylistEditCoverClient
+import dev.brahmkshatriya.echo.common.clients.QuickSearchClient
 import dev.brahmkshatriya.echo.common.clients.RadioClient
 import dev.brahmkshatriya.echo.common.clients.SaveClient
 import dev.brahmkshatriya.echo.common.clients.SearchFeedClient
@@ -44,6 +45,7 @@ import dev.brahmkshatriya.echo.common.models.ImportType
 import dev.brahmkshatriya.echo.common.models.Lyrics
 import dev.brahmkshatriya.echo.common.models.Metadata
 import dev.brahmkshatriya.echo.common.models.Playlist
+import dev.brahmkshatriya.echo.common.models.QuickSearchItem
 import dev.brahmkshatriya.echo.common.models.Radio
 import dev.brahmkshatriya.echo.common.models.Shelf
 import dev.brahmkshatriya.echo.common.models.Streamable
@@ -58,6 +60,9 @@ import dev.brahmkshatriya.echo.extensions.cache.Cached
 import dev.brahmkshatriya.echo.extensions.exceptions.AppException.Companion.toAppException
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.toKey
 import dev.brahmkshatriya.echo.utils.CacheUtils.getFromCache
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import java.io.File
@@ -67,7 +72,7 @@ class UnifiedExtension(
     private val app: App,
     private val cache: SimpleCache,
 ) : ExtensionClient, MusicExtensionsProvider,
-    HomeFeedClient, SearchFeedClient, LibraryFeedClient,
+    HomeFeedClient, QuickSearchClient, LibraryFeedClient,
     PlaylistClient, AlbumClient, ArtistClient, TrackClient,
     FollowClient, RadioClient, LikeClient, SaveClient, HideClient, ShareClient,
     PlaylistEditClient, PlaylistEditCoverClient, LyricsClient, TrackerMarkClient {
@@ -360,8 +365,60 @@ class UnifiedExtension(
 
     override suspend fun loadHomeFeed() = feed<HomeFeedClient> { loadHomeFeed() }
 
+    override suspend fun quickSearch(query: String): List<QuickSearchItem> = coroutineScope {
+        extensions().map { extension ->
+            async {
+                extension.clientOrNull<QuickSearchClient, List<QuickSearchItem>> {
+                    quickSearch(query)
+                } ?: listOf()
+            }
+        }.awaitAll().flatten().distinctBy { it.title }.take(15)
+    }
+
+    override suspend fun deleteQuickSearch(item: QuickSearchItem) {
+        extensions().forEach { extension ->
+            extension.clientOrNull<QuickSearchClient, Unit> {
+                deleteQuickSearch(item)
+            }
+        }
+    }
+
     override suspend fun loadSearchFeed(query: String): Feed<Shelf> {
-        return feed<SearchFeedClient> { loadSearchFeed(query) }
+        val list = extensions()
+        if (list.size <= 1) return feed<SearchFeedClient> { loadSearchFeed(query) }
+
+        return Feed(
+            listOf(Tab("Unified", context.getString(R.string.all))) +
+                    list.map { Tab(it.id, it.name).injectId(it.id) }
+        ) { tab ->
+            if (tab == null || tab.id == "Unified") {
+                coroutineScope {
+                    val deferreds = list.map { extension ->
+                        async {
+                            runCatching {
+                                val feed = extension.client<SearchFeedClient, Feed<Shelf>> {
+                                    loadSearchFeed(query)
+                                }.injectExtensionId(extension)
+                                val data = feed.getPagedData(feed.tabs.firstOrNull())
+                                val items = data.pagedData.loadAll()
+                                if (items.isNotEmpty()) {
+                                    Shelf.Category(
+                                        extension.id,
+                                        extension.name,
+                                        items.toFeed()
+                                    )
+                                } else null
+                            }.getOrNull()
+                        }
+                    }
+                    val shelves = deferreds.awaitAll().filterNotNull()
+                    PagedData.Single { shelves }.toFeedData()
+                }
+            } else {
+                val id = tab.extras.extensionId
+                list.get(id).getFeedData<SearchFeedClient> { loadSearchFeed(query) }
+            }
+        }
     }
 
     private val MIGRATION_6_7 = object : Migration(6, 7) {
