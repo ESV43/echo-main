@@ -38,18 +38,27 @@ jobs:
           fi
 
       - name: Cook KeyStore
+        if: github.event.inputs.build_type != 'debug'
         run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > $GITHUB_WORKSPACE/signing-key.jks
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
+        shell: bash
         run: |
-          ./gradlew assemble${{ github.event.inputs.build_type }} --stacktrace \
-          -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
-          -Pandroid.injected.signing.store.password=${{ secrets.PASSWORD }} \
-          -Pandroid.injected.signing.key.alias=key0 \
-          -Pandroid.injected.signing.key.password=${{ secrets.PASSWORD }}
+          BUILD_TYPE="${{ github.event.inputs.build_type }}"
+          GRADLE_TASK="assemble${BUILD_TYPE^}"
+
+          if [ "$BUILD_TYPE" = "debug" ]; then
+            ./gradlew "$GRADLE_TASK" --stacktrace
+          else
+            ./gradlew "$GRADLE_TASK" --stacktrace \
+              -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/signing-key.jks" \
+              -Pandroid.injected.signing.store.password="${{ secrets.PASSWORD }}" \
+              -Pandroid.injected.signing.key.alias=key0 \
+              -Pandroid.injected.signing.key.password="${{ secrets.PASSWORD }}"
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
