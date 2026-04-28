@@ -25,22 +25,62 @@ jobs:
           java-version: 17
           cache: 'gradle'
 
-      - name: Cook KeyStore
-        run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > $GITHUB_WORKSPACE/signing-key.jks
+      - name: Cook and validate KeyStore
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          SIGNING_PASSWORD: ${{ secrets.PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "KEYSTORE_B64 secret is empty." >&2
+            exit 1
+          fi
+
+          printf '%s' "$KEYSTORE_B64" | tr -d '\r\n' | base64 -d > "$GITHUB_WORKSPACE/signing-key.jks"
+
+          if [ ! -s "$GITHUB_WORKSPACE/signing-key.jks" ]; then
+            echo "Decoded keystore is empty. Recreate KEYSTORE_B64 from the binary keystore file." >&2
+            exit 1
+          fi
+
+          if ! keytool -list -keystore "$GITHUB_WORKSPACE/signing-key.jks" -storepass "$SIGNING_PASSWORD" -alias key0 >/dev/null; then
+            echo "Decoded keystore cannot be read with PASSWORD and alias key0." >&2
+            echo "Recreate KEYSTORE_B64 with: base64 -w 0 signing-key.jks" >&2
+            exit 1
+          fi
+
+          KEYSTORE_MAGIC="$(od -An -tx1 -N4 "$GITHUB_WORKSPACE/signing-key.jks" | tr -d ' \n')"
+          case "$KEYSTORE_MAGIC" in
+            feedfeed) echo "SIGNING_STORE_TYPE=JKS" >> "$GITHUB_ENV" ;;
+            30*) echo "SIGNING_STORE_TYPE=PKCS12" >> "$GITHUB_ENV" ;;
+            *)
+              echo "Decoded keystore has an unsupported file header." >&2
+              exit 1
+              ;;
+          esac
 
       - name: Cook Google Services
-        run: echo "${{ secrets.GOOGLE_SERVICES_B64 }}" | base64 -d > app/google-services.json
+        shell: bash
+        env:
+          GOOGLE_SERVICES_B64: ${{ secrets.GOOGLE_SERVICES_B64 }}
+        run: printf '%s' "$GOOGLE_SERVICES_B64" | tr -d '\r\n' | base64 -d > app/google-services.json
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
+        shell: bash
+        env:
+          SIGNING_PASSWORD: ${{ secrets.PASSWORD }}
         run: |
           ./gradlew assembleStable \
-          -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
-          -Pandroid.injected.signing.store.password=${{ secrets.PASSWORD }} \
+          -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/signing-key.jks" \
+          -Pandroid.injected.signing.store.type="$SIGNING_STORE_TYPE" \
+          -Pandroid.injected.signing.store.password="$SIGNING_PASSWORD" \
           -Pandroid.injected.signing.key.alias=key0 \
-          -Pandroid.injected.signing.key.password=${{ secrets.PASSWORD }}
+          -Pandroid.injected.signing.key.password="$SIGNING_PASSWORD"
           cp app/build/outputs/apk/stable/app-stable.apk app/build/${{ env.VERSION }}.apk
 
       - name: Upload APK
