@@ -50,10 +50,15 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
             ?: throw IllegalStateException("Missing hifi-api search query for ${streamable.id}")
         val title = streamable.extras["title"].orEmpty()
         val artist = streamable.extras["artist"]
-        val response = get<HifiSearchResponse>(
-            url = "$baseUrl/search",
-            params = mapOf("s" to searchQuery)
-        )
+        
+        val response = runCatching {
+            get<HifiSearchResponse>(
+                url = "$baseUrl/search",
+                params = mapOf("s" to searchQuery)
+            )
+        }.getOrElse { e ->
+            throw Exception("Failed to search track on hifi-api: ${e.message}. Use search query: $searchQuery", e)
+        }
 
         return response.data.items
             .firstOrNull { title.isBlank() || it.matches(title, artist) }

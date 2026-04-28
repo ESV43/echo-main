@@ -185,6 +185,7 @@ abstract class BaseHttpClient(@PublishedApi internal val client: OkHttpClient, @
 
         return Request.Builder().url(httpUrl).apply {
             addHeader("Accept", "application/json")
+            addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
             headers?.forEach { (key, value) ->
                 if (value.isNotEmpty()) addHeader(key, value)
             }

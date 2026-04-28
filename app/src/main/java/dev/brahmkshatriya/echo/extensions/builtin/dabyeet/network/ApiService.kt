@@ -18,16 +18,14 @@ import okhttp3.Response
 
 class ApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, json) {
 
-    val baseUrl: String = "https://dabmusic.xyz/api"
-
-    suspend fun getAlbum(id: String): AlbumResponse {
+    suspend fun getAlbum(baseUrl: String, id: String): AlbumResponse {
         return get(
             url = "${baseUrl}/album",
             params = mapOf("albumId" to id)
         )
     }
 
-    suspend fun getArtist(id: String): ArtistResponse {
+    suspend fun getArtist(baseUrl: String, id: String): ArtistResponse {
         return get(
             url = "${baseUrl}/discography",
             params = mapOf("artistId" to id)
@@ -35,15 +33,16 @@ class ApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, json
     }
 
     suspend fun search(
+        baseUrl: String,
         query: String,
         offset: Int = 0,
         type: String,
-        session: String?
+        session: String? = null
     ): SearchResponse {
         return get(
             url = "${baseUrl}/search",
             params = mapOf(
-                "q" to query,
+                "query" to query,
                 "offset" to offset.toString(),
                 "type" to type
             ),
@@ -51,35 +50,35 @@ class ApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, json
         )
     }
 
-    suspend fun getStream(trackId: String): Stream {
+    suspend fun getStream(baseUrl: String, trackId: String): Stream {
         return get(
             url = "${baseUrl}/stream",
             params = mapOf("trackId" to trackId)
         )
     }
 
-    suspend fun login(username: String, password: String): Response {
+    suspend fun login(baseUrl: String, username: String, password: String): Response {
         return postResponse(
             url = "${baseUrl}/auth/login",
             jsonBody = LoginRequest(username, password).toJsonString()
         )
     }
 
-    suspend fun register(username: String, email: String, password: String, inviteCode: String?): Response {
+    suspend fun register(baseUrl: String, username: String, email: String, password: String, inviteCode: String?): Response {
         return postResponse(
             url = "${baseUrl}/auth/register",
             jsonBody = RegisterRequest(username, email, password, inviteCode).toJsonString()
         )
     }
 
-    suspend fun getPlaylists(session: String): LibrariesResponse {
+    suspend fun getPlaylists(baseUrl: String, session: String): LibrariesResponse {
         return get(
             url = "${baseUrl}/libraries",
             headers = mapOf("Cookie" to session)
         )
     }
 
-    suspend fun getPlaylist(id: String, session: String, page: Int = 1, limit: Int? = null): LibraryResponse {
+    suspend fun getPlaylist(baseUrl: String, id: String, session: String, page: Int = 1, limit: Int? = null): LibraryResponse {
         return get(
             url = "${baseUrl}/libraries/${id}",
             params = mapOf(
@@ -90,7 +89,7 @@ class ApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, json
         )
     }
 
-    suspend fun getFeaturedAlbums(type: String, offset: Int? = 0, limit: Int? = 25, session: String?): FeaturedResponse {
+    suspend fun getFeaturedAlbums(baseUrl: String, type: String, offset: Int? = 0, limit: Int? = 25, session: String?): FeaturedResponse {
         return get(
             url = "${baseUrl}/featured-albums",
             params = mapOf(
@@ -102,14 +101,14 @@ class ApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, json
         )
     }
 
-    suspend fun getAuth(session: String): AuthResponse {
+    suspend fun getAuth(baseUrl: String, session: String): AuthResponse {
         return get(
             url = "${baseUrl}/auth/me",
             headers = mapOf("Cookie" to session)
         )
     }
 
-    suspend fun createLibrary(json: String, session: String): LibraryResponse {
+    suspend fun createLibrary(baseUrl: String, json: String, session: String): LibraryResponse {
         return post<LibraryResponse>(
             url = "${baseUrl}/libraries",
             jsonBody = json,
@@ -117,7 +116,7 @@ class ApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, json
         )
     }
 
-    suspend fun editLibraryMetadata(id: String, json: String, session: String): GenericResponse {
+    suspend fun editLibraryMetadata(baseUrl: String, id: String, json: String, session: String): GenericResponse {
         return patch<GenericResponse>(
             url = "${baseUrl}/libraries/${id}",
             jsonBody = json,
@@ -125,14 +124,14 @@ class ApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, json
         )
     }
 
-    suspend fun deleteLibrary(id: String, session: String): GenericResponse {
+    suspend fun deleteLibrary(baseUrl: String, id: String, session: String): GenericResponse {
         return delete(
             url = "${baseUrl}/libraries/${id}",
             headers = mapOf("Cookie" to session)
         )
     }
 
-    suspend fun addToLibrary(id: String, json: String, session: String): GenericResponse {
+    suspend fun addToLibrary(baseUrl: String, id: String, json: String, session: String): GenericResponse {
         return post(
             url = "${baseUrl}/libraries/${id}/tracks",
             jsonBody = json,
@@ -140,21 +139,21 @@ class ApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, json
         )
     }
 
-    suspend fun removeFromLibrary(id: String, trackId: String, session: String): GenericResponse {
+    suspend fun removeFromLibrary(baseUrl: String, id: String, trackId: String, session: String): GenericResponse {
         return delete(
             url = "${baseUrl}/libraries/${id}/tracks/${trackId}",
             headers = mapOf("Cookie" to session)
         )
     }
 
-    suspend fun getFavourites(session: String): FavouriteResponse {
+    suspend fun getFavourites(baseUrl: String, session: String): FavouriteResponse {
         return get(
             url = "${baseUrl}/favorites",
             headers = mapOf("Cookie" to session)
         )
     }
 
-    suspend fun addFavourite(json: String, session: String): GenericResponse {
+    suspend fun addFavourite(baseUrl: String, json: String, session: String): GenericResponse {
         return post(
             url = "${baseUrl}/favorites",
             jsonBody = json,
@@ -162,7 +161,7 @@ class ApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, json
         )
     }
 
-    suspend fun removeFavourite(id: String, session: String): GenericResponse {
+    suspend fun removeFavourite(baseUrl: String, id: String, session: String): GenericResponse {
         return delete(
             url = "${baseUrl}/favorites",
             params = mapOf("trackId" to id),

@@ -26,18 +26,9 @@ data class LibraryItem(
         return Playlist(
             id = id,
             title = name,
-            isEditable = true,
             isPrivate = !isPublic,
-            isShareable = isPublic,
-            trackCount = trackCount,
-            cover = tracks?.firstOrNull()?.images?.high?.toImageHolder(),
-            creationDate = Date(
-                epochTimeMs = Instant.parse(createdAt).toEpochMilliseconds()
-            ),
             description = description,
-            extras = mapOf("userID" to userID.toString()),
-            isRadioSupported = false,
-            isFollowable = false,
+            cover = tracks?.firstOrNull()?.images?.high?.toImageHolder(),
         )
     }
 }
