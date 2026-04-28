@@ -9,6 +9,7 @@ import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE_DURATION
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FADE_CONTROLS
@@ -23,6 +24,7 @@ class FadePlayer(
     private val handler = Handler(Looper.getMainLooper())
     private var transitionInProgress = false
     private var lastMediaItemIndex = C.INDEX_UNSET
+    private var crossfadeStartedForIndex = C.INDEX_UNSET
 
     private val crossfadePoll = object : Runnable {
         override fun run() {
@@ -39,11 +41,18 @@ class FadePlayer(
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                fadeAnimator?.cancel()
                 transitionInProgress = false
                 lastMediaItemIndex = player.currentMediaItemIndex
+                crossfadeStartedForIndex = C.INDEX_UNSET
                 if (settings.getBoolean(CROSSFADE, false) && player.playWhenReady) {
                     fadeVolume(player.volume.coerceIn(0f, 1f), 1f, fadeDuration())
                 }
+            }
+
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                crossfadeStartedForIndex = C.INDEX_UNSET
+                transitionInProgress = false
             }
         })
     }
@@ -91,6 +100,7 @@ class FadePlayer(
         if (!settings.getBoolean(CROSSFADE, false)) return
         if (transitionInProgress || !player.isPlaying) return
         if (!player.hasNextMediaItem()) return
+        if (player.currentMediaItemIndex == crossfadeStartedForIndex) return
 
         val duration = player.duration
         if (duration == C.TIME_UNSET || duration <= 0) return
@@ -102,8 +112,9 @@ class FadePlayer(
         if (remaining !in 1..durationMs) return
 
         transitionInProgress = true
+        crossfadeStartedForIndex = player.currentMediaItemIndex
         lastMediaItemIndex = player.currentMediaItemIndex
-        fadeVolume(player.volume.coerceIn(0f, 1f), 0f, remaining.coerceAtMost(durationMs)) {
+        fadeVolume(player.volume.coerceIn(0f, 1f), 0f, fadeOutBeforeSwitchDuration(remaining)) {
             if (player.currentMediaItemIndex == lastMediaItemIndex && player.hasNextMediaItem()) {
                 player.seekToNextMediaItem()
             }
@@ -115,6 +126,15 @@ class FadePlayer(
 
     private fun crossfadeDuration() =
         settings.getInt(CROSSFADE_DURATION, 5).coerceIn(1, 60) * 1000L
+
+    private fun fadeOutBeforeSwitchDuration(remaining: Long): Long {
+        val fade = fadeDuration()
+        return when {
+            fade <= 0 -> 0
+            remaining <= fade -> remaining
+            else -> fade
+        }
+    }
 
     private fun fadeVolume(from: Float, to: Float, duration: Long, onEnd: (() -> Unit)? = null) {
         fadeAnimator?.cancel()
