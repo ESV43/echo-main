@@ -23,7 +23,7 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
 
         val response = runCatching {
             get<HifiTrackManifestResponse>(
-                url = "$baseUrl/trackManifests/",
+                url = "$baseUrl/trackManifests",
                 params = mapOf(
                     "id" to trackId,
                     "formats" to "AACLC,FLAC,FLAC_HIRES,HEAACV1",
@@ -51,7 +51,7 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
         val title = streamable.extras["title"].orEmpty()
         val artist = streamable.extras["artist"]
         val response = get<HifiSearchResponse>(
-            url = "$baseUrl/search/",
+            url = "$baseUrl/search",
             params = mapOf("s" to searchQuery)
         )
 
@@ -65,7 +65,7 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
     @OptIn(ExperimentalEncodingApi::class)
     private suspend fun getLegacyTrackStream(baseUrl: String, trackId: String): Streamable.Media {
         val response = get<HifiTrackResponse>(
-            url = "$baseUrl/track/",
+            url = "$baseUrl/track",
             params = mapOf(
                 "id" to trackId,
                 "quality" to "HI_RES_LOSSLESS"

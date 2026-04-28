@@ -28,9 +28,7 @@ abstract class BaseHttpClient(@PublishedApi internal val client: OkHttpClient, @
         headers: Map<String, String>? = null
     ): T {
         val request = buildRequest(url, params, headers).get().build()
-        val response = execute(request)
-        val responseBody = response.body.string()
-        return json.decodeFromString(responseBody)
+        return executeAndDecode(request)
     }
 
     /**
@@ -56,9 +54,7 @@ abstract class BaseHttpClient(@PublishedApi internal val client: OkHttpClient, @
         jsonBody: String,
     ): T {
         val request = buildRequest(url, params, headers).post(jsonBody.toRequestBody(jsonMediaType)).build()
-        val response = execute(request)
-        val responseBody = response.body.string()
-        return json.decodeFromString(responseBody)
+        return executeAndDecode(request)
     }
 
     /**
@@ -71,9 +67,7 @@ abstract class BaseHttpClient(@PublishedApi internal val client: OkHttpClient, @
         jsonBody: String,
     ): T {
         val request = buildRequest(url, params, headers).patch(jsonBody.toRequestBody(jsonMediaType)).build()
-        val response = execute(request)
-        val responseBody = response.body.string()
-        return json.decodeFromString(responseBody)
+        return executeAndDecode(request)
     }
 
     /**
@@ -87,9 +81,7 @@ abstract class BaseHttpClient(@PublishedApi internal val client: OkHttpClient, @
     ): T {
         val request =
             buildRequest(url, params, headers).put(jsonBody.toRequestBody(jsonMediaType)).build()
-        val response = execute(request)
-        val responseBody = response.body.string()
-        return json.decodeFromString(responseBody)
+        return executeAndDecode(request)
     }
 
     /**
@@ -102,9 +94,7 @@ abstract class BaseHttpClient(@PublishedApi internal val client: OkHttpClient, @
         jsonBody: String? = null,
     ): T {
         val request = buildRequest(url, params, headers).delete(jsonBody?.toRequestBody(jsonMediaType)).build()
-        val response = execute(request)
-        val responseBody = response.body.string()
-        return json.decodeFromString(responseBody)
+        return executeAndDecode(request)
     }
 
     /**
@@ -124,6 +114,20 @@ abstract class BaseHttpClient(@PublishedApi internal val client: OkHttpClient, @
             )
         }
         return response
+    }
+
+    @PublishedApi
+    internal suspend inline fun <reified T> executeAndDecode(request: Request): T {
+        val response = execute(request)
+        val responseBody = response.body.string()
+        return try {
+            json.decodeFromString<T>(responseBody)
+        } catch (e: Exception) {
+            if (responseBody.trim().startsWith("<html", ignoreCase = true)) {
+                throw Exception("Server returned HTML instead of JSON. The service might be down or blocked.")
+            }
+            throw e
+        }
     }
 
     /**
@@ -180,6 +184,7 @@ abstract class BaseHttpClient(@PublishedApi internal val client: OkHttpClient, @
 
 
         return Request.Builder().url(httpUrl).apply {
+            addHeader("Accept", "application/json")
             headers?.forEach { (key, value) ->
                 if (value.isNotEmpty()) addHeader(key, value)
             }

@@ -81,19 +81,22 @@ jobs:
           -Pandroid.injected.signing.store.password="$SIGNING_PASSWORD" \
           -Pandroid.injected.signing.key.alias=key0 \
           -Pandroid.injected.signing.key.password="$SIGNING_PASSWORD"
-          cp app/build/outputs/apk/stable/app-stable.apk app/build/${{ env.VERSION }}.apk
+          
+          mkdir -p release_artifacts
+          apk_path=$(find app/build/outputs/apk/stable -name "*.apk" | head -n 1)
+          cp "$apk_path" "release_artifacts/echo-${{ env.VERSION }}_stable.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          path: app/build/outputs/apk/stable/app-stable.apk
+          path: release_artifacts/echo-${{ env.VERSION }}_stable.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           make_latest: true
           body: ${{ env.COMMIT }}
-          files: app/build/${{ env.VERSION }}.apk
+          files: release_artifacts/echo-${{ env.VERSION }}_stable.apk
 
       - name: Upload APK to Discord
         shell: bash
@@ -102,7 +105,7 @@ jobs:
         run: |
           message=$(echo "@everyone **${{ env.VERSION }}**\n${{ env.COMMIT }}")
           curl -F "payload_json={\"content\":\"${message}\"}" \
-          -F "echo_beta=@app/build/${{ env.VERSION }}.apk" \
+          -F "echo_beta=@release_artifacts/echo-${{ env.VERSION }}_stable.apk" \
           ${{ env.WEBHOOK }}
 
       - name: Upload APK to Telegram
@@ -116,7 +119,7 @@ jobs:
           message=$(printf "${{ env.COMMIT }}" | sed -E "$regex")
           curl -F "chat_id=${{ env.CHANNEL_ID }}" \
           -F "message_thread_id=${{ env.THREAD_ID }}" \
-          -F "document=@app/build/${{ env.VERSION }}.apk" \
+          -F "document=@release_artifacts/echo-${{ env.VERSION }}_stable.apk" \
           -F "caption=${message}" \
           -F "parse_mode=MarkdownV2" \
           https://api.telegram.org/bot${{ env.BOT_ID }}/sendDocument
