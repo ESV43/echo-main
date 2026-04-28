@@ -26,6 +26,7 @@ data class LibraryItem(
         return Playlist(
             id = id,
             title = name,
+            isEditable = true,
             isPrivate = !isPublic,
             description = description,
             cover = tracks?.firstOrNull()?.images?.high?.toImageHolder(),

@@ -209,13 +209,13 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
             e.printStackTrace()
             throw Exception("Failed to load media from Hifi and DAB fallback: ${e.message}", e)
         }
-    }
+    override suspend fun loadFeed(track: Track): Feed<Shelf>? = null
 
-    override suspend fun getLoginForm(): List<LoginClient.Form> = listOf(
+    override val forms: List<LoginClient.Form> = listOf(
         LoginClient.Form(
             key = "login",
-            title = "Login",
-            type = LoginClient.InputField.Type.Email,
+            label = "Login",
+            icon = LoginClient.InputField.Type.Email,
             inputFields = listOf(
                 LoginClient.InputField(
                     type = LoginClient.InputField.Type.Email,
