@@ -289,7 +289,7 @@
             android:text="@string/dj"
             android:textColor="@color/amoled_fg"
             android:contentDescription="@string/crossfade"
-            app:checkable="true"
+            android:checkable="true"
             app:icon="@drawable/ic_equalizer"
             app:iconSize="18dp"
             app:iconTint="@color/amoled_fg" />
