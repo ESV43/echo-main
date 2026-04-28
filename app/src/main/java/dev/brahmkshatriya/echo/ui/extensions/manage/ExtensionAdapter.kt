@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.DiffUtil
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.Extension
 import dev.brahmkshatriya.echo.common.models.ExtensionType
+import dev.brahmkshatriya.echo.common.models.ImportType
 import dev.brahmkshatriya.echo.databinding.ItemExtensionBinding
 import dev.brahmkshatriya.echo.extensions.ExtensionLoader.Companion.priorityKey
 import dev.brahmkshatriya.echo.ui.feed.EmptyAdapter
@@ -29,7 +30,9 @@ ExtensionAdapter(
     interface Listener {
         fun onClick(extension: Extension<*>, view: View)
         fun onDragHandleTouched(viewHolder: ViewHolder)
+        fun onEnabledChanged(extension: Extension<*>, enabled: Boolean)
         fun onOpenClick(extension: Extension<*>)
+        fun onUninstallClick(extension: Extension<*>)
     }
 
     object DiffCallback : DiffUtil.ItemCallback<Extension<*>>() {
@@ -57,6 +60,10 @@ ExtensionAdapter(
                 else context.getString(R.string.x_disabled, metadata.name)
             }
             binding.extensionVersion.text = "${metadata.version} • ${metadata.importType.name}"
+            binding.extensionStatus.setText(
+                if (metadata.isEnabled) R.string.ready
+                else R.string.disabled
+            )
             binding.itemExtension.apply {
                 metadata.icon.loadAsCircle(this, R.drawable.ic_extension_32dp) {
                     setImageDrawable(it)
@@ -72,6 +79,23 @@ ExtensionAdapter(
             binding.extensionUse.isVisible = extension.type == ExtensionType.MUSIC
             binding.extensionUse.setOnClickListener {
                 listener.onOpenClick(extension)
+            }
+            binding.extensionEnabledSwitch.apply {
+                setOnCheckedChangeListener(null)
+                isChecked = metadata.isEnabled
+                contentDescription = context.getString(
+                    if (metadata.isEnabled) R.string.enabled else R.string.disabled
+                )
+                setOnCheckedChangeListener { _, isChecked ->
+                    contentDescription = context.getString(
+                        if (isChecked) R.string.enabled else R.string.disabled
+                    )
+                    listener.onEnabledChanged(extension, isChecked)
+                }
+            }
+            binding.extensionUninstall.isVisible = metadata.importType != ImportType.BuiltIn
+            binding.extensionUninstall.setOnClickListener {
+                listener.onUninstallClick(extension)
             }
         }
     }

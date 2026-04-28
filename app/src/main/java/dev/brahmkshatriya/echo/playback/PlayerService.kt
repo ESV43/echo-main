@@ -96,7 +96,7 @@ class PlayerService : MediaLibraryService() {
         setListener(MediaSessionServiceListener(this, getPendingIntent(this)))
 
         val shufflePlayer = ShufflePlayer(exoPlayer)
-        val player = FadePlayer(shufflePlayer)
+        val player = FadePlayer(shufflePlayer, app.settings)
         scope.launch(Dispatchers.Main) {
             mediaChangeFlow.collect { (o, n) -> shufflePlayer.onMediaItemChanged(o, n) }
         }
@@ -199,6 +199,10 @@ class PlayerService : MediaLibraryService() {
         const val MORE_BRAIN_CAPACITY = "offload"
         const val CLOSE_PLAYER = "close_player"
         const val SKIP_SILENCE = "skip_silence"
+        const val FADE_CONTROLS = "fade_controls"
+        const val FADE_DURATION = "fade_duration"
+        const val CROSSFADE = "crossfade"
+        const val CROSSFADE_DURATION = "crossfade_duration"
         const val EQ_GAINS = "eq_gains"
 
         const val CACHE_SIZE = "cache_size"

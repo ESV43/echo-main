@@ -62,7 +62,7 @@ class DownloadsAdapter(
             val entity = item.downloadEntity
             binding.apply {
                 val track = entity.track.getOrNull()
-                title.text = track?.title
+                title.text = track?.title ?: root.context.getString(R.string.unknown)
                 track?.cover.loadInto(imageView, R.drawable.art_music)
                 item.extension?.metadata?.icon?.loadAsCircle(
                     extensionIcon, R.drawable.ic_extension
@@ -75,15 +75,25 @@ class DownloadsAdapter(
 
                 exception.text = entity.exception?.title
                 exception.isVisible = exception.text.isNotEmpty()
+                status.setText(
+                    when {
+                        entity.exception != null -> R.string.download_status_failed
+                        entity.finalFile != null -> R.string.download_status_completed
+                        else -> R.string.download_status_active
+                    }
+                )
 
                 remove.setOnClickListener {
                     listener.onCancel(entity.id)
                 }
+                remove.isVisible = entity.finalFile == null
 
                 retry.isVisible = entity.exception != null
+                retry.contentDescription = root.context.getString(R.string.refresh)
                 retry.setOnClickListener {
                     listener.onRestart(entity.id)
                 }
+                remove.contentDescription = root.context.getString(R.string.remove)
                 root.setOnClickListener {
                     val data = entity.exception ?: return@setOnClickListener
                     listener.onExceptionClicked(data)
@@ -119,6 +129,12 @@ class DownloadsAdapter(
 
     data class Task(val taskType: TaskType, val progress: Progress, val id: Long) : Item
 
+    enum class Filter {
+        Active,
+        Completed,
+        Failed
+    }
+
     override fun getItemViewType(position: Int): Int {
         return when (getItem(position)) {
             is Download -> 0
@@ -152,12 +168,20 @@ class DownloadsAdapter(
 
 
     companion object {
-        fun List<Downloader.Info>.toItems(extensions: List<Extension<*>>) = filter {
-            it.download.finalFile == null
+        fun List<Downloader.Info>.toItems(
+            extensions: List<Extension<*>>,
+            filter: Filter = Filter.Active
+        ) = filter {
+            when (filter) {
+                Filter.Active -> it.download.finalFile == null && it.download.exception == null
+                Filter.Completed -> it.download.finalFile != null
+                Filter.Failed -> it.download.exception != null
+            }
         }.flatMap { info ->
             val download = info.download
             val extension = extensions.find { it.id == download.extensionId }
-            listOf(Download(info.context, download, extension)) + info.workers.map {
+            val workers = if (filter == Filter.Active) info.workers else emptyList()
+            listOf(Download(info.context, download, extension)) + workers.map {
                 Task(it.first, it.second, download.id)
             }
         }

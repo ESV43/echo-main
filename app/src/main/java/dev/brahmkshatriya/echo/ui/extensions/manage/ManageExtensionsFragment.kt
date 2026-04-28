@@ -8,7 +8,9 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.tabs.TabLayout
+import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.Extension
 import dev.brahmkshatriya.echo.common.MusicExtension
 import dev.brahmkshatriya.echo.common.models.ExtensionType
@@ -106,10 +108,28 @@ class ManageExtensionsFragment : Fragment() {
                 touchHelper.startDrag(viewHolder)
             }
 
+            override fun onEnabledChanged(extension: Extension<*>, enabled: Boolean) {
+                viewModel.setExtensionEnabled(extension.type, extension.id, enabled)
+            }
+
             override fun onOpenClick(extension: Extension<*>) {
                 viewModel.onExtensionSelected(extension as MusicExtension)
                 parentFragmentManager.popBackStack()
                 parentFragmentManager.popBackStack()
+            }
+
+            override fun onUninstallClick(extension: Extension<*>) {
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(getString(R.string.confirmation))
+                    .setMessage(
+                        getString(R.string.uninstall_extension_confirmation, extension.name)
+                    )
+                    .setPositiveButton(getString(R.string.confirm)) { _, _ ->
+                        viewModel.uninstall(requireActivity(), extension)
+                    }
+                    .setNegativeButton(getString(R.string.cancel)) { dialog, _ ->
+                        dialog.dismiss()
+                    }.show()
             }
         })
 

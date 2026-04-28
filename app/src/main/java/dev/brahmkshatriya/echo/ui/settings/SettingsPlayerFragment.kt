@@ -12,6 +12,10 @@ import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceImageHolder
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CACHE_SIZE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CLOSE_PLAYER
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE_DURATION
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FADE_CONTROLS
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FADE_DURATION
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.MORE_BRAIN_CAPACITY
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.SKIP_SILENCE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.STREAM_QUALITY
@@ -121,6 +125,45 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = FADE_CONTROLS
+                    title = getString(R.string.fade_controls)
+                    summary = getString(R.string.fade_controls_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                MaterialSliderPreference(context, 100, 1500, steps = 100, allowOverride = true)
+                    .apply {
+                        key = FADE_DURATION
+                        title = getString(R.string.fade_duration)
+                        summary = getString(R.string.fade_duration_summary)
+                        isIconSpaceReserved = false
+                        setDefaultValue(300)
+                        addPreference(this)
+                    }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = CROSSFADE
+                    title = getString(R.string.crossfade)
+                    summary = getString(R.string.crossfade_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                MaterialSliderPreference(context, 1, 12, allowOverride = true).apply {
+                    key = CROSSFADE_DURATION
+                    title = getString(R.string.crossfade_duration)
+                    summary = getString(R.string.crossfade_duration_summary)
+                    isIconSpaceReserved = false
+                    setDefaultValue(5)
                     addPreference(this)
                 }
 

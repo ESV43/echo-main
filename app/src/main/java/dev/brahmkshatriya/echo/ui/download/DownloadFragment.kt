@@ -5,9 +5,11 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.paging.LoadState
+import com.google.android.material.tabs.TabLayout
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.Feed
 import dev.brahmkshatriya.echo.databinding.FragmentDownloadBinding
+import dev.brahmkshatriya.echo.download.Downloader
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.getFeed
 import dev.brahmkshatriya.echo.ui.common.ExceptionFragment
@@ -20,6 +22,7 @@ import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.applyContentInset
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.applyFabInsets
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.applyInsets
 import dev.brahmkshatriya.echo.ui.download.DownloadsAdapter.Companion.toItems
+import dev.brahmkshatriya.echo.ui.download.DownloadsAdapter.Filter
 import dev.brahmkshatriya.echo.ui.feed.FeedAdapter.Companion.getFeedAdapter
 import dev.brahmkshatriya.echo.ui.feed.FeedAdapter.Companion.getTouchHelper
 import dev.brahmkshatriya.echo.ui.feed.FeedClickListener.Companion.getFeedListener
@@ -35,6 +38,8 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 class DownloadFragment : Fragment(R.layout.fragment_download) {
 
     private val vm by viewModel<DownloadViewModel>()
+    private var filter = Filter.Active
+    private var latestInfos = emptyList<Downloader.Info>()
     private val downloadsAdapter by lazy {
         DownloadsAdapter(object : DownloadsAdapter.Listener {
             override fun onCancel(trackId: Long) = vm.cancel(trackId)
@@ -77,9 +82,23 @@ class DownloadFragment : Fragment(R.layout.fragment_download) {
         }
         FastScrollerHelper.applyTo(binding.recyclerView)
         val lineAdapter = LineAdapter()
-        binding.fabCancel.setOnClickListener {
-            vm.cancelAll()
+        val downloadTabs = listOf(
+            R.string.active to Filter.Active,
+            R.string.completed to Filter.Completed,
+            R.string.failed to Filter.Failed
+        )
+        downloadTabs.forEach { (title, _) ->
+            binding.downloadTabs.addTab(binding.downloadTabs.newTab().setText(title))
         }
+        binding.downloadTabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                filter = downloadTabs[tab.position].second
+                submitDownloads(binding)
+            }
+
+            override fun onTabReselected(tab: TabLayout.Tab) = onTabSelected(tab)
+            override fun onTabUnselected(tab: TabLayout.Tab) {}
+        })
         binding.recyclerView.itemAnimator = null
         getTouchHelper(feedListener).attachToRecyclerView(binding.recyclerView)
         configureGridLayout(
@@ -90,11 +109,44 @@ class DownloadFragment : Fragment(R.layout.fragment_download) {
                 feedAdapter.withLoading(this)
             )
         )
+        binding.fabCancel.setOnClickListener {
+            when (filter) {
+                Filter.Active -> vm.cancelAll()
+                Filter.Failed -> vm.restartFailed()
+                Filter.Completed -> Unit
+            }
+        }
         observe(vm.flow) { infos ->
-            binding.fabCancel.isVisible = infos.any { it.download.finalFile == null }
-            lineAdapter.loadState = if (infos.isNotEmpty()) LoadState.Loading
+            latestInfos = infos
+            lineAdapter.loadState = if (infos.any { it.download.finalFile == null })
+                LoadState.Loading
             else LoadState.NotLoading(false)
-            downloadsAdapter.submitList(infos.toItems(vm.extensions.music.value))
+            submitDownloads(binding)
+        }
+    }
+
+    private fun submitDownloads(binding: FragmentDownloadBinding) {
+        downloadsAdapter.submitList(latestInfos.toItems(vm.extensions.music.value, filter))
+        binding.fabCancel.isVisible = when (filter) {
+            Filter.Active -> latestInfos.any {
+                it.download.finalFile == null && it.download.exception == null
+            }
+
+            Filter.Failed -> latestInfos.any { it.download.exception != null }
+            Filter.Completed -> false
+        }
+        when (filter) {
+            Filter.Active -> {
+                binding.fabCancel.text = getString(R.string.cancel_all)
+                binding.fabCancel.setIconResource(R.drawable.ic_close)
+            }
+
+            Filter.Failed -> {
+                binding.fabCancel.text = getString(R.string.retry_all)
+                binding.fabCancel.setIconResource(R.drawable.ic_refresh)
+            }
+
+            Filter.Completed -> Unit
         }
     }
 }

@@ -90,6 +90,10 @@ class DownloadViewModel(
         downloader.restart(trackId)
     }
 
+    fun restartFailed() {
+        downloader.restartFailed()
+    }
+
     fun cancelAll() {
         downloader.cancelAll()
     }

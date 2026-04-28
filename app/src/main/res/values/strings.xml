@@ -61,8 +61,15 @@
     <string name="extension">Extension</string>
     <string name="downloading_x">Downloading %1$s</string>
     <string name="cancel_all">Cancel All</string>
+    <string name="retry_all">Retry All</string>
     <string name="download_progress">Download Progress</string>
     <string name="downloads">Downloads</string>
+    <string name="active">Active</string>
+    <string name="completed">Completed</string>
+    <string name="failed">Failed</string>
+    <string name="download_status_active">Downloading</string>
+    <string name="download_status_completed">Saved offline</string>
+    <string name="download_status_failed">Needs attention</string>
 
     <string name="downloaded_x">Downloaded %1$s</string>
 
@@ -127,6 +134,16 @@
 
     <string name="skip_silence">Skip Silence</string>
     <string name="skip_silence_summary">Skip silent part in the song, to provide gapless playback.</string>
+
+    <string name="fade_controls">Fade Play/Pause</string>
+    <string name="fade_controls_summary">Smoothly fade audio when playback starts or pauses.</string>
+    <string name="fade_duration">Fade Duration</string>
+    <string name="fade_duration_summary">Duration in milliseconds for play and pause fades.</string>
+    <string name="crossfade">DJ Crossfade</string>
+    <string name="crossfade_summary">Fade out near the end of a track and fade into the next track.</string>
+    <string name="crossfade_duration">Crossfade Duration</string>
+    <string name="crossfade_duration_summary">Duration in seconds for automatic track transition fades.</string>
+    <string name="dj">DJ</string>
 
     <string name="auto_start_radio">Auto Start Radio</string>
     <string name="auto_start_radio_summary">Automatically add related songs of track in the playlist, to have an infinite queue</string>
@@ -214,6 +231,7 @@
     <string name="x_extension">%1$s Extension</string>
     <string name="enabled">Enabled</string>
     <string name="disabled">Disabled</string>
+    <string name="ready">Ready</string>
     <string name="error_updating_extension">Error while updating</string>
 
     <string name="no_user_found">No user found</string>
@@ -231,6 +249,7 @@
     <string name="playing_from">Playing From</string>
     <string name="up_next">Up Next</string>
     <string name="info">Info</string>
+    <string name="quality">Quality</string>
     <string name="seekbar">Seekbar</string>
     <string name="shuffle">Shuffle</string>
     <string name="previous">Previous</string>
@@ -431,6 +450,7 @@
     <string name="album_order_n">Album Order Number: %1$d</string>
     <string name="confirmation">Confirmation</string>
     <string name="delete_playlist_confirmation">Are you sure you want to delete %1$s?</string>
+    <string name="uninstall_extension_confirmation">Are you sure you want to uninstall %1$s?</string>
     <string name="confirm">Confirm</string>
     <string name="big_cover">Bigger Covers</string>
     <string name="big_cover_summary">Good for devices with larger screens</string>

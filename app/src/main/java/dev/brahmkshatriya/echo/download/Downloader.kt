@@ -154,6 +154,25 @@ class Downloader(
         }
     }
 
+    fun restartFailed() {
+        scope.launch {
+            val downloads = downloadFlow.first().filter { it.exception != null }
+            downloads.forEach { download ->
+                taskManager.remove(download.id)
+                dao.insertDownloadEntity(
+                    download.copy(exceptionFile = null, finalFile = null, fullyDownloaded = false)
+                )
+                download.exceptionFile?.let {
+                    val file = File(it)
+                    if (file.exists()) file.delete()
+                }
+                servers.remove(download.id)
+                mutexes.remove(download.id)
+            }
+            if (downloads.isNotEmpty()) ensureWorker()
+        }
+    }
+
     fun cancelAll() {
         taskManager.removeAll()
         scope.launch {

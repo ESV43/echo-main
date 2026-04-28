@@ -12,6 +12,7 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceGroup
 import androidx.preference.SwitchPreferenceCompat
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.Extension
 import dev.brahmkshatriya.echo.common.models.ExtensionType
@@ -90,8 +91,21 @@ class ExtensionInfoFragment : BaseSettingsFragment() {
             binding.toolBar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.menu_uninstall -> {
-                        parentFragmentManager.popBackStack()
-                        extensionsViewModel.uninstall(requireActivity(), extension)
+                        MaterialAlertDialogBuilder(requireContext())
+                            .setTitle(getString(R.string.confirmation))
+                            .setMessage(
+                                getString(
+                                    R.string.uninstall_extension_confirmation,
+                                    extension.name
+                                )
+                            )
+                            .setPositiveButton(getString(R.string.confirm)) { _, _ ->
+                                parentFragmentManager.popBackStack()
+                                extensionsViewModel.uninstall(requireActivity(), extension)
+                            }
+                            .setNegativeButton(getString(R.string.cancel)) { dialog, _ ->
+                                dialog.dismiss()
+                            }.show()
                         true
                     }
 

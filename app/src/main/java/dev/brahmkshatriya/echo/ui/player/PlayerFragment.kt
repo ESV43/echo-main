@@ -18,6 +18,7 @@ import android.view.ViewOutlineProvider
 import android.widget.ProgressBar
 import androidx.annotation.OptIn
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.edit
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.net.toUri
 import androidx.core.view.doOnLayout
@@ -55,6 +56,7 @@ import dev.brahmkshatriya.echo.playback.MediaItemUtils.isLiked
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.isLoaded
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.showBackground
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.track
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE
 import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
 import dev.brahmkshatriya.echo.ui.common.UiViewModel
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.applyHorizontalInsets
@@ -68,6 +70,7 @@ import dev.brahmkshatriya.echo.ui.player.PlayerColors.Companion.getColorsFrom
 import dev.brahmkshatriya.echo.ui.player.PlayerTrackAdapter.Companion.configureClicking
 import dev.brahmkshatriya.echo.ui.player.quality.FormatUtils.getDetails
 import dev.brahmkshatriya.echo.ui.player.quality.QualitySelectionBottomSheet
+import dev.brahmkshatriya.echo.ui.player.sleep.SleepTimerBottomSheet
 import dev.brahmkshatriya.echo.utils.ContextUtils.emit
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
@@ -518,6 +521,20 @@ class PlayerFragment : Fragment() {
             trackSubtitle.setOnClickListener {
                 it.hapticFeedback()
                 QualitySelectionBottomSheet().show(parentFragmentManager, null)
+            }
+            qualityShortcut.setOnClickListener {
+                it.hapticFeedback()
+                QualitySelectionBottomSheet().show(parentFragmentManager, null)
+            }
+            sleepTimerShortcut.setOnClickListener {
+                it.hapticFeedback()
+                SleepTimerBottomSheet().show(parentFragmentManager, null)
+            }
+            crossfadeShortcut.isChecked = viewModel.settings.getBoolean(CROSSFADE, false)
+            crossfadeShortcut.setOnClickListener {
+                it.hapticFeedback()
+                val enabled = crossfadeShortcut.isChecked
+                viewModel.settings.edit { putBoolean(CROSSFADE, enabled) }
             }
             observe(viewModel.serverAndTracks) { (tracks, server, index) ->
                 trackSubtitle.text = tracks?.getDetails(requireContext(), server, index)
