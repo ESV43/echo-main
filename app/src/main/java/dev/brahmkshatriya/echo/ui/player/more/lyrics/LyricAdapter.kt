@@ -1,5 +1,9 @@
 package dev.brahmkshatriya.echo.ui.player.more.lyrics
 
+import android.graphics.Color
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -15,16 +19,24 @@ import dev.brahmkshatriya.echo.utils.ui.scrolling.ScrollAnimViewHolder
 
 class LyricAdapter(
     val uiViewModel: UiViewModel, val listener: Listener,
-) : ScrollAnimListAdapter<Lyrics.Item, LyricAdapter.ViewHolder>(DiffCallback) {
+) : ScrollAnimListAdapter<LyricAdapter.LyricLine, LyricAdapter.ViewHolder>(DiffCallback) {
+    
+    data class LyricLine(
+        val text: String,
+        val startTime: Long,
+        val endTime: Long,
+        val words: List<Lyrics.Item>? = null
+    )
+
     fun interface Listener {
-        fun onLyricSelected(adapter: LyricAdapter, lyric: Lyrics.Item)
+        fun onLyricSelected(adapter: LyricAdapter, lyric: LyricLine)
     }
 
-    object DiffCallback : DiffUtil.ItemCallback<Lyrics.Item>() {
-        override fun areItemsTheSame(oldItem: Lyrics.Item, newItem: Lyrics.Item) =
-            oldItem.text == newItem.text
+    object DiffCallback : DiffUtil.ItemCallback<LyricLine>() {
+        override fun areItemsTheSame(oldItem: LyricLine, newItem: LyricLine) =
+            oldItem.startTime == newItem.startTime && oldItem.text == newItem.text
 
-        override fun areContentsTheSame(oldItem: Lyrics.Item, newItem: Lyrics.Item) =
+        override fun areContentsTheSame(oldItem: LyricLine, newItem: LyricLine) =
             oldItem == newItem
     }
 
@@ -48,10 +60,55 @@ class LyricAdapter(
     private fun getItemOrNull(position: Int) = runCatching { getItem(position) }.getOrNull()
 
     private var currentPos = -1
+    private var currentProgress = 0L
+
+    fun updateCurrent(currentPos: Int, progress: Long = 0L) {
+        this.currentPos = currentPos
+        this.currentProgress = progress
+        onEachViewHolder { updateCurrent() }
+    }
+
     private fun ViewHolder.updateCurrent() {
-        val currentTime = getItemOrNull(currentPos)?.startTime ?: 0
-        val time = getItemOrNull(bindingAdapterPosition)?.startTime ?: 0
-        binding.root.alpha = if (currentTime >= time) 1f else 0.5f
+        val pos = bindingAdapterPosition
+        val line = getItemOrNull(pos) ?: return
+        val colors = uiViewModel.playerColors.value ?: itemView.context.defaultPlayerColors()
+        val activeColor = colors.onBackground or -0x1000000
+        val inactiveColor = Color.argb(128, Color.red(activeColor), Color.green(activeColor), Color.blue(activeColor))
+
+        if (pos == currentPos) {
+            binding.root.alpha = 1f
+            binding.root.animate().scaleX(1.1f).scaleY(1.1f).setDuration(300).start()
+            if (line.words != null) {
+                val spannable = SpannableString(line.text)
+                var startIndex = 0
+                line.words.forEach { word ->
+                    val wordIndex = line.text.indexOf(word.text, startIndex)
+                    if (wordIndex != -1) {
+                        val color = if (currentProgress >= word.startTime) activeColor else inactiveColor
+                        spannable.setSpan(
+                            ForegroundColorSpan(color),
+                            wordIndex,
+                            wordIndex + word.text.length,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                        startIndex = wordIndex + word.text.length
+                    }
+                }
+                binding.root.text = spannable
+            } else {
+                binding.root.setTextColor(activeColor)
+            }
+        } else {
+            binding.root.animate().scaleX(1f).scaleY(1f).setDuration(300).start()
+            binding.root.setTextColor(activeColor)
+            binding.root.alpha = if (pos < currentPos) 1f else 0.5f
+            if (line.words == null) {
+                binding.root.text = line.text
+            } else {
+                // If it was word-by-word, reset to plain text when not active
+                binding.root.text = line.text
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -61,8 +118,8 @@ class LyricAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val lyric = getItem(position) ?: return
-        holder.binding.root.text = lyric.text.trim().trim('\n').ifEmpty { "♪" }
+        val line = getItem(position) ?: return
+        holder.binding.root.text = line.text.trim().trim('\n').ifEmpty { "♪" }
         holder.updateColors()
         holder.updateCurrent()
         holder.itemView.applyTranslationYAnimation(scrollY)
@@ -76,10 +133,6 @@ class LyricAdapter(
         onEachViewHolder { updateColors() }
     }
 
-    fun updateCurrent(currentPos: Int) {
-        this.currentPos = currentPos
-        onEachViewHolder { updateCurrent() }
-    }
     class Loading(
         parent: ViewGroup,
         val binding: ItemLoadingBinding = ItemLoadingBinding.inflate(

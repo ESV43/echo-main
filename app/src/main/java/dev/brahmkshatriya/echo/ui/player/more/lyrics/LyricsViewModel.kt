@@ -17,6 +17,7 @@ import dev.brahmkshatriya.echo.playback.MediaItemUtils.extensionId
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.isLoaded
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.track
 import dev.brahmkshatriya.echo.playback.PlayerState
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.PREFERRED_LYRICS_SOURCE
 import dev.brahmkshatriya.echo.ui.common.PagedSource
 import dev.brahmkshatriya.echo.ui.extensions.list.ExtensionListViewModel
 import dev.brahmkshatriya.echo.utils.CacheUtils.getFromCache
@@ -70,6 +71,7 @@ class LyricsViewModel(
         currentSelectionFlow.value = media?.let {
             val id = app.context.getFromCache<String>(media, "lyrics_ext")
                 ?: app.settings.getString(LAST_LYRICS_KEY, null)
+                ?: app.settings.getString(PREFERRED_LYRICS_SOURCE, null)
             extensions.find { it.id == id } ?: extensions.firstOrNull()
         }
         refreshFlow.emit(Unit)

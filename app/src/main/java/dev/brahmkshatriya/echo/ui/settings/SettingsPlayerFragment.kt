@@ -16,7 +16,9 @@ import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE_DURATION
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FADE_CONTROLS
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FADE_DURATION
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FLUID_LYRICS
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.MORE_BRAIN_CAPACITY
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.PREFERRED_LYRICS_SOURCE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.SKIP_SILENCE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.STREAM_QUALITY
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.UNMETERED_STREAM_QUALITY
@@ -193,6 +195,36 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     summary = getString(R.string.cache_size_summary)
                     isIconSpaceReserved = false
                     setDefaultValue(250)
+                    addPreference(this)
+                }
+            }
+
+            PreferenceCategory(context).apply {
+                title = getString(R.string.lyrics)
+                key = "lyrics_category"
+                isIconSpaceReserved = false
+                layoutResource = R.layout.preference_category
+                screen.addPreference(this)
+
+                SwitchPreferenceCompat(context).apply {
+                    key = FLUID_LYRICS
+                    title = getString(R.string.fluid_lyrics)
+                    summary = getString(R.string.fluid_lyrics_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                MaterialListPreference(context).apply {
+                    key = PREFERRED_LYRICS_SOURCE
+                    title = getString(R.string.preferred_lyrics_source)
+                    summary = getString(R.string.preferred_lyrics_source_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    entries = arrayOf("Auto")
+                    entryValues = arrayOf("auto")
+                    setDefaultValue("auto")
                     addPreference(this)
                 }
             }

@@ -84,21 +84,21 @@ class LyricsFragment : Fragment() {
     }
 
     private fun updateLyrics(current: Long) {
-        val lyrics = currentLyrics as? Lyrics.Timed ?: return
-        val currentTime = lyrics.list.getOrNull(currentLyricsPos)?.endTime ?: -1
-        if (currentTime < current || current <= 0) {
-            val currentIndex = lyrics.list.indexOfLast { lyric ->
-                lyric.startTime <= current
-            }
-            lyricAdapter.updateCurrent(currentIndex)
-            if (!shouldAutoScroll) return
-            binding.appBarLayout.setExpanded(false)
-            slideDown()
-            if (currentIndex < 0) return
-            val smoothScroller = CenterSmoothScroller(requireContext())
-            smoothScroller.targetPosition = currentIndex
-            layoutManager.startSmoothScroll(smoothScroller)
+        val lyrics = lyricAdapter.currentList
+        if (lyrics.isEmpty()) return
+        val currentIndex = lyrics.indexOfLast { lyric ->
+            lyric.startTime <= current
         }
+        lyricAdapter.updateCurrent(currentIndex, current)
+        if (!shouldAutoScroll) return
+        binding.appBarLayout.setExpanded(false)
+        slideDown()
+        if (currentIndex < 0) return
+        if (currentLyricsPos == currentIndex) return
+        currentLyricsPos = currentIndex
+        val smoothScroller = CenterSmoothScroller(requireContext())
+        smoothScroller.targetPosition = currentIndex
+        layoutManager.startSmoothScroll(smoothScroller)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -204,9 +204,20 @@ class LyricsFragment : Fragment() {
             currentLyricsPos = -1
             currentLyrics = lyricsItem?.lyrics
             val list = when (val lyrics = currentLyrics) {
-                is Lyrics.Simple -> listOf(Lyrics.Item(lyrics.text, 0, 0))
-                is Lyrics.Timed -> lyrics.list
-                is Lyrics.WordByWord -> lyrics.list.flatten()
+                is Lyrics.Simple -> listOf(LyricAdapter.LyricLine(lyrics.text, 0, 0))
+                is Lyrics.Timed -> lyrics.list.map {
+                    LyricAdapter.LyricLine(it.text, it.startTime, it.endTime)
+                }
+
+                is Lyrics.WordByWord -> lyrics.list.map { words ->
+                    LyricAdapter.LyricLine(
+                        words.joinToString(" ") { it.text },
+                        words.firstOrNull()?.startTime ?: 0,
+                        words.lastOrNull()?.endTime ?: 0,
+                        words
+                    )
+                }
+
                 null -> emptyList()
             }
             lyricAdapter.submitList(list)

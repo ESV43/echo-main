@@ -80,9 +80,7 @@ class ExtensionLoader(
         UnifiedExtension.metadata to unified,
         OfflineExtension.metadata to lazy { OfflineExtension(app.context) },
         DabYeetExtension.metadata to lazy { DabYeetExtension() },
-//        TestExtension.metadata to lazy { TestExtension() },
-//        DownloadExtension.metadata to lazy { DownloadExtension(app.context) }
-//        TrackerTestExtension.metadata to Injectable { TrackerTestExtension() },
+        dev.brahmkshatriya.echo.extensions.builtin.lyrics.BuiltinLyricsExtension.metadata to lazy { dev.brahmkshatriya.echo.extensions.builtin.lyrics.BuiltinLyricsExtension() },
     )
 
     private val settings = app.settings

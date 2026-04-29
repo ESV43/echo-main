@@ -71,6 +71,8 @@ import dev.brahmkshatriya.echo.ui.player.PlayerTrackAdapter.Companion.configureC
 import dev.brahmkshatriya.echo.ui.player.quality.FormatUtils.getDetails
 import dev.brahmkshatriya.echo.ui.player.quality.QualitySelectionBottomSheet
 import dev.brahmkshatriya.echo.ui.player.sleep.SleepTimerBottomSheet
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FLUID_LYRICS
+import dev.brahmkshatriya.echo.ui.player.more.lyrics.LyricsViewModel
 import dev.brahmkshatriya.echo.utils.ContextUtils.emit
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
@@ -99,6 +101,7 @@ class PlayerFragment : Fragment() {
     private var binding by autoClearedNullable<FragmentPlayerBinding>()
     private val viewModel by activityViewModel<PlayerViewModel>()
     private val uiViewModel by activityViewModel<UiViewModel>()
+    private val lyricsViewModel by activityViewModel<LyricsViewModel>()
     private val adapter by lazy {
         PlayerTrackAdapter(uiViewModel, viewModel.playerState.current, adapterListener)
     }
@@ -118,7 +121,46 @@ class PlayerFragment : Fragment() {
         configureCollapsing(binding)
         configureColors()
         configurePlayerControls()
+        configureFluidLyrics()
         configureBackgroundPlayerView()
+    }
+
+    private fun configureFluidLyrics() {
+        val binding = binding ?: return
+        val context = requireContext()
+        val settings = context.getSettings()
+
+        observe(viewModel.progress) { (progress, _) ->
+            if (!settings.getBoolean(FLUID_LYRICS, false)) {
+                binding.playerControls.fluidLyricsContainer.isVisible = false
+                return@observe
+            }
+
+            val lyricsState = lyricsViewModel.lyricsState.value
+            if (lyricsState is LyricsViewModel.State.Loaded) {
+                val lyrics = lyricsState.result.getOrNull()?.lyrics
+                val currentLine = when (lyrics) {
+                    is dev.brahmkshatriya.echo.common.models.Lyrics.Timed -> {
+                        lyrics.list.findLast { it.startTime <= progress }?.text
+                    }
+                    is dev.brahmkshatriya.echo.common.models.Lyrics.WordByWord -> {
+                        lyrics.list.findLast { words -> 
+                            words.firstOrNull()?.startTime ?: 0 <= progress 
+                        }?.joinToString(" ") { it.text }
+                    }
+                    else -> null
+                }
+
+                val color = uiViewModel.playerColors.value ?: context.defaultPlayerColors()
+                val activeColor = color.accent
+                val bgColor = Color.argb(128, Color.red(activeColor), Color.green(activeColor), Color.blue(activeColor))
+                binding.playerControls.fluidLyricsContainer.backgroundTintList = ColorStateList.valueOf(bgColor)
+                binding.playerControls.fluidLyricsContainer.isVisible = !currentLine.isNullOrBlank()
+                binding.playerControls.fluidLyricsText.text = currentLine
+            } else {
+                binding.playerControls.fluidLyricsContainer.isVisible = false
+            }
+        }
     }
 
     private val collapseHeight by lazy {

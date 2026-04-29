@@ -59,6 +59,7 @@ class PlayerService : MediaLibraryService() {
     private val extensions by lazy { extensionLoader }
     private val eqAudioProcessor = EqAudioProcessor()
     private val exoPlayer by lazy { createExoplayer() }
+    private val secondaryExoPlayer by lazy { createExoplayer() }
 
     private var mediaSession: MediaLibrarySession? = null
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
@@ -96,7 +97,7 @@ class PlayerService : MediaLibraryService() {
         setListener(MediaSessionServiceListener(this, getPendingIntent(this)))
 
         val shufflePlayer = ShufflePlayer(exoPlayer)
-        val player = FadePlayer(shufflePlayer, app.settings)
+        val player = CrossfadePlayer(shufflePlayer, secondaryExoPlayer, app.settings)
         scope.launch(Dispatchers.Main) {
             mediaChangeFlow.collect { (o, n) -> shufflePlayer.onMediaItemChanged(o, n) }
         }
@@ -204,6 +205,9 @@ class PlayerService : MediaLibraryService() {
         const val CROSSFADE = "crossfade"
         const val CROSSFADE_DURATION = "crossfade_duration"
         const val EQ_GAINS = "eq_gains"
+
+        const val PREFERRED_LYRICS_SOURCE = "preferred_lyrics_source"
+        const val FLUID_LYRICS = "fluid_lyrics"
 
         const val CACHE_SIZE = "cache_size"
 
