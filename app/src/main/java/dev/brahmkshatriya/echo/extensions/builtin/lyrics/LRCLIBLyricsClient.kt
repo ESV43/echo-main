@@ -25,7 +25,7 @@ class LRCLIBLyricsClient : BaseLyricsClient() {
         val url = "https://lrclib.net/api/get".toHttpUrl().newBuilder()
             .addQueryParameter("artist_name", track.artists.firstOrNull()?.name ?: "")
             .addQueryParameter("track_name", track.title)
-            .addQueryParameter("duration", (track.duration / 1000).toString())
+            .addQueryParameter("duration", ((track.duration ?: 0) / 1000).toString())
             .build()
 
         val request = Request.Builder().url(url).build()
@@ -42,10 +42,6 @@ class LRCLIBLyricsClient : BaseLyricsClient() {
             return listOf(lyrics).toFeed()
         }
         return super.searchTrackLyrics(clientId, track)
-    }
-
-    override suspend fun loadLyrics(lyrics: Lyrics): Lyrics {
-        return lyrics
     }
 
     private fun parseLrc(lrc: String): Lyrics.Lyric {

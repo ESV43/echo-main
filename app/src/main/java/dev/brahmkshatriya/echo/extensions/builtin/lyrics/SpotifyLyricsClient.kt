@@ -33,8 +33,4 @@ class SpotifyLyricsClient : BaseLyricsClient() {
         // Let's just provide it as a placeholder that could be expanded.
         return super.searchTrackLyrics(clientId, track)
     }
-
-    override suspend fun loadLyrics(lyrics: Lyrics): Lyrics {
-        return lyrics
-    }
 }

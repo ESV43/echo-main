@@ -7,11 +7,16 @@ import dev.brahmkshatriya.echo.common.models.Metadata
 import dev.brahmkshatriya.echo.common.models.ExtensionType
 import dev.brahmkshatriya.echo.common.models.ImportType
 import dev.brahmkshatriya.echo.common.models.Feed
+import dev.brahmkshatriya.echo.common.models.Feed.Companion.toFeedData
+import dev.brahmkshatriya.echo.common.settings.Setting
+import dev.brahmkshatriya.echo.common.settings.Settings
 
 class BuiltinLyricsExtension : LyricsClient {
     
     companion object {
         val metadata = Metadata(
+            className = BuiltinLyricsExtension::class.java.name,
+            path = "builtin",
             id = "builtin_lyrics",
             name = "Built-in Lyrics",
             description = "Provides lyrics from LRCLIB, YouTube and more",
@@ -21,6 +26,9 @@ class BuiltinLyricsExtension : LyricsClient {
             author = "Echo"
         )
     }
+
+    override suspend fun getSettingItems(): List<Setting> = emptyList()
+    override fun setSettings(settings: Settings) {}
 
     private val clients = listOf(
         LRCLIBLyricsClient(),
@@ -36,7 +44,7 @@ class BuiltinLyricsExtension : LyricsClient {
                 return feed
             }
         }
-        return Feed(emptyList()) { null }
+        return Feed(emptyList()) { emptyList<Lyrics>().toFeedData() }
     }
 
     override suspend fun loadLyrics(lyrics: Lyrics): Lyrics {
