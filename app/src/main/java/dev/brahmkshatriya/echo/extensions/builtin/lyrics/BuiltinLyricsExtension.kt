@@ -25,7 +25,8 @@ class BuiltinLyricsExtension : LyricsClient {
     private val clients = listOf(
         LRCLIBLyricsClient(),
         YouTubeLyricsClient(),
-        SimpMusicLyricsClient()
+        SimpMusicLyricsClient(),
+        SpotifyLyricsClient()
     )
 
     override suspend fun searchTrackLyrics(clientId: String, track: Track): Feed<Lyrics> {

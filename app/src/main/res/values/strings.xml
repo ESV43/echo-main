@@ -151,7 +151,6 @@
     <string name="cache_size">Cache Size</string>
     <string name="cache_size_summary">Size in MB to cache audio and video</string>
 
-    <string name="lyrics">Lyrics</string>
     <string name="preferred_lyrics_source">Preferred Lyrics Source</string>
     <string name="preferred_lyrics_source_summary">The extension to use by default for fetching lyrics.</string>
     <string name="fluid_lyrics">Fluid Lyrics UI</string>
