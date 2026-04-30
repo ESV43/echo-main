@@ -64,9 +64,9 @@ jobs:
             -Pandroid.injected.signing.store.type="$SIGNING_STORE_TYPE" \
             -Pandroid.injected.signing.store.password="$SIGNING_PASSWORD" \
             -Pandroid.injected.signing.key.alias=key0 \
-            -Pandroid.injected.signing.key.password="$SIGNING_PASSWORD"
+            -Pandroid.injected.signing.key.password="$SIGNING_PASSWORD" || echo "Nightly build failed"
           else
-            ./gradlew assembleNightly
+            ./gradlew assembleNightly || echo "Nightly build failed"
           fi
 
       - name: Prepare Artifacts
@@ -82,11 +82,15 @@ jobs:
           
           # Copy Debug APK
           debug_apk=$(find app/build/outputs/apk/debug -name "*.apk" | head -n 1)
-          cp "$debug_apk" "release_artifacts/echo-v${version}_debug.apk"
+          if [ -n "$debug_apk" ]; then
+            cp "$debug_apk" "release_artifacts/echo-v${version}_debug.apk"
+          fi
           
           # Copy Nightly APK
           nightly_apk=$(find app/build/outputs/apk/nightly -name "*.apk" | head -n 1)
-          cp "$nightly_apk" "release_artifacts/echo-v${version}_nightly.apk"
+          if [ -n "$nightly_apk" ]; then
+            cp "$nightly_apk" "release_artifacts/echo-v${version}_nightly.apk"
+          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@v2

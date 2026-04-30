@@ -13,6 +13,11 @@ on:
           - release
           - stable
           - nightly
+      create_release:
+        description: 'Create a GitHub Release'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -101,3 +106,14 @@ jobs:
         with:
           name: echo-${{ github.event.inputs.build_type }}-apk
           path: app/build/outputs/apk/${{ github.event.inputs.build_type }}/*.apk
+
+      - name: Create Release
+        if: github.event.inputs.create_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: manual-${{ github.event.inputs.build_type }}-${{ github.run_id }}
+          name: Manual ${{ github.event.inputs.build_type^ }} Build ${{ github.run_id }}
+          prerelease: true
+          files: app/build/outputs/apk/${{ github.event.inputs.build_type }}/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
