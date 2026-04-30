@@ -22,6 +22,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -82,13 +84,20 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      - name: Prepare Build Variables
+        id: vars
+        run: |
+          BUILD_TYPE="${{ github.event.inputs.build_type }}"
+          echo "build_type=$BUILD_TYPE" >> "$GITHUB_OUTPUT"
+          echo "build_type_cap=$(echo ${BUILD_TYPE^})" >> "$GITHUB_OUTPUT"
+
       - name: Build with Gradle
         shell: bash
         env:
           SIGNING_PASSWORD: ${{ secrets.PASSWORD }}
         run: |
-          BUILD_TYPE="${{ github.event.inputs.build_type }}"
-          GRADLE_TASK="assemble${BUILD_TYPE^}"
+          BUILD_TYPE="${{ steps.vars.outputs.build_type }}"
+          GRADLE_TASK="assemble${{ steps.vars.outputs.build_type_cap }}"
 
           if [ "$BUILD_TYPE" = "debug" ]; then
             ./gradlew "$GRADLE_TASK" --stacktrace
@@ -108,11 +117,11 @@ jobs:
           path: app/build/outputs/apk/${{ github.event.inputs.build_type }}/*.apk
 
       - name: Create Release
-        if: github.event.inputs.create_release == 'true'
+        if: github.event.inputs.create_release == true || github.event.inputs.create_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: manual-${{ github.event.inputs.build_type }}-${{ github.run_id }}
-          name: Manual ${{ github.event.inputs.build_type^ }} Build ${{ github.run_id }}
+          name: Manual ${{ steps.vars.outputs.build_type_cap }} Build ${{ github.run_id }}
           prerelease: true
           files: app/build/outputs/apk/${{ github.event.inputs.build_type }}/*.apk
         env:
