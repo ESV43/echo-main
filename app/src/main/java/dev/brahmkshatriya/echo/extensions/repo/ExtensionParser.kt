@@ -20,7 +20,7 @@ class ExtensionParser(
 
     fun getAllDynamically(
         type: ImportType,
-        map: WeakHashMap<String, Pair<String, Result<Pair<Metadata, Lazy<ExtensionClient>>>>>,
+        map: MutableMap<String, Pair<String, Result<Pair<Metadata, Lazy<ExtensionClient>>>>>,
         files: List<File>
     ): List<Result<Pair<Metadata, Lazy<ExtensionClient>>>> {
         val new = files.associate {

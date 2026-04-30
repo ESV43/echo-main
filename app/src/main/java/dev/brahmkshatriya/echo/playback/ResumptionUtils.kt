@@ -36,10 +36,10 @@ object ResumptionUtils {
 
     suspend fun saveQueue(context: Context, player: Player) = withContext(Dispatchers.Main) {
         val list = player.mediaItems()
-        context.saveToCache(CLEARED, list.isEmpty())
-        if (list.isEmpty()) return@withContext
         val currentIndex = player.currentMediaItemIndex
         withContext(Dispatchers.IO) {
+            context.saveToCache(CLEARED, list.isEmpty())
+            if (list.isEmpty()) return@withContext
             val extensionIds = list.map { it.extensionId }
             val tracks = list.map { it.track }
             val contexts = list.map { it.context }

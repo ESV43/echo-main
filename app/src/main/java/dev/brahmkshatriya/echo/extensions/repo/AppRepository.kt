@@ -40,7 +40,7 @@ class AppRepository(
     }
 
     private val map =
-        WeakHashMap<String, Pair<String, Result<Pair<Metadata, Lazy<ExtensionClient>>>>>()
+        HashMap<String, Pair<String, Result<Pair<Metadata, Lazy<ExtensionClient>>>>>()
     private val mutex = Mutex()
 
     override suspend fun loadExtensions() = mutex.withLock {
@@ -50,22 +50,23 @@ class AppRepository(
     override val flow = channelFlow {
         send(null)
         send(loadExtensions())
-        suspendCoroutine {
-            val receiver = Receiver {
-                scope.launch {
-                    send(loadExtensions())
-                }
+        val receiver = Receiver {
+            scope.launch {
+                send(loadExtensions())
             }
-            val filter = IntentFilter().apply {
-                addAction(Intent.ACTION_PACKAGE_ADDED)
-                addAction(Intent.ACTION_PACKAGE_REMOVED)
-                addAction(Intent.ACTION_PACKAGE_REPLACED)
-                addAction(Intent.ACTION_PACKAGE_CHANGED)
-                addDataScheme("package")
-            }
-            ContextCompat.registerReceiver(
-                context, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED
-            )
+        }
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addAction(Intent.ACTION_PACKAGE_CHANGED)
+            addDataScheme("package")
+        }
+        ContextCompat.registerReceiver(
+            context, receiver, filter, ContextCompat.RECEIVER_EXPORTED
+        )
+        kotlinx.coroutines.channels.awaitClose {
+            context.unregisterReceiver(receiver)
         }
     }
 

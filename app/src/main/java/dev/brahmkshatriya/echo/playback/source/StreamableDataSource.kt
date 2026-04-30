@@ -55,7 +55,6 @@ class StreamableDataSource(
 
                 is Streamable.Source.Http -> {
                     val spec = streamable.request.run {
-                        defaultHttpDataSourceFactory.value.setDefaultRequestProperties(headers)
                         dataSpec.copy(uri = url.toUri(), httpRequestHeaders = headers)
                     }
                     defaultDataSourceFactory to spec

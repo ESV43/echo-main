@@ -137,11 +137,13 @@ class PlayerService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        app.settings.unregisterOnSharedPreferenceChangeListener(listener)
         mediaSession?.run {
             player.release()
             release()
             mediaSession = null
         }
+        kotlinx.coroutines.cancel(scope.coroutineContext)
         super.onDestroy()
     }
 

@@ -51,7 +51,7 @@ import dev.brahmkshatriya.echo.utils.CoroutineUtils.await
 import dev.brahmkshatriya.echo.utils.CoroutineUtils.future
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
-import java.util.WeakHashMap
+import java.util.concurrent.ConcurrentHashMap
 
 @UnstableApi
 abstract class AndroidAutoCallback(
@@ -316,7 +316,7 @@ abstract class AndroidAutoCallback(
         }
 
 
-        private val itemMap = WeakHashMap<String, EchoMediaItem>()
+        private val itemMap = ConcurrentHashMap<String, EchoMediaItem>()
         private fun EchoMediaItem.toMediaItem(
             context: Context, extId: String
         ): MediaItem = when (this) {
@@ -341,7 +341,7 @@ abstract class AndroidAutoCallback(
             }
         }
 
-        private val listsMap = WeakHashMap<String, Shelf.Lists<*>>()
+        private val listsMap = ConcurrentHashMap<String, Shelf.Lists<*>>()
         private fun getListsItems(
             context: Context, id: String, extId: String
         ) = run {
@@ -381,8 +381,8 @@ abstract class AndroidAutoCallback(
 
 
         // THIS PROBABLY BREAKS GOING BACK TBH, NEED TO TEST
-        private val shelvesMap = WeakHashMap<String, PagedData<Shelf>>()
-        private val continuations = WeakHashMap<Pair<String, Int>, String?>()
+        private val shelvesMap = ConcurrentHashMap<String, PagedData<Shelf>>()
+        private val continuations = ConcurrentHashMap<Pair<String, Int>, String?>()
         private suspend fun getShelfItems(
             context: Context, id: String, extId: String, page: Int
         ): List<MediaItem> {
@@ -394,7 +394,7 @@ abstract class AndroidAutoCallback(
             )
         }
 
-        private val feedMap = WeakHashMap<String, Feed<Shelf>>()
+        private val feedMap = ConcurrentHashMap<String, Feed<Shelf>>()
         private suspend fun Feed<Shelf>.toMediaItems(
             id: String, context: Context, extId: String, page: Int
         ): List<MediaItem> {
@@ -414,7 +414,7 @@ abstract class AndroidAutoCallback(
             TODO()
         }
 
-        private val tracksMap = WeakHashMap<String, Pair<EchoMediaItem, PagedData<Track>>>()
+        private val tracksMap = ConcurrentHashMap<String, Pair<EchoMediaItem, PagedData<Track>>>()
         private suspend fun getTracks(
             context: Context,
             id: String,

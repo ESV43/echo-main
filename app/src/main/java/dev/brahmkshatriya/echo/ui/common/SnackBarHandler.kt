@@ -22,15 +22,20 @@ class SnackBarHandler(
 
     private val messageFlow = app.messageFlow
     private val messages = mutableListOf<Message>()
+    private val mutex = kotlinx.coroutines.sync.Mutex()
 
     suspend fun create(message: Message) {
-        if (messages.isEmpty()) messageFlow.emit(message)
-        if (!messages.contains(message)) messages.add(message)
+        mutex.withLock {
+            if (messages.isEmpty()) messageFlow.emit(message)
+            if (!messages.contains(message)) messages.add(message)
+        }
     }
 
     suspend fun remove(message: Message, dismissed: Boolean) {
-        if (dismissed) messages.remove(message)
-        if (messages.isNotEmpty()) messageFlow.emit(messages.first())
+        mutex.withLock {
+            if (dismissed) messages.remove(message)
+            if (messages.isNotEmpty()) messageFlow.emit(messages.first())
+        }
     }
 
     companion object {
@@ -39,8 +44,8 @@ class SnackBarHandler(
         ): SnackBarHandler {
             val handler by inject<SnackBarHandler>()
             val padding = 8.dpToPx(this@setupSnackBar)
-            @Suppress("IDENTITY_SENSITIVE_OPERATIONS_WITH_VALUE_TYPE")
-            val snackBars = WeakHashMap<Int, Snackbar>()
+            val snackBars = mutableMapOf<Int, Snackbar>()
+
             fun updateInsets(snackBar: Snackbar) {
                 snackBar.view.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                     val insets = uiViewModel.systemInsets.value

@@ -21,7 +21,7 @@ class FileRepository(
 ) : ExtensionRepository {
 
     private val map =
-        WeakHashMap<String, Pair<String, Result<Pair<Metadata, Lazy<ExtensionClient>>>>>()
+        HashMap<String, Pair<String, Result<Pair<Metadata, Lazy<ExtensionClient>>>>>()
     private val mutex = Mutex()
 
     private var toIgnoreFile: File? = null

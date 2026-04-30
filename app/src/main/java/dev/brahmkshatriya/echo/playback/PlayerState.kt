@@ -9,7 +9,7 @@ import dev.brahmkshatriya.echo.playback.MediaItemUtils.context
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.track
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import java.util.WeakHashMap
+import java.util.concurrent.ConcurrentHashMap
 
 data class PlayerState(
     val current: MutableStateFlow<Current?> = MutableStateFlow(null),
@@ -18,7 +18,7 @@ data class PlayerState(
     val sleepTimerMillis: MutableStateFlow<Long?> = MutableStateFlow(null)
 ) {
 
-    val servers: WeakHashMap<String, Result<Streamable.Media.Server>> = WeakHashMap()
+    val servers = ConcurrentHashMap<String, Result<Streamable.Media.Server>>()
     val serverChanged = MutableSharedFlow<Unit>()
 
     data class Current(

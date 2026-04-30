@@ -64,7 +64,8 @@ class PlayerEventListener(
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         updateCurrentFlow()
         updateCustomLayout()
-        ResumptionUtils.saveIndex(context, player.currentMediaItemIndex)
+        val index = player.currentMediaItemIndex
+        scope.launch(Dispatchers.IO) { ResumptionUtils.saveIndex(context, index) }
     }
 
     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
@@ -74,16 +75,16 @@ class PlayerEventListener(
 
     override fun onTimelineChanged(timeline: Timeline, reason: Int) {
         updateCurrentFlow()
-        scope.launch { ResumptionUtils.saveQueue(context, player) }
+        scope.launch(Dispatchers.IO) { ResumptionUtils.saveQueue(context, player) }
     }
 
     override fun onRepeatModeChanged(repeatMode: Int) {
         updateCustomLayout()
-        ResumptionUtils.saveRepeat(context, repeatMode)
+        scope.launch(Dispatchers.IO) { ResumptionUtils.saveRepeat(context, repeatMode) }
     }
 
     override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
-        ResumptionUtils.saveShuffle(context, shuffleModeEnabled)
+        scope.launch(Dispatchers.IO) { ResumptionUtils.saveShuffle(context, shuffleModeEnabled) }
     }
 
     override fun onPlaybackStateChanged(playbackState: Int) {
@@ -92,13 +93,15 @@ class PlayerEventListener(
 
     override fun onIsPlayingChanged(isPlaying: Boolean) {
         updateCurrentFlow()
-        ResumptionUtils.saveCurrentPos(context, player.currentPosition)
+        val pos = player.currentPosition
+        scope.launch(Dispatchers.IO) { ResumptionUtils.saveCurrentPos(context, pos) }
     }
 
     override fun onPositionDiscontinuity(
         oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int
     ) {
-        ResumptionUtils.saveCurrentPos(context, player.currentPosition)
+        val pos = player.currentPosition
+        scope.launch(Dispatchers.IO) { ResumptionUtils.saveCurrentPos(context, pos) }
     }
 
     private val maxRetries = 3

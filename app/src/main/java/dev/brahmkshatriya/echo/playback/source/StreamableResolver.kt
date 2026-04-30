@@ -10,11 +10,11 @@ import dev.brahmkshatriya.echo.common.models.Streamable
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.toKey
 import dev.brahmkshatriya.echo.playback.source.StreamableDataSource.Companion.uri
 import dev.brahmkshatriya.echo.utils.CacheUtils.saveToCache
-import java.util.WeakHashMap
+import java.util.concurrent.ConcurrentHashMap
 
 class StreamableResolver(
     private val context: Context,
-    private val current: WeakHashMap<String, Result<Streamable.Media.Server>>,
+    private val current: ConcurrentHashMap<String, Result<Streamable.Media.Server>>,
 ) : Resolver {
 
     @OptIn(UnstableApi::class)

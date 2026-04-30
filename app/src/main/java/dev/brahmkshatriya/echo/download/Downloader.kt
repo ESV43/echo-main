@@ -37,7 +37,7 @@ import kotlinx.coroutines.plus
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
-import java.util.WeakHashMap
+import java.util.concurrent.ConcurrentHashMap
 
 class Downloader(
     val app: App,
@@ -99,10 +99,8 @@ class Downloader(
         workManager.enqueueUniqueWork(TAG, ExistingWorkPolicy.KEEP, request)
     }
 
-    @Suppress("IDENTITY_SENSITIVE_OPERATIONS_WITH_VALUE_TYPE")
-    private val servers = WeakHashMap<Long, Streamable.Media.Server>()
-    @Suppress("IDENTITY_SENSITIVE_OPERATIONS_WITH_VALUE_TYPE")
-    private val mutexes = WeakHashMap<Long, Mutex>()
+    private val servers = ConcurrentHashMap<Long, Streamable.Media.Server>()
+    private val mutexes = ConcurrentHashMap<Long, Mutex>()
 
     suspend fun getServer(
         trackId: Long, download: DownloadEntity
