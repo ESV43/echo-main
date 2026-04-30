@@ -46,6 +46,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.isLiked
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.track
+import dev.brahmkshatriya.echo.playback.MediaItemUtils.extensionId
+import dev.brahmkshatriya.echo.playback.MediaItemUtils.isLoaded
+import dev.brahmkshatriya.echo.playback.MediaItemUtils.context
+import androidx.media3.common.Player
+import dev.brahmkshatriya.echo.playback.MediaItemUtils
 import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadInto
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
@@ -234,15 +239,17 @@ class LyricsFragment : Fragment() {
     private fun configureMiniPlayer() {
         observe(playerVM.playerState.current) { current ->
             val mediaItem = current?.mediaItem ?: return@observe
-            val track = mediaItem.track
-            binding.miniPlayerTitle.text = track.title
-            binding.miniPlayerArtist.text = track.artists.joinToString(", ") { it.name }
-            track.cover.loadInto(binding.miniPlayerCover, R.drawable.art_music)
-            binding.miniPlayerLike.isChecked = mediaItem.isLiked
+            with(MediaItemUtils) {
+                val track = mediaItem.track
+                binding.miniPlayerTitle.text = track.title
+                binding.miniPlayerArtist.text = track.artists.joinToString(", ") { it.name }
+                track.cover.loadInto(binding.miniPlayerCover, R.drawable.art_music)
+                binding.miniPlayerLike.isChecked = mediaItem.isLiked
 
-            lifecycleScope.launch {
-                val canLike = playerVM.isLikeClient(mediaItem.extensionId)
-                binding.miniPlayerLike.isVisible = canLike
+                lifecycleScope.launch {
+                    val canLike = playerVM.isLikeClient(mediaItem.extensionId)
+                    binding.miniPlayerLike.isVisible = canLike
+                }
             }
         }
 
@@ -258,7 +265,7 @@ class LyricsFragment : Fragment() {
         observe(playerVM.shuffleMode) { binding.miniPlayerShuffle.isChecked = it }
         binding.miniPlayerShuffle.setOnClickListener { playerVM.setShuffle(!playerVM.shuffleMode.value) }
 
-        val repeatModes =
+        val repeatModes: List<Int> =
             listOf(Player.REPEAT_MODE_OFF, Player.REPEAT_MODE_ALL, Player.REPEAT_MODE_ONE)
         val repeatIcons =
             listOf(R.drawable.ic_repeat_20dp, R.drawable.ic_repeat_on_20dp, R.drawable.ic_repeat_one_20dp)
@@ -289,7 +296,7 @@ class LyricsFragment : Fragment() {
             com.google.android.material.slider.Slider.OnSliderTouchListener {
             override fun onStartTrackingTouch(slider: com.google.android.material.slider.Slider) {}
             override fun onStopTrackingTouch(slider: com.google.android.material.slider.Slider) {
-                playerVM.seekTo(slider.value.toLong())
+                playerVM.seek(slider.value.toInt())
             }
         })
 
