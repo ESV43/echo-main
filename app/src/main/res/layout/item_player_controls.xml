@@ -36,8 +36,6 @@
                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                 android:textColor="@color/white"
                 android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end"
                 tools:text="Lyrics will appear here" />
 
             <TextView
@@ -47,8 +45,6 @@
                 android:gravity="start"
                 android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                 android:textColor="#B3FFFFFF"
-                android:maxLines="1"
-                android:ellipsize="end"
                 tools:text="Next line will appear here" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

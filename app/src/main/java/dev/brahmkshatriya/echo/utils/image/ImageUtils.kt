@@ -1,6 +1,7 @@
 package dev.brahmkshatriya.echo.utils.image
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.view.View
 import android.widget.ImageView
@@ -17,6 +18,8 @@ import coil3.request.error
 import coil3.request.placeholder
 import coil3.request.target
 import coil3.request.transformations
+import coil3.size.Precision
+import coil3.size.Size
 import coil3.transform.CircleCropTransformation
 import coil3.transform.Transformation
 import dev.brahmkshatriya.echo.common.models.ImageHolder
@@ -155,6 +158,8 @@ object ImageUtils {
         createRequest(this, builder)
         placeholder?.let { builder.placeholder(it) }
         error?.let { builder.error(it) }
+        builder.precision(Precision.EXACT)
+        builder.bitmapConfig(Bitmap.Config.ARGB_8888)
         val list = if (crop) listOf(squareCrop, *transformations) else transformations.toList()
         if (list.isNotEmpty()) builder.transformations(list)
         return builder
