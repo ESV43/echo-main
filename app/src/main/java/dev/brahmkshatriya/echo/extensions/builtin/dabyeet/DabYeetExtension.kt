@@ -372,7 +372,7 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
 
     companion object {
         private const val HIFI_API_BASE_URL = "hifi_api_base_url"
-        private const val DEFAULT_HIFI_API_BASE_URL = "https://tidal.squid.wtf/api"
+        private const val DEFAULT_HIFI_API_BASE_URL = "https://lucida.to/api"
 
         private const val DAB_API_BASE_URL = "dab_api_base_url"
         private const val DEFAULT_DAB_API_BASE_URL = "https://dabmusic.xyz/api"
@@ -384,9 +384,9 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
             type = ExtensionType.MUSIC,
             id = "dab_yeet",
             name = "Hi-Res Music",
-            description = "YouTube Music metadata with hifi-api hi-res audio",
+            description = "High-fidelity music streaming via lucida.to and DAB fallback",
             version = "v${BuildConfig.VERSION_CODE}",
-            author = "Sad",
+            author = "Echo Team",
             icon = "https://raw.githubusercontent.com/BitFable/echo-dab-yeet-extension/refs/heads/image-branch/music.png".toImageHolder()
         )
     }

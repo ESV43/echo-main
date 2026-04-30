@@ -26,13 +26,15 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
                 url = "$baseUrl/trackManifests",
                 params = mapOf(
                     "id" to trackId,
-                    "formats" to "AACLC,FLAC,FLAC_HIRES,HEAACV1",
+                    "formats" to "FLAC_HIRES,FLAC,AACLC,HEAACV1",
                     "adaptive" to "true",
                     "manifestType" to "MPEG_DASH",
                     "uriScheme" to "HTTPS",
                     "usage" to if (isDownload) "DOWNLOAD" else "PLAYBACK"
                 )
             )
+        }.onFailure { e ->
+            println("HifiAPI Manifest Error for $trackId: ${e.message}")
         }.getOrNull()
 
         val manifestUrl = response?.data?.data?.attributes?.uri
