@@ -8,29 +8,50 @@
     android:clipToPadding="false"
     android:orientation="vertical">
 
-    <FrameLayout
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/fluidLyricsContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
-        android:background="@drawable/shape_rounded_item_corner"
-        android:backgroundTint="#80000000"
-        android:padding="12dp"
+        app:cardBackgroundColor="#80000000"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp"
         android:visibility="gone"
         tools:visibility="visible">
 
-        <TextView
-            android:id="@+id/fluidLyricsText"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            tools:text="Lyrics will appear here" />
-    </FrameLayout>
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/fluidLyricsText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="Lyrics will appear here" />
+
+            <TextView
+                android:id="@+id/fluidLyricsNextText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                android:textColor="#B3FFFFFF"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="Next line will appear here" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <LinearLayout
         android:layout_width="match_parent"

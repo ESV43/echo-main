@@ -130,6 +130,13 @@ class PlayerFragment : Fragment() {
         val context = requireContext()
         val settings = context.getSettings()
 
+        binding.playerControls.fluidLyricsContainer.setOnClickListener {
+            it.hapticFeedback()
+            uiViewModel.changePlayerState(STATE_EXPANDED)
+            uiViewModel.changeMoreState(STATE_EXPANDED)
+            uiViewModel.lastMoreTab = R.id.lyrics
+        }
+
         observe(viewModel.progress) { (progress, _) ->
             if (!settings.getBoolean(FLUID_LYRICS, false)) {
                 binding.playerControls.fluidLyricsContainer.isVisible = false
@@ -139,24 +146,44 @@ class PlayerFragment : Fragment() {
             val lyricsState = lyricsViewModel.lyricsState.value
             if (lyricsState is LyricsViewModel.State.Loaded) {
                 val lyrics = lyricsState.result.getOrNull()?.lyrics
-                val currentLine = when (lyrics) {
+                val currentLine: String?
+                val nextLine: String?
+
+                when (lyrics) {
                     is dev.brahmkshatriya.echo.common.models.Lyrics.Timed -> {
-                        lyrics.list.findLast { it.startTime <= progress }?.text
+                        val index = lyrics.list.indexOfLast { it.startTime <= progress }
+                        currentLine = lyrics.list.getOrNull(index)?.text
+                        nextLine = lyrics.list.getOrNull(index + 1)?.text
                     }
+
                     is dev.brahmkshatriya.echo.common.models.Lyrics.WordByWord -> {
-                        lyrics.list.findLast { words -> 
-                            words.firstOrNull()?.startTime ?: 0 <= progress 
-                        }?.joinToString(" ") { it.text }
+                        val index = lyrics.list.indexOfLast { words ->
+                            words.firstOrNull()?.startTime ?: 0 <= progress
+                        }
+                        currentLine = lyrics.list.getOrNull(index)?.joinToString(" ") { it.text }
+                        nextLine = lyrics.list.getOrNull(index + 1)?.joinToString(" ") { it.text }
                     }
-                    else -> null
+
+                    else -> {
+                        currentLine = null
+                        nextLine = null
+                    }
                 }
 
                 val color = uiViewModel.playerColors.value ?: context.defaultPlayerColors()
                 val activeColor = color.accent
-                val bgColor = Color.argb(128, Color.red(activeColor), Color.green(activeColor), Color.blue(activeColor))
-                binding.playerControls.fluidLyricsContainer.backgroundTintList = ColorStateList.valueOf(bgColor)
+                val bgColor = Color.argb(
+                    128,
+                    Color.red(activeColor),
+                    Color.green(activeColor),
+                    Color.blue(activeColor)
+                )
+                binding.playerControls.fluidLyricsContainer.backgroundTintList =
+                    ColorStateList.valueOf(bgColor)
                 binding.playerControls.fluidLyricsContainer.isVisible = !currentLine.isNullOrBlank()
                 binding.playerControls.fluidLyricsText.text = currentLine
+                binding.playerControls.fluidLyricsNextText.text = nextLine
+                binding.playerControls.fluidLyricsNextText.isVisible = !nextLine.isNullOrBlank()
             } else {
                 binding.playerControls.fluidLyricsContainer.isVisible = false
             }

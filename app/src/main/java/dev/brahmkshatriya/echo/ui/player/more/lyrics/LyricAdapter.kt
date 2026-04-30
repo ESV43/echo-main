@@ -73,11 +73,11 @@ class LyricAdapter(
         val line = getItemOrNull(pos) ?: return
         val colors = uiViewModel.playerColors.value ?: itemView.context.defaultPlayerColors()
         val activeColor = colors.onBackground or -0x1000000
-        val inactiveColor = Color.argb(128, Color.red(activeColor), Color.green(activeColor), Color.blue(activeColor))
+        val inactiveColor = Color.argb(100, Color.red(activeColor), Color.green(activeColor), Color.blue(activeColor))
 
         if (pos == currentPos) {
             binding.root.alpha = 1f
-            binding.root.animate().scaleX(1.1f).scaleY(1.1f).setDuration(300).start()
+            binding.root.animate().scaleX(1.05f).scaleY(1.05f).setDuration(300).start()
             if (line.words != null) {
                 val spannable = SpannableString(line.text)
                 var startIndex = 0
@@ -97,17 +97,13 @@ class LyricAdapter(
                 binding.root.text = spannable
             } else {
                 binding.root.setTextColor(activeColor)
+                binding.root.text = line.text
             }
         } else {
             binding.root.animate().scaleX(1f).scaleY(1f).setDuration(300).start()
-            binding.root.setTextColor(activeColor)
-            binding.root.alpha = if (pos < currentPos) 1f else 0.5f
-            if (line.words == null) {
-                binding.root.text = line.text
-            } else {
-                // If it was word-by-word, reset to plain text when not active
-                binding.root.text = line.text
-            }
+            binding.root.setTextColor(inactiveColor)
+            binding.root.alpha = if (pos < currentPos) 0.8f else 0.4f
+            binding.root.text = line.text
         }
     }
 

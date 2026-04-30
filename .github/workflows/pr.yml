@@ -14,11 +14,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup JDK 17
+      - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: 17
+          java-version: 21
           cache: 'gradle'
 
       - name: Create empty google-services.json if missing
@@ -30,8 +30,8 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build with Gradle
-        run: ./gradlew assembleRelease
+      - name: Lint and Build with Gradle
+        run: ./gradlew lintRelease assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

@@ -44,8 +44,11 @@ import dev.brahmkshatriya.echo.utils.ui.FastScrollerHelper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import dev.brahmkshatriya.echo.playback.MediaItemUtils.isLiked
+import dev.brahmkshatriya.echo.playback.MediaItemUtils.track
+import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadInto
+import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
-
 
 class LyricsFragment : Fragment() {
 
@@ -182,6 +185,7 @@ class LyricsFragment : Fragment() {
             lyricAdapter.updateColors()
             val colors = it ?: requireContext().defaultPlayerColors()
             binding.noLyrics.setTextColor(colors.onBackground)
+            binding.miniPlayerCard.setCardBackgroundColor(colors.background)
         }
 
         binding.lyricsRecyclerView.adapter = ConcatAdapter(lyricsErrorAdapter, lyricAdapter)
@@ -224,6 +228,74 @@ class LyricsFragment : Fragment() {
         }
 
         observe(playerVM.progress) { updateLyrics(it.first) }
+        configureMiniPlayer()
+    }
+
+    private fun configureMiniPlayer() {
+        observe(playerVM.playerState.current) { current ->
+            val mediaItem = current?.mediaItem ?: return@observe
+            val track = mediaItem.track
+            binding.miniPlayerTitle.text = track.title
+            binding.miniPlayerArtist.text = track.artists.joinToString(", ") { it.name }
+            track.cover.loadInto(binding.miniPlayerCover, R.drawable.art_music)
+            binding.miniPlayerLike.isChecked = mediaItem.isLiked
+
+            lifecycleScope.launch {
+                val canLike = playerVM.isLikeClient(mediaItem.extensionId)
+                binding.miniPlayerLike.isVisible = canLike
+            }
+        }
+
+        observe(playerVM.isPlaying) { binding.miniPlayerPlayPause.isChecked = it }
+
+        binding.miniPlayerPlayPause.setOnCheckedChangeListener { _, isChecked ->
+            if (playerVM.isPlaying.value != isChecked) playerVM.setPlaying(isChecked)
+        }
+
+        binding.miniPlayerNext.setOnClickListener { playerVM.next() }
+        binding.miniPlayerPrev.setOnClickListener { playerVM.previous() }
+
+        observe(playerVM.shuffleMode) { binding.miniPlayerShuffle.isChecked = it }
+        binding.miniPlayerShuffle.setOnClickListener { playerVM.setShuffle(!playerVM.shuffleMode.value) }
+
+        val repeatModes =
+            listOf(Player.REPEAT_MODE_OFF, Player.REPEAT_MODE_ALL, Player.REPEAT_MODE_ONE)
+        val repeatIcons =
+            listOf(R.drawable.ic_repeat_20dp, R.drawable.ic_repeat_on_20dp, R.drawable.ic_repeat_one_20dp)
+        observe(playerVM.repeatMode) { mode ->
+            val index = repeatModes.indexOf(mode).coerceAtLeast(0)
+            binding.miniPlayerRepeat.setIconResource(repeatIcons[index])
+        }
+        binding.miniPlayerRepeat.setOnClickListener {
+            val nextMode = when (playerVM.repeatMode.value) {
+                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                else -> Player.REPEAT_MODE_OFF
+            }
+            playerVM.setRepeat(nextMode)
+        }
+
+        observe(playerVM.progress) { (pos, _) ->
+            if (!binding.miniPlayerSeekBar.isPressed) {
+                binding.miniPlayerSeekBar.value =
+                    pos.toFloat().coerceIn(0f, binding.miniPlayerSeekBar.valueTo)
+            }
+        }
+        observe(playerVM.totalDuration) { duration ->
+            val max = (duration ?: 0L).toFloat().coerceAtLeast(1f)
+            binding.miniPlayerSeekBar.valueTo = max
+        }
+        binding.miniPlayerSeekBar.addOnSliderTouchListener(object :
+            com.google.android.material.slider.Slider.OnSliderTouchListener {
+            override fun onStartTrackingTouch(slider: com.google.android.material.slider.Slider) {}
+            override fun onStopTrackingTouch(slider: com.google.android.material.slider.Slider) {
+                playerVM.seekTo(slider.value.toLong())
+            }
+        })
+
+        binding.miniPlayerLike.setOnCheckedChangeListener { _, isChecked ->
+            playerVM.likeCurrent(isChecked)
+        }
     }
 
     fun ItemLyricsItemBinding.bind(lyrics: Lyrics?) = root.run {
