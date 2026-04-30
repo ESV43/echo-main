@@ -76,6 +76,7 @@ dependencies {
     implementation(libs.bundles.koin)
     implementation(libs.bundles.media3)
     implementation(libs.bundles.coil)
+    implementation("io.coil-kt.coil3:coil-core:3.3.0")
 
     implementation(libs.pikolo)
     implementation(libs.fadingedgelayout)

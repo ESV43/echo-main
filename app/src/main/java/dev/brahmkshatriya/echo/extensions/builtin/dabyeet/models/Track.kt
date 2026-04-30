@@ -59,7 +59,11 @@ data class Track(
                 Streamable.server(
                     id = id,
                     quality = 0,
-                    title = if (audioQuality.isHiRes) "Lossless" else "Lossy",
+                    title = when {
+                        audioQuality.isHiRes -> "Hi-Res"
+                        audioQuality.maximumBitDepth >= 16 -> "Lossless"
+                        else -> "Lossy"
+                    },
                 )
             ),
         )

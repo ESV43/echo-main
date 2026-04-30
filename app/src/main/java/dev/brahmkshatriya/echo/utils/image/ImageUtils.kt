@@ -13,15 +13,8 @@ import coil3.imageLoader
 import coil3.load
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
-import coil3.request.ImageRequest
-import coil3.request.bitmapConfig
-import coil3.request.error
-import coil3.request.placeholder
-import coil3.request.precision
-import coil3.request.target
-import coil3.request.transformations
-import coil3.size.Precision
-import coil3.size.Size
+import coil3.request.*
+import coil3.size.*
 import coil3.transform.CircleCropTransformation
 import coil3.transform.Transformation
 import dev.brahmkshatriya.echo.common.models.ImageHolder

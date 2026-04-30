@@ -42,10 +42,13 @@ class CrossfadePlayer(
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                if (!transitionInProgress) {
-                    fadeAnimatorMain?.cancel()
-                    mainPlayer.volume = 1f
+                if (transitionInProgress) {
+                    secondaryPlayer.pause()
+                    transitionInProgress = false
                 }
+                fadeAnimatorMain?.cancel()
+                fadeAnimatorSecondary?.cancel()
+                mainPlayer.volume = 1f
                 crossfadeStartedForIndex = C.INDEX_UNSET
             }
 
@@ -93,9 +96,13 @@ class CrossfadePlayer(
         secondaryPlayer.play()
 
         fadeVolume(mainPlayer, 1f, 0f, durationMs) {
-            mainPlayer.pause()
-            mainPlayer.seekToNextMediaItem()
+            val wasPlaying = secondaryPlayer.isPlaying
+            val position = secondaryPlayer.currentPosition
+            val nextIndex = mainPlayer.nextMediaItemIndex
+            mainPlayer.seekTo(nextIndex, position)
             mainPlayer.volume = 1f
+            if (wasPlaying) mainPlayer.play()
+            secondaryPlayer.pause()
             transitionInProgress = false
         }
         fadeVolume(secondaryPlayer, 0f, 1f, durationMs)
