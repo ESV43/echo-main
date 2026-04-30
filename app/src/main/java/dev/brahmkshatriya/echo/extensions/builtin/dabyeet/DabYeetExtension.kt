@@ -67,13 +67,14 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
     private val dabApi by lazy { ApiService(client, json) }
 
     private val hifiMirrors = listOf(
-        "https://ohio.monochrome.tf/api",
+        "https://triton.squid.wtf/api",
+        "https://aether.squid.wtf/api",
+        "https://zeus.squid.wtf/api",
         "https://virginia.monochrome.tf/api",
         "https://oregon.monochrome.tf/api",
         "https://wolf.qqdl.site/api",
         "https://maus.qqdl.site/api",
-        "https://triton.squid.wtf/api",
-        "https://aether.squid.wtf/api"
+        "https://tidal.401658.xyz/api"
     )
 
     // ===== Settings ===== //
@@ -202,30 +203,36 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
         }
         
         // DAB API Fallback
-        return runCatching {
-            val searchQuery = streamable.extras["searchQuery"]
-                ?: throw IllegalStateException("Missing search query for fallback")
-            val title = streamable.extras["title"].orEmpty()
-            val artist = streamable.extras["artist"].orEmpty()
-            
-            val searchResponse = dabApi.search(
-                baseUrl = dabApiBaseUrl,
-                query = searchQuery,
-                type = "track"
-            )
-            
-            val tracks = searchResponse.tracks ?: emptyList()
-            val matchedTrack = tracks.firstOrNull { 
-                it.title.contains(title, ignoreCase = true) && 
-                (it.artist.contains(artist, ignoreCase = true) || artist.contains(it.artist, ignoreCase = true))
-            } ?: tracks.firstOrNull() ?: throw IllegalStateException("No DAB fallback match found")
+        val dabUrls = listOf(dabApiBaseUrl, "https://dab.yeet.su/api").distinct()
+        var lastError: Exception? = null
+        
+        for (baseUrl in dabUrls) {
+            val result = runCatching {
+                val searchQuery = streamable.extras["searchQuery"]
+                    ?: throw IllegalStateException("Missing search query for fallback")
+                val title = streamable.extras["title"].orEmpty()
+                val artist = streamable.extras["artist"].orEmpty()
                 
-            val stream = dabApi.getStream(dabApiBaseUrl, matchedTrack.id)
-            stream.url.toServerMedia()
-        }.getOrElse { e ->
-            e.printStackTrace()
-            throw Exception("Failed to load media from all Hi-Res mirrors and DAB fallback: ${e.message}", e)
+                val searchResponse = dabApi.search(
+                    baseUrl = baseUrl,
+                    query = searchQuery,
+                    type = "track"
+                )
+                
+                val tracks = searchResponse.tracks ?: emptyList()
+                val matchedTrack = tracks.firstOrNull { 
+                    it.title.contains(title, ignoreCase = true) && 
+                    (it.artist.contains(artist, ignoreCase = true) || artist.contains(it.artist, ignoreCase = true))
+                } ?: tracks.firstOrNull() ?: throw IllegalStateException("No DAB fallback match found")
+                    
+                val stream = dabApi.getStream(baseUrl, matchedTrack.id)
+                stream.url.toServerMedia()
+            }
+            if (result.isSuccess) return result.getOrThrow()
+            lastError = result.exceptionOrNull() as? Exception
         }
+        
+        throw Exception("Failed to load media from all Hi-Res mirrors and DAB fallbacks", lastError)
     }
 
     override suspend fun loadFeed(track: Track): Feed<Shelf>? = null
@@ -388,10 +395,10 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
 
     companion object {
         private const val HIFI_API_BASE_URL = "hifi_api_base_url"
-        private const val DEFAULT_HIFI_API_BASE_URL = "https://ohio.monochrome.tf/api"
+        private const val DEFAULT_HIFI_API_BASE_URL = "https://triton.squid.wtf/api"
 
         private const val DAB_API_BASE_URL = "dab_api_base_url"
-        private const val DEFAULT_DAB_API_BASE_URL = "https://dabmusic.xyz/api"
+        private const val DEFAULT_DAB_API_BASE_URL = "https://dab.yeet.su/api"
 
         val metadata = Metadata(
             className = "dev.brahmkshatriya.echo.extensions.builtin.dabyeet.DabYeetExtension",
