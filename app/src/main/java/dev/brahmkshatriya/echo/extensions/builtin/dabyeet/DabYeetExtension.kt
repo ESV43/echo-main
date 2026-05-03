@@ -6,6 +6,7 @@ import dev.brahmkshatriya.echo.common.clients.ExtensionClient
 import dev.brahmkshatriya.echo.common.clients.HomeFeedClient
 import dev.brahmkshatriya.echo.common.clients.LibraryFeedClient
 import dev.brahmkshatriya.echo.common.clients.LoginClient
+import dev.brahmkshatriya.echo.common.clients.LyricsClient
 import dev.brahmkshatriya.echo.common.clients.SearchFeedClient
 import dev.brahmkshatriya.echo.common.clients.ShareClient
 import dev.brahmkshatriya.echo.common.clients.TrackClient
@@ -22,6 +23,7 @@ import dev.brahmkshatriya.echo.common.models.Streamable.Media.Companion.toServer
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.common.models.User
 import dev.brahmkshatriya.echo.common.settings.Setting
+import dev.brahmkshatriya.echo.common.settings.SettingList
 import dev.brahmkshatriya.echo.common.settings.SettingTextInput
 import dev.brahmkshatriya.echo.common.settings.Settings
 import dev.brahmkshatriya.echo.BuildConfig
@@ -29,6 +31,7 @@ import dev.brahmkshatriya.echo.common.models.ExtensionType
 import dev.brahmkshatriya.echo.common.models.ImportType
 import dev.brahmkshatriya.echo.common.models.Metadata
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toImageHolder
+import dev.brahmkshatriya.echo.common.models.Lyrics
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.network.ApiService
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.network.HifiApiService
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.network.YoutubeMusicApiService
@@ -44,7 +47,7 @@ import java.util.concurrent.TimeUnit
 
 @Suppress("unused")
 class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumClient, ArtistClient,
-    ShareClient, LoginClient.CustomInput, LibraryFeedClient, HomeFeedClient {
+    ShareClient, LoginClient.CustomInput, LibraryFeedClient, HomeFeedClient, LyricsClient {
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -86,10 +89,19 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
     override suspend fun onInitialize() {}
 
     override suspend fun getSettingItems(): List<Setting> = listOf(
+        SettingList(
+            title = "Hi-Res Source",
+            key = HIFI_SOURCE,
+            summary = "Select the source for Hi-Res audio",
+            entryTitles = listOf("Auto") + hifiMirrors.map { it.substringAfter("//").substringBefore(".") } + listOf("Custom"),
+            entryValues = listOf("auto") + hifiMirrors + listOf("custom"),
+            defaultEntryIndex = 0
+        ),
+
         SettingTextInput(
             title = "HiFi API base URL",
             key = HIFI_API_BASE_URL,
-            summary = "hifi-api URL used for hi-res audio. Defaults to $DEFAULT_HIFI_API_BASE_URL"
+            summary = "Custom hifi-api URL used for hi-res audio."
         ),
 
         SettingTextInput(
@@ -99,7 +111,9 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
         )
     )
 
+    private var hifiSource: String = "auto"
     override fun setSettings(settings: Settings) {
+        hifiSource = settings.getString(HIFI_SOURCE) ?: "auto"
         hifiApiBaseUrl = settings.getString(HIFI_API_BASE_URL)
             ?.trim()
             ?.trimEnd('/')
@@ -194,7 +208,11 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
         streamable: Streamable,
         isDownload: Boolean
     ): Streamable.Media {
-        val urlsToTry = (listOf(hifiApiBaseUrl) + hifiMirrors).distinct()
+        val urlsToTry = when (hifiSource) {
+            "auto" -> (listOf(hifiApiBaseUrl) + hifiMirrors).distinct()
+            "custom" -> listOf(hifiApiBaseUrl)
+            else -> (listOf(hifiSource) + hifiMirrors + hifiApiBaseUrl).distinct()
+        }
         
         for (baseUrl in urlsToTry) {
             val result = runCatching {
@@ -238,6 +256,33 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
     }
 
     override suspend fun loadFeed(track: Track): Feed<Shelf>? = null
+
+    // ====== LyricsClient ====== //
+
+    override suspend fun searchTrackLyrics(clientId: String, track: Track): Feed<Lyrics> {
+        val urlsToTry = when (hifiSource) {
+            "auto" -> (listOf(hifiApiBaseUrl) + hifiMirrors).distinct()
+            "custom" -> listOf(hifiApiBaseUrl)
+            else -> (listOf(hifiSource) + hifiMirrors + hifiApiBaseUrl).distinct()
+        }
+
+        for (baseUrl in urlsToTry) {
+            val lyric = runCatching { hifiApi.getLyrics(baseUrl, track) }.getOrNull()
+            if (lyric != null) {
+                return listOf(
+                    Lyrics(
+                        id = track.id,
+                        title = track.title,
+                        subtitle = track.subtitle,
+                        lyrics = lyric
+                    )
+                ).toFeed()
+            }
+        }
+        return emptyList<Lyrics>().toFeed()
+    }
+
+    override suspend fun loadLyrics(lyrics: Lyrics): Lyrics = lyrics
 
     override val forms: List<LoginClient.Form> = listOf(
         LoginClient.Form(
@@ -396,8 +441,9 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
     }
 
     companion object {
+        private const val HIFI_SOURCE = "hifi_source"
         private const val HIFI_API_BASE_URL = "hifi_api_base_url"
-        private const val DEFAULT_HIFI_API_BASE_URL = "https://triton.squid.wtf/api"
+        private const val DEFAULT_HIFI_API_BASE_URL = "https://hifi-api.kennyy.com.br"
 
         private const val DAB_API_BASE_URL = "dab_api_base_url"
         private const val DEFAULT_DAB_API_BASE_URL = "https://dab.yeet.su/api"
@@ -408,8 +454,8 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
             importType = ImportType.BuiltIn,
             type = ExtensionType.MUSIC,
             id = "dab_yeet",
-            name = "Hi-Res Music",
-            description = "High-fidelity music streaming via lucida.to and DAB fallback",
+            name = "Hi-Res Music & Lyrics",
+            description = "High-fidelity streaming and word-by-word lyrics via hifi-api & DAB",
             version = "v${BuildConfig.VERSION_CODE}",
             author = "Echo Team",
             icon = "https://raw.githubusercontent.com/BitFable/echo-dab-yeet-extension/refs/heads/image-branch/music.png".toImageHolder()

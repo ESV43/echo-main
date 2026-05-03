@@ -41,7 +41,10 @@ class CrossfadePlayer(
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                if (isAutoTransitioning) return
+                if (isAutoTransitioning) {
+                    isAutoTransitioning = false
+                    return
+                }
 
                 if (transitionInProgress) {
                     secondaryPlayer.pause()
@@ -70,7 +73,7 @@ class CrossfadePlayer(
 
     private fun maybeCrossfade() {
         if (!settings.getBoolean(CROSSFADE, false)) return
-        if (transitionInProgress || !mainPlayer.isPlaying) return
+        if (transitionInProgress || !mainPlayer.isPlaying || !mainPlayer.playWhenReady) return
         if (!mainPlayer.hasNextMediaItem()) return
         if (mainPlayer.currentMediaItemIndex == crossfadeStartedForIndex) return
 
@@ -103,7 +106,6 @@ class CrossfadePlayer(
         // Move main player to next track for fade in
         isAutoTransitioning = true
         mainPlayer.seekToNext()
-        isAutoTransitioning = false
         mainPlayer.volume = 0f
         mainPlayer.play()
 

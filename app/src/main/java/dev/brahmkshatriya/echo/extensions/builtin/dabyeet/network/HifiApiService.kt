@@ -1,8 +1,10 @@
 package dev.brahmkshatriya.echo.extensions.builtin.dabyeet.network
 
+import dev.brahmkshatriya.echo.common.models.Lyrics
 import dev.brahmkshatriya.echo.common.models.Streamable
 import dev.brahmkshatriya.echo.common.models.Streamable.Media.Companion.toServerMedia
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiBtsManifest
+import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiLyricsResponse
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiSearchResponse
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiTrackManifestResponse
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiTrackResponse
@@ -43,6 +45,44 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
         }
 
         return getLegacyTrackStream(baseUrl, trackId)
+    }
+
+    suspend fun getLyrics(baseUrl: String, track: dev.brahmkshatriya.echo.common.models.Track): Lyrics.Lyric? {
+        val trackId = track.id.toLongOrNull()?.toString() ?: runCatching {
+            val searchQuery = listOf(track.title, track.artists.firstOrNull()?.name.orEmpty())
+                .filter { it.isNotBlank() }.joinToString(" ")
+            
+            get<HifiSearchResponse>(
+                url = "$baseUrl/search",
+                params = mapOf("s" to searchQuery)
+            ).data.items.firstOrNull()?.id
+        }.getOrNull() ?: return null
+
+        val response = runCatching {
+            get<HifiLyricsResponse>(
+                url = "$baseUrl/lyrics",
+                params = mapOf(
+                    "id" to trackId,
+                    "source" to "apple_music"
+                )
+            )
+        }.getOrNull() ?: return null
+
+        val lines = response.data.lines
+        if (lines.isEmpty()) return null
+
+        val isWordByWord = lines.any { it.words.isNotEmpty() }
+        return if (isWordByWord) {
+            Lyrics.WordByWord(lines.map { line ->
+                line.words.map { word ->
+                    Lyrics.Item(word.text, word.startTime, word.endTime)
+                }
+            })
+        } else {
+            Lyrics.Timed(lines.map { line ->
+                Lyrics.Item(line.text, line.startTime, line.endTime)
+            })
+        }
     }
 
     private suspend fun resolveTrackId(baseUrl: String, streamable: Streamable): String {

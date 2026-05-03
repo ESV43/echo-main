@@ -84,3 +84,28 @@ data class HifiSearchArtist(
     val id: String = "",
     val name: String
 )
+
+@Serializable
+data class HifiLyricsResponse(
+    val data: HifiLyricsData
+)
+
+@Serializable
+data class HifiLyricsData(
+    val lines: List<HifiLyricLine> = emptyList()
+)
+
+@Serializable
+data class HifiLyricLine(
+    val startTime: Long,
+    val endTime: Long,
+    val text: String,
+    val words: List<HifiLyricWord> = emptyList()
+)
+
+@Serializable
+data class HifiLyricWord(
+    val startTime: Long,
+    val endTime: Long,
+    val text: String
+)
