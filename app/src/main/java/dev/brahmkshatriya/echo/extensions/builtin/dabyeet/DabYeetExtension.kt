@@ -7,6 +7,8 @@ import dev.brahmkshatriya.echo.common.clients.HomeFeedClient
 import dev.brahmkshatriya.echo.common.clients.LibraryFeedClient
 import dev.brahmkshatriya.echo.common.clients.LoginClient
 import dev.brahmkshatriya.echo.common.clients.LyricsClient
+import dev.brahmkshatriya.echo.common.clients.PlaylistClient
+import dev.brahmkshatriya.echo.common.clients.RadioClient
 import dev.brahmkshatriya.echo.common.clients.SearchFeedClient
 import dev.brahmkshatriya.echo.common.clients.ShareClient
 import dev.brahmkshatriya.echo.common.clients.TrackClient
@@ -16,6 +18,7 @@ import dev.brahmkshatriya.echo.common.models.Artist
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Feed
 import dev.brahmkshatriya.echo.common.models.Feed.Companion.toFeed
+import dev.brahmkshatriya.echo.common.models.Playlist
 import dev.brahmkshatriya.echo.common.models.Radio
 import dev.brahmkshatriya.echo.common.models.Shelf
 import dev.brahmkshatriya.echo.common.models.Streamable
@@ -39,6 +42,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Cookie
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -47,7 +54,7 @@ import java.util.concurrent.TimeUnit
 
 @Suppress("unused")
 class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumClient, ArtistClient,
-    ShareClient, LoginClient.CustomInput, LibraryFeedClient, HomeFeedClient, LyricsClient {
+    ShareClient, LoginClient.CustomInput, LibraryFeedClient, HomeFeedClient, LyricsClient, PlaylistClient, RadioClient {
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -180,6 +187,7 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
             cover = thumbnail?.toImageHolder(),
             duration = durationSeconds?.times(1000L),
             subtitle = artists.joinToString(", ").ifBlank { null },
+            isRadioSupported = true,
             extras = mapOf(
                 "searchQuery" to listOf(title, primaryArtist).filter { it.isNotBlank() }.joinToString(" "),
                 "youtubeVideoId" to videoId,
@@ -305,6 +313,19 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
                     isRequired = true
                 )
             )
+        ),
+        LoginClient.Form(
+            key = "ytm",
+            label = "YouTube Music",
+            icon = LoginClient.InputField.Type.Password,
+            inputFields = listOf(
+                LoginClient.InputField(
+                    type = LoginClient.InputField.Type.Password,
+                    key = "cookie",
+                    label = "Cookie",
+                    isRequired = true
+                )
+            )
         )
     )
 
@@ -313,6 +334,18 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
         data: Map<String, String?>
     ): List<User> {
         when (key) {
+            "ytm" -> {
+                val cookie = data["cookie"]!!
+                return listOf(
+                    User(
+                        id = "ytm",
+                        name = "YouTube Music",
+                        extras = mapOf(
+                            "ytmCookie" to cookie
+                        )
+                    )
+                )
+            }
             "register" -> {
                 val response = dabApi.register(
                     baseUrl = dabApiBaseUrl,
@@ -376,8 +409,10 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
     }
 
     private var _session: String? = null
+    private var _ytmCookie: String? = null
     override fun setLoginUser(user: User?) {
         _session = user?.extras?.get("session")
+        _ytmCookie = user?.extras?.get("ytmCookie")
     }
 
     override suspend fun getCurrentUser(): User? = null
@@ -385,28 +420,98 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
     // ======= LibraryFeedClient ===== //
 
     override suspend fun loadLibraryFeed(): Feed<Shelf> {
-        val session = _session ?: throw ClientException.LoginRequired()
+        val shelves = mutableListOf<Shelf>()
 
-        val favorites = dabApi.getFavourites(dabApiBaseUrl, session)
-        val likedTracks = favorites.track.map { it.toTrack(json) }
+        if (_session != null) {
+            val session = _session!!
+            val favorites = dabApi.getFavourites(dabApiBaseUrl, session)
+            val likedTracks = favorites.track.map { it.toTrack(json) }
 
-        val favShelf = Shelf.Lists.Items(
-            id = "fav",
-            title = "Favourites",
-            list = likedTracks,
-            type = Shelf.Lists.Type.Linear,
-        )
+            val favShelf = Shelf.Lists.Items(
+                id = "fav",
+                title = "Favourites",
+                list = likedTracks,
+                type = Shelf.Lists.Type.Linear,
+            )
+            shelves.add(favShelf)
 
-        val playlists = dabApi.getPlaylists(dabApiBaseUrl, session).libraries.map { it.toPlaylist() }
+            val playlists = dabApi.getPlaylists(dabApiBaseUrl, session).libraries.map { it.toPlaylist() }
 
-        val playlistShelf = Shelf.Lists.Items(
-            id = "playlist",
-            title = "Playlists",
-            list = playlists,
-            type = Shelf.Lists.Type.Linear,
-        )
+            val playlistShelf = Shelf.Lists.Items(
+                id = "playlist",
+                title = "Playlists",
+                list = playlists,
+                type = Shelf.Lists.Type.Linear,
+            )
+            shelves.add(playlistShelf)
+        }
 
-        return listOf(favShelf, playlistShelf).toFeed()
+        if (_ytmCookie != null) {
+            val ytmCookie = _ytmCookie!!
+            val ytmPlaylists = youtubeMusicApi.getLibraryPlaylists(ytmCookie).mapNotNull { renderer ->
+                val browseId = renderer["navigationEndpoint"]?.jsonObject?.get("browseEndpoint")?.jsonObject?.get("browseId")?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+                val title = renderer["title"]?.jsonObject?.get("runs")?.jsonArray?.firstOrNull()?.jsonObject?.get("text")?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+                Playlist(
+                    id = "ytm_$browseId",
+                    title = title,
+                    cover = null,
+                    isRadioSupported = true
+                )
+            }
+            if (ytmPlaylists.isNotEmpty()) {
+                val ytmShelf = Shelf.Lists.Items(
+                    id = "ytm_playlists",
+                    title = "YouTube Music Playlists",
+                    list = ytmPlaylists,
+                    type = Shelf.Lists.Type.Linear,
+                )
+                shelves.add(ytmShelf)
+            }
+        }
+        
+        if (shelves.isEmpty()) {
+            throw ClientException.LoginRequired()
+        }
+
+        return shelves.toFeed()
+    }
+
+    // ====== PlaylistClient ====== //
+    override suspend fun loadPlaylist(playlist: Playlist): Playlist = playlist
+
+    override suspend fun loadTracks(playlist: Playlist): Feed<Track> {
+        if (playlist.id.startsWith("ytm_")) {
+            val browseId = playlist.id.removePrefix("ytm_")
+            val ytmCookie = _ytmCookie ?: throw ClientException.LoginRequired()
+            val tracks = youtubeMusicApi.getPlaylist(browseId, ytmCookie).map { it.toTrack() }
+            return tracks.toFeed()
+        }
+        throw ClientException.NotSupported("Only YouTube Music playlists are supported.")
+    }
+
+    override suspend fun loadFeed(playlist: Playlist): Feed<Shelf>? = null
+
+    // ====== RadioClient ====== //
+    override suspend fun loadRadio(radio: Radio): Radio = radio
+
+    override suspend fun loadTracks(radio: Radio): Feed<Track> {
+        val tracks = youtubeMusicApi.getUpNext(radio.id).map { it.toTrack() }
+        return tracks.toFeed()
+    }
+
+    override suspend fun radio(item: EchoMediaItem, context: EchoMediaItem?): Radio {
+        return when (item) {
+            is Track -> {
+                val ytmVideoId = item.extras["youtubeVideoId"] ?: item.id
+                Radio(
+                    id = ytmVideoId,
+                    title = "Radio",
+                    subtitle = item.title,
+                    cover = item.cover
+                )
+            }
+            else -> throw ClientException.NotSupported("Radio not supported for this item.")
+        }
     }
 
     override suspend fun loadAlbum(album: Album): Album {

@@ -84,6 +84,101 @@ class YoutubeMusicApiService(client: OkHttpClient, json: Json) : BaseHttpClient(
         )
     }
 
+    suspend fun getUpNext(videoId: String): List<Track> {
+        val body = buildJsonObject {
+            put("context", buildJsonObject {
+                put("client", buildJsonObject {
+                    put("clientName", "WEB_REMIX")
+                    put("clientVersion", "1.20240408.01.00")
+                })
+            })
+            put("videoId", videoId)
+        }.toString()
+
+        val request = Request.Builder()
+            .url("$BASE_URL/next?key=$INNERTUBE_KEY")
+            .header("Content-Type", "application/json")
+            .header("Origin", "https://music.youtube.com")
+            .header("Referer", "https://music.youtube.com/")
+            .post(body.toRequestBody(jsonMediaType))
+            .build()
+
+        val response = execute(request).body.string()
+        return findObjects(json.parseToJsonElement(response), "playlistPanelVideoRenderer")
+            .mapNotNull { parsePlaylistTrack(it) }
+            .distinctBy { it.videoId }
+    }
+
+    private fun parsePlaylistTrack(renderer: JsonObject): Track? {
+        val videoId = findFirstString(renderer, "videoId") ?: return null
+        val title = findRuns(renderer["title"] ?: return null)
+            .mapNotNull { it["text"]?.jsonPrimitive?.contentOrNull }
+            .joinToString("")
+            .takeIf { it.isNotBlank() } ?: return null
+
+        val runs = findRuns(renderer["longBylineText"] ?: renderer["shortBylineText"] ?: return null)
+            .mapNotNull { it["text"]?.jsonPrimitive?.contentOrNull }
+
+        val artists = runs.takeWhile { it != " • " && it != " & " }
+            .filter { it.isNotBlank() }
+        
+        return Track(
+            videoId = videoId,
+            title = title,
+            artists = artists,
+            album = null,
+            thumbnail = findThumbnails(renderer).maxByOrNull { it.width ?: 0 }?.url?.upscaleThumbnail(),
+            durationSeconds = findFirstString(renderer, "lengthText")?.toDurationSeconds()
+        )
+    }
+
+    suspend fun getLibraryPlaylists(cookie: String): List<JsonObject> {
+        val body = buildJsonObject {
+            put("context", buildJsonObject {
+                put("client", buildJsonObject {
+                    put("clientName", "WEB_REMIX")
+                    put("clientVersion", "1.20240408.01.00")
+                })
+            })
+            put("browseId", "FEmusic_liked_playlists")
+        }.toString()
+
+        val request = Request.Builder()
+            .url("$BASE_URL/browse?key=$INNERTUBE_KEY")
+            .header("Cookie", cookie)
+            .header("Content-Type", "application/json")
+            .header("Origin", "https://music.youtube.com")
+            .post(body.toRequestBody(jsonMediaType))
+            .build()
+
+        val response = execute(request).body.string()
+        return findObjects(json.parseToJsonElement(response), "musicTwoRowItemRenderer")
+    }
+
+    suspend fun getPlaylist(browseId: String, cookie: String): List<Track> {
+        val body = buildJsonObject {
+            put("context", buildJsonObject {
+                put("client", buildJsonObject {
+                    put("clientName", "WEB_REMIX")
+                    put("clientVersion", "1.20240408.01.00")
+                })
+            })
+            put("browseId", browseId)
+        }.toString()
+
+        val request = Request.Builder()
+            .url("$BASE_URL/browse?key=$INNERTUBE_KEY")
+            .header("Cookie", cookie)
+            .header("Content-Type", "application/json")
+            .header("Origin", "https://music.youtube.com")
+            .post(body.toRequestBody(jsonMediaType))
+            .build()
+
+        val response = execute(request).body.string()
+        return findObjects(json.parseToJsonElement(response), "musicResponsiveListItemRenderer")
+            .mapNotNull { parseTrack(it) }
+            .distinctBy { it.videoId }
+    }
     private fun String.upscaleThumbnail(): String {
         return if (this.contains("googleusercontent.com") || this.contains("ggpht.com")) {
             if (this.contains("=")) {
