@@ -67,6 +67,8 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
     private val dabApi by lazy { ApiService(client, json) }
 
     private val hifiMirrors = listOf(
+        "https://hifi-api.kennyy.com.br",
+        "https://qobuz.kennyy.com.br",
         "https://triton.squid.wtf/api",
         "https://aether.squid.wtf/api",
         "https://zeus.squid.wtf/api",

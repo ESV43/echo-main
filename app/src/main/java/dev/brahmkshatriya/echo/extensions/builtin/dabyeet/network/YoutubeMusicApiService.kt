@@ -77,11 +77,25 @@ class YoutubeMusicApiService(client: OkHttpClient, json: Json) : BaseHttpClient(
             title = title,
             artists = artists,
             album = album,
-            thumbnail = findThumbnails(renderer).maxByOrNull { it.width ?: 0 }?.url,
+            thumbnail = findThumbnails(renderer).maxByOrNull { it.width ?: 0 }?.url?.upscaleThumbnail(),
             durationSeconds = findFirstString(renderer, "text")
                 ?.takeIf { looksLikeDuration(it) }
                 ?.toDurationSeconds()
         )
+    }
+
+    private fun String.upscaleThumbnail(): String {
+        return if (this.contains("googleusercontent.com") || this.contains("ggpht.com")) {
+            if (this.contains("=")) {
+                this.replaceAfterLast("=", "w1000-h1000-l90-rj")
+            } else {
+                "$this=w1000-h1000-l90-rj"
+            }
+        } else if (this.contains("ytimg.com")) {
+            this.replace("hqdefault.jpg", "maxresdefault.jpg")
+        } else {
+            this
+        }
     }
 
     private fun findObjects(element: JsonElement, key: String): List<JsonObject> {

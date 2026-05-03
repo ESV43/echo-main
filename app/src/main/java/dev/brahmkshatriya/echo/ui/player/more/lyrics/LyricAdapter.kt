@@ -84,6 +84,7 @@ class LyricAdapter(
                 line.words.forEach { word ->
                     val wordIndex = line.text.indexOf(word.text, startIndex)
                     if (wordIndex != -1) {
+                        val isActive = currentProgress in word.startTime..word.endTime
                         val color = if (currentProgress >= word.startTime) activeColor else inactiveColor
                         spannable.setSpan(
                             ForegroundColorSpan(color),
@@ -91,6 +92,14 @@ class LyricAdapter(
                             wordIndex + word.text.length,
                             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                         )
+                        if (isActive) {
+                            spannable.setSpan(
+                                android.text.style.StyleSpan(android.graphics.Typeface.BOLD),
+                                wordIndex,
+                                wordIndex + word.text.length,
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                            )
+                        }
                         startIndex = wordIndex + word.text.length
                     }
                 }

@@ -12,8 +12,6 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE_DURATION
-import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FADE_CONTROLS
-import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FADE_DURATION
 
 class CrossfadePlayer(
     private val mainPlayer: Player,
@@ -25,6 +23,7 @@ class CrossfadePlayer(
     private var fadeAnimatorSecondary: ValueAnimator? = null
     private val handler = Handler(Looper.getMainLooper())
     private var transitionInProgress = false
+    private var isAutoTransitioning = false
     private var crossfadeStartedForIndex = C.INDEX_UNSET
 
     private val crossfadePoll = object : Runnable {
@@ -42,6 +41,8 @@ class CrossfadePlayer(
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                if (isAutoTransitioning) return
+
                 if (transitionInProgress) {
                     secondaryPlayer.pause()
                     transitionInProgress = false
@@ -65,7 +66,6 @@ class CrossfadePlayer(
 
     private fun stopCrossfadePolling() {
         handler.removeCallbacks(crossfadePoll)
-        transitionInProgress = false
     }
 
     private fun maybeCrossfade() {
@@ -86,26 +86,33 @@ class CrossfadePlayer(
     }
 
     private fun startOverlap(durationMs: Long) {
+        val currentItem = mainPlayer.currentMediaItem ?: return
+        val currentPosition = mainPlayer.currentPosition
+        if (!mainPlayer.hasNextMediaItem()) return
+
         transitionInProgress = true
         crossfadeStartedForIndex = mainPlayer.currentMediaItemIndex
 
-        val nextMediaItem = mainPlayer.getMediaItemAt(mainPlayer.nextMediaItemIndex)
-        secondaryPlayer.setMediaItem(nextMediaItem)
+        // Start old track in secondary player for fade out
+        secondaryPlayer.setMediaItem(currentItem)
         secondaryPlayer.prepare()
-        secondaryPlayer.volume = 0f
+        secondaryPlayer.seekTo(currentPosition)
         secondaryPlayer.play()
+        secondaryPlayer.volume = 1f
 
-        fadeVolume(mainPlayer, 1f, 0f, durationMs) {
-            val wasPlaying = secondaryPlayer.isPlaying
-            val position = secondaryPlayer.currentPosition
-            val nextIndex = mainPlayer.nextMediaItemIndex
-            mainPlayer.seekTo(nextIndex, position)
-            mainPlayer.volume = 1f
-            if (wasPlaying) mainPlayer.play()
-            secondaryPlayer.pause()
+        // Move main player to next track for fade in
+        isAutoTransitioning = true
+        mainPlayer.seekToNext()
+        isAutoTransitioning = false
+        mainPlayer.volume = 0f
+        mainPlayer.play()
+
+        fadeVolume(mainPlayer, 0f, 1f, durationMs) {
             transitionInProgress = false
         }
-        fadeVolume(secondaryPlayer, 0f, 1f, durationMs)
+        fadeVolume(secondaryPlayer, 1f, 0f, durationMs) {
+            secondaryPlayer.pause()
+        }
     }
 
     private fun fadeVolume(player: Player, from: Float, to: Float, duration: Long, onEnd: (() -> Unit)? = null) {
@@ -117,8 +124,12 @@ class CrossfadePlayer(
             }
             if (onEnd != null) {
                 addListener(object : android.animation.AnimatorListenerAdapter() {
+                    private var canceled = false
+                    override fun onAnimationCancel(animation: android.animation.Animator) {
+                        canceled = true
+                    }
                     override fun onAnimationEnd(animation: android.animation.Animator) {
-                        onEnd()
+                        if (!canceled) onEnd()
                     }
                 })
             }

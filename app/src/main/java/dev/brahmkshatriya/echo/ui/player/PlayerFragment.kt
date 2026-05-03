@@ -4,13 +4,17 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Outline
+import android.graphics.Typeface
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.text.Spannable
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.method.LinkMovementMethod
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -146,8 +150,12 @@ class PlayerFragment : Fragment() {
             val lyricsState = lyricsViewModel.lyricsState.value
             if (lyricsState is LyricsViewModel.State.Loaded) {
                 val lyrics = lyricsState.result.getOrNull()?.lyrics
-                val currentLine: String?
-                val nextLine: String?
+                var currentLine: CharSequence? = null
+                var nextLine: String? = null
+
+                val color = uiViewModel.playerColors.value ?: context.defaultPlayerColors()
+                val activeColor = color.accent
+                val inactiveColor = Color.argb(128, Color.red(activeColor), Color.green(activeColor), Color.blue(activeColor))
 
                 when (lyrics) {
                     is dev.brahmkshatriya.echo.common.models.Lyrics.Timed -> {
@@ -160,7 +168,35 @@ class PlayerFragment : Fragment() {
                         val index = lyrics.list.indexOfLast { words ->
                             words.firstOrNull()?.startTime ?: 0 <= progress
                         }
-                        currentLine = lyrics.list.getOrNull(index)?.joinToString(" ") { it.text }
+                        val words = lyrics.list.getOrNull(index)
+                        if (words != null) {
+                            val text = words.joinToString(" ") { it.text }
+                            val spannable = SpannableString(text)
+                            var startIndex = 0
+                            words.forEach { word ->
+                                val wordIndex = text.indexOf(word.text, startIndex)
+                                if (wordIndex != -1) {
+                                    val isWordActive = progress in word.startTime..word.endTime
+                                    val wordColor = if (progress >= word.startTime) activeColor else inactiveColor
+                                    spannable.setSpan(
+                                        ForegroundColorSpan(wordColor),
+                                        wordIndex,
+                                        wordIndex + word.text.length,
+                                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                                    )
+                                    if (isWordActive) {
+                                        spannable.setSpan(
+                                            StyleSpan(Typeface.BOLD),
+                                            wordIndex,
+                                            wordIndex + word.text.length,
+                                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                                        )
+                                    }
+                                    startIndex = wordIndex + word.text.length
+                                }
+                            }
+                            currentLine = spannable
+                        }
                         nextLine = lyrics.list.getOrNull(index + 1)?.joinToString(" ") { it.text }
                     }
 
@@ -170,8 +206,6 @@ class PlayerFragment : Fragment() {
                     }
                 }
 
-                val color = uiViewModel.playerColors.value ?: context.defaultPlayerColors()
-                val activeColor = color.accent
                 val bgColor = Color.argb(
                     128,
                     Color.red(activeColor),
