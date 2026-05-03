@@ -1,0 +1,76 @@
+name: iOS Release Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version Name (e.g. 1.2.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  release:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+
+    - name: Build KMP Shared Framework
+      run: ./gradlew :common:assembleCommonReleaseFramework
+
+    - name: Set Version Numbers
+      run: |
+        # Use the manual input for Version Name and GitHub Run Number for Build Number
+        BUILD_NUMBER=${{ github.run_number }}
+        VERSION_NAME=${{ github.event.inputs.version_name }}
+        
+        echo "Updating Info.plist with Version: $VERSION_NAME ($BUILD_NUMBER)"
+        
+        # Update Info.plist using PlistBuddy (Standard macOS tool)
+        PLIST="apple/iosApp/Info.plist"
+        if [ -f "$PLIST" ]; then
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION_NAME" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$PLIST"
+        fi
+
+    - name: Build and Archive
+      run: |
+        xcodebuild -project apple/iosApp/iosApp.xcodeproj \
+                   -scheme iosApp \
+                   -sdk iphoneos \
+                   -configuration Release \
+                   -archivePath $PWD/build/Echo.xcarchive \
+                   archive \
+                   CODE_SIGNING_ALLOWED=NO \
+                   MARKETING_VERSION=${{ github.event.inputs.version_name }} \
+                   CURRENT_PROJECT_VERSION=${{ github.run_number }}
+
+    - name: Package IPA
+      run: |
+        mkdir -p Payload
+        cp -r build/Echo.xcarchive/Products/Applications/iosApp.app Payload/
+        zip -r Echo_v${{ github.event.inputs.version_name }}_b${{ github.run_number }}.ipa Payload
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: "*.ipa"
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Echo-iOS-Release-${{ github.event.inputs.version_name }}
+        path: "*.ipa"
