@@ -25,7 +25,7 @@ jobs:
       uses: gradle/actions/setup-gradle@v3
 
     - name: Build KMP Shared Framework
-      run: ./gradlew :common:assembleCommonReleaseXCFramework
+      run: ./gradlew :common:assembleCommonReleaseXCFramework --info
 
     - name: Set Version Numbers
       run: |

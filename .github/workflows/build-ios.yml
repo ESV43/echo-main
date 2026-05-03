@@ -22,7 +22,7 @@ jobs:
       uses: gradle/actions/setup-gradle@v3
 
     - name: Build KMP Shared Framework
-      run: ./gradlew :common:assembleCommonReleaseXCFramework
+      run: ./gradlew :common:assembleCommonReleaseXCFramework --info
 
     - name: Install Apple Certificate (Optional - for real devices)
       # This step requires setting up secrets for signing. 
