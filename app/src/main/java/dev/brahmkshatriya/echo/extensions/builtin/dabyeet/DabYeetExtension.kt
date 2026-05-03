@@ -183,6 +183,8 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
             extras = mapOf(
                 "searchQuery" to listOf(title, primaryArtist).filter { it.isNotBlank() }.joinToString(" "),
                 "youtubeVideoId" to videoId,
+                "title" to title,
+                "artist" to primaryArtist
             ),
             streamables = listOf(
                 Streamable.server(

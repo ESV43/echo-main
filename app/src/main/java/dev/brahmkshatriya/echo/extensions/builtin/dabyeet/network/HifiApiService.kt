@@ -23,9 +23,18 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
         streamable: Streamable,
         isDownload: Boolean
     ): Streamable.Media {
-        // Monochrome way: Search Qobuz by query and get high-res URL
+        // Monochrome way: Search Qobuz and get high-res URL
         runCatching {
+            val isrc = streamable.extras["isrc"]
             val query = streamable.extras["searchQuery"] ?: streamable.title
+            
+            // Try ISRC match first if available
+            if (!isrc.isNullOrBlank()) {
+                val stream = getQobuzStream(baseUrl, isrc)
+                if (stream != null) return stream
+            }
+            
+            // Fallback to query-based search
             getQobuzStreamBySearch(baseUrl, query)
         }.getOrNull()?.let { return it }
 
@@ -74,6 +83,23 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
         }
 
         return getLegacyTrackStream(baseUrl, trackId)
+    }
+
+    private suspend fun getQobuzStream(baseUrl: String, isrc: String): Streamable.Media? {
+        val searchRes = get<QobuzSearchResponse>(
+            url = "$baseUrl/api/get-music",
+            params = mapOf("q" to isrc, "offset" to "0")
+        )
+        val track = searchRes.data?.tracks?.items?.find { 
+            it.isrc?.equals(isrc, ignoreCase = true) == true 
+        } ?: return null
+
+        val streamRes = get<QobuzDownloadResponse>(
+            url = "$baseUrl/api/download-music",
+            params = mapOf("track_id" to track.id, "quality" to "27")
+        )
+        val url = streamRes.data?.url ?: return null
+        return url.toServerMedia()
     }
 
     private suspend fun getQobuzStreamBySearch(baseUrl: String, query: String): Streamable.Media {
