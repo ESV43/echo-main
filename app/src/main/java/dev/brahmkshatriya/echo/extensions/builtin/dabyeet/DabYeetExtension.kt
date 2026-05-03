@@ -49,12 +49,15 @@ import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Cookie
 import okhttp3.OkHttpClient
 import okhttp3.Response
+import dev.brahmkshatriya.echo.common.helpers.WebViewRequest
+import dev.brahmkshatriya.echo.common.models.NetworkRequest
+import dev.brahmkshatriya.echo.common.models.NetworkRequest.Companion.toGetRequest
 import java.util.Locale.getDefault
 import java.util.concurrent.TimeUnit
 
 @Suppress("unused")
 class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumClient, ArtistClient,
-    ShareClient, LoginClient.CustomInput, LibraryFeedClient, HomeFeedClient, LyricsClient, PlaylistClient, RadioClient {
+    ShareClient, LoginClient.CustomInput, LoginClient.WebView, LibraryFeedClient, HomeFeedClient, LyricsClient, PlaylistClient, RadioClient {
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -293,6 +296,24 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
     }
 
     override suspend fun loadLyrics(lyrics: Lyrics): Lyrics = lyrics
+
+    override val webViewRequest: WebViewRequest<List<User>> =
+        object : WebViewRequest.Cookie<List<User>> {
+            override val initialUrl = "https://music.youtube.com".toGetRequest()
+            override val stopUrlRegex = "https://music\\.youtube\\.com/?".toRegex()
+
+            override suspend fun onStop(url: NetworkRequest, cookie: String): List<User>? {
+                return listOf(
+                    User(
+                        id = "ytm",
+                        name = "YouTube Music",
+                        extras = mapOf(
+                            "ytmCookie" to cookie
+                        )
+                    )
+                )
+            }
+        }
 
     override val forms: List<LoginClient.Form> = listOf(
         LoginClient.Form(

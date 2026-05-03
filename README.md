@@ -26,6 +26,7 @@
 - **New Lyrics Engine**: Support for multiple lyrics sources with a beautiful, synchronized lyrics UI.
 - **DJ Crossfade**: Smooth transitions between tracks for an uninterrupted flow.
 - **Smart Search**: Unified search across all enabled extensions.
+- **Improved Authentication**: Standard web-view login for YouTube Music, with manual cookie fallback.
 - **Offline Mode**: Full support for local media files and downloaded content.
 
 ## 🔌 Built-in Extensions
