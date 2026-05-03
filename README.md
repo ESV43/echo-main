@@ -14,6 +14,10 @@ An Extension-based Music Player for Android, designed with a clean and intuitive
 
 ## Additional Feature in Plus:
 > Listen together
+> DJ Crossfade
+> HI-Res Music
+> New lyrics engine
+> Equiliser
 
 ## Development
 The focus of the app has now been shifted to be [Multiplatform](https://github.com/brahmkshatriya/echo/tree/compose) (using compose). That means Echo Desktop and a remake of Android app is under development. If you still want to download the old version, you can look around in the discord server.
