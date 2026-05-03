@@ -14,6 +14,7 @@ An Extension-based Music Player for Android, designed with a clean and intuitive
 
 ## Additional Feature in Plus:
 > Listen together
+> 
 > DJ Crossfade
 > HI-Res Music
 > New lyrics engine
