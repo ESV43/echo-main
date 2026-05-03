@@ -16,8 +16,11 @@ An Extension-based Music Player for Android, designed with a clean and intuitive
 > Listen together
 > 
 > DJ Crossfade
+> 
 > HI-Res Music
+> 
 > New lyrics engine
+> 
 > Equiliser
 
 ## Development
