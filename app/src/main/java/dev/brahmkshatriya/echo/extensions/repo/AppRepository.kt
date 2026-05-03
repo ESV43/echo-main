@@ -12,6 +12,7 @@ import dev.brahmkshatriya.echo.extensions.repo.ExtensionParser.Companion.FEATURE
 import dev.brahmkshatriya.echo.extensions.repo.ExtensionParser.Companion.PACKAGE_FLAGS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -65,7 +66,7 @@ class AppRepository(
         ContextCompat.registerReceiver(
             context, receiver, filter, ContextCompat.RECEIVER_EXPORTED
         )
-        kotlinx.coroutines.channels.awaitClose {
+        awaitClose {
             context.unregisterReceiver(receiver)
         }
     }

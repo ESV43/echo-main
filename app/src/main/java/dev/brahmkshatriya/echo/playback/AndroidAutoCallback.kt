@@ -351,14 +351,14 @@ abstract class AndroidAutoCallback(
                 is Shelf.Lists.Items -> shelf.list.map { it.toMediaItem(context, extId) }
                 is Shelf.Lists.Tracks -> shelf.list.map { it.toItem(context, extId) }
             } + listOfNotNull(
-                if (shelf.more != null) {
+                shelf.more?.let { more ->
                     val moreId = shelf.id
-                    feedMap[moreId] = shelf.more
+                    feedMap[moreId] = more
                     browsableItem(
                         "$ROOT/$extId/$FEED/$moreId",
                         context.getString(R.string.more)
                     )
-                } else null
+                }
             )
         }
 

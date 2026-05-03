@@ -47,6 +47,7 @@ import dev.brahmkshatriya.echo.utils.ContextUtils.listenFuture
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
@@ -143,7 +144,7 @@ class PlayerService : MediaLibraryService() {
             release()
             mediaSession = null
         }
-        kotlinx.coroutines.cancel(scope.coroutineContext)
+        scope.cancel()
         super.onDestroy()
     }
 

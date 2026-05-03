@@ -13,6 +13,7 @@ import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.dpToPx
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import org.koin.android.ext.android.inject
 import java.util.WeakHashMap
 
@@ -25,17 +26,20 @@ class SnackBarHandler(
     private val mutex = kotlinx.coroutines.sync.Mutex()
 
     suspend fun create(message: Message) {
-        mutex.withLock {
-            if (messages.isEmpty()) messageFlow.emit(message)
+        val shouldEmit = mutex.withLock {
+            val empty = messages.isEmpty()
             if (!messages.contains(message)) messages.add(message)
+            empty
         }
+        if (shouldEmit) messageFlow.emit(message)
     }
 
     suspend fun remove(message: Message, dismissed: Boolean) {
-        mutex.withLock {
+        val nextMessage = mutex.withLock {
             if (dismissed) messages.remove(message)
-            if (messages.isNotEmpty()) messageFlow.emit(messages.first())
+            messages.firstOrNull()
         }
+        if (nextMessage != null) messageFlow.emit(nextMessage)
     }
 
     companion object {
