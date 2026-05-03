@@ -445,7 +445,7 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
     companion object {
         private const val HIFI_SOURCE = "hifi_source"
         private const val HIFI_API_BASE_URL = "hifi_api_base_url"
-        private const val DEFAULT_HIFI_API_BASE_URL = "https://hifi-api.kennyy.com.br"
+        private const val DEFAULT_HIFI_API_BASE_URL = "https://qobuz.kennyy.com.br"
 
         private const val DAB_API_BASE_URL = "dab_api_base_url"
         private const val DEFAULT_DAB_API_BASE_URL = "https://dab.yeet.su/api"

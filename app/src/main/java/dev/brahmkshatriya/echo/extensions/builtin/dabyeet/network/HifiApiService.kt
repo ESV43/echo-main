@@ -50,7 +50,7 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
                     )
                 }.getOrNull()
                 val url = res?.url ?: res?.data
-                if (!url.isNullOrBlank() && !url.contains("preview")) return url.toServerMedia()
+                if (url.isFullTrack()) return url!!.toServerMedia()
             }
             
             // Try DASH manifest
@@ -74,6 +74,12 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
         }
 
         throw Exception("Failed to resolve stream for $baseUrl")
+    }
+
+    private fun String?.isFullTrack(): Boolean {
+        if (this.isNullOrBlank()) return false
+        val low = this.lowercase()
+        return !low.contains("preview") && !low.contains("30s") && !low.contains("/sample/")
     }
 
     private suspend fun getQobuzStream(baseUrl: String, isrc: String): Streamable.Media? {
@@ -108,7 +114,7 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
             }.getOrNull()
             
             val url = result?.data?.url
-            if (!url.isNullOrBlank() && !url.contains("preview")) return url.toServerMedia()
+            if (url.isFullTrack()) return url!!.toServerMedia()
         }
         return null
     }

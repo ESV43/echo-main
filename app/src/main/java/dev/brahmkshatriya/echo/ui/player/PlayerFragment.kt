@@ -129,6 +129,13 @@ class PlayerFragment : Fragment() {
         configureBackgroundPlayerView()
     }
 
+    override fun onDestroyView() {
+        backgroundPlayer?.release()
+        backgroundPlayer = null
+        oldBg = null
+        super.onDestroyView()
+    }
+
     private fun configureFluidLyrics() {
         val binding = binding ?: return
         val context = requireContext()
@@ -248,6 +255,7 @@ class PlayerFragment : Fragment() {
 
         val maxElevation = 4.dpToPx(requireContext()).toFloat()
         fun updateOutline() {
+            if (!view.isAttachedToWindow) return
             val offset = max(0f, uiViewModel.playerSheetOffset.value)
             val inv = 1 - offset
             view.elevation = maxElevation * inv
@@ -787,11 +795,12 @@ class PlayerFragment : Fragment() {
 
     @OptIn(UnstableApi::class)
     private fun applyPlayer() {
+        val binding = binding ?: return
         val mainPlayer = viewModel.browser.value
         val background = viewModel.playerState.current.value?.mediaItem?.background
         val visible = if (mainPlayer.hasVideo()) {
-            binding?.playerView?.player = mainPlayer
-            binding?.playerView?.resizeMode = RESIZE_MODE_FIT
+            binding.playerView.player = mainPlayer
+            binding.playerView.resizeMode = RESIZE_MODE_FIT
             backgroundPlayer?.release()
             backgroundPlayer = null
             true
@@ -801,13 +810,13 @@ class PlayerFragment : Fragment() {
                 backgroundPlayer?.release()
                 backgroundPlayer = getPlayer(requireContext(), viewModel.cache, background)
             }
-            binding?.playerView?.player = backgroundPlayer
-            binding?.playerView?.resizeMode = RESIZE_MODE_ZOOM
+            binding.playerView.player = backgroundPlayer
+            binding.playerView.resizeMode = RESIZE_MODE_ZOOM
             true
         } else {
             backgroundPlayer?.release()
             backgroundPlayer = null
-            binding?.playerView?.player = null
+            binding.playerView.player = null
             false
         }
         applyVideoVisibility(visible)
