@@ -454,6 +454,7 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
                 Playlist(
                     id = "ytm_$browseId",
                     title = title,
+                    isEditable = false,
                     cover = null,
                     isRadioSupported = true
                 )
