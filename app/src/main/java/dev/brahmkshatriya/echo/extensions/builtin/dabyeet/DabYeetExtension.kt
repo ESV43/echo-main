@@ -300,9 +300,12 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
     override val webViewRequest: WebViewRequest<List<User>> =
         object : WebViewRequest.Cookie<List<User>> {
             override val initialUrl = "https://music.youtube.com".toGetRequest()
-            override val stopUrlRegex = "https://music\\.youtube\\.com/?".toRegex()
+            override val stopUrlRegex = "https://music\\.youtube\\.com/.*".toRegex()
 
             override suspend fun onStop(url: NetworkRequest, cookie: String): List<User>? {
+                if (!cookie.contains("SAPISID") && !cookie.contains("__Secure-3PAPISID"))
+                    return null
+
                 return listOf(
                     User(
                         id = "ytm",

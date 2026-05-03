@@ -464,11 +464,12 @@ class PlayerFragment : Fragment() {
 
         fun submit() {
             adapter.submitList(viewModel.queue) {
+                val binding = binding ?: return@submitList
                 val index = (viewModel.playerState.current.value?.index ?: -1).takeIf { it != -1 }
                     ?: return@submitList
-                val current = binding?.viewPager?.currentItem ?: 0
+                val current = binding.viewPager.currentItem
                 val smooth = abs(index - current) <= 1
-                binding?.viewPager?.setCurrentItem(index, smooth)
+                binding.viewPager.setCurrentItem(index, smooth)
             }
         }
 
