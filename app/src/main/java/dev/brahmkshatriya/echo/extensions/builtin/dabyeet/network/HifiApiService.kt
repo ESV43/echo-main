@@ -8,6 +8,7 @@ import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiLyricsRespo
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiSearchResponse
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiTrackManifestResponse
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiTrackResponse
+import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiUrlResponse
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import kotlin.io.encoding.Base64
@@ -23,7 +24,36 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
         val trackId = streamable.extras["hifiTrackId"]
             ?: resolveTrackId(baseUrl, streamable)
 
-        val response = runCatching {
+        // 1. Try /track/url (Monochrome/Qobuz Direct)
+        runCatching {
+            get<HifiUrlResponse>(
+                url = "$baseUrl/track/url",
+                params = mapOf(
+                    "id" to trackId,
+                    "quality" to "27" // HI_RES
+                )
+            )
+        }.getOrNull()?.let { response ->
+            val url = response.url ?: response.data
+            if (!url.isNullOrBlank()) return url.toServerMedia()
+        }
+
+        // 2. Try /track/stream (Fallback for some instances)
+        runCatching {
+            get<HifiUrlResponse>(
+                url = "$baseUrl/track/stream",
+                params = mapOf(
+                    "id" to trackId,
+                    "quality" to "27"
+                )
+            )
+        }.getOrNull()?.let { response ->
+            val url = response.url ?: response.data
+            if (!url.isNullOrBlank()) return url.toServerMedia()
+        }
+
+        // 3. Try /trackManifests (Tidal Legacy)
+        val manifestResponse = runCatching {
             get<HifiTrackManifestResponse>(
                 url = "$baseUrl/trackManifests",
                 params = mapOf(
@@ -35,15 +65,13 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
                     "usage" to if (isDownload) "DOWNLOAD" else "PLAYBACK"
                 )
             )
-        }.onFailure { e ->
-            println("HifiAPI Manifest Error for $trackId: ${e.message}")
         }.getOrNull()
 
-        val manifestUrl = response?.data?.data?.attributes?.uri
-        if (!manifestUrl.isNullOrBlank()) {
-            return manifestUrl.toServerMedia(type = Streamable.SourceType.DASH)
+        manifestResponse?.data?.data?.attributes?.uri?.takeIf { it.isNotBlank() }?.let {
+            return it.toServerMedia(type = Streamable.SourceType.DASH)
         }
 
+        // 4. Legacy Fallback
         return getLegacyTrackStream(baseUrl, trackId)
     }
 

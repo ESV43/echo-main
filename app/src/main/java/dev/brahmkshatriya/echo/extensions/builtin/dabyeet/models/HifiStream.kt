@@ -30,6 +30,12 @@ data class HifiTrackResponse(
 )
 
 @Serializable
+data class HifiUrlResponse(
+    val data: String? = null,
+    val url: String? = null
+)
+
+@Serializable
 data class HifiTrackData(
     val manifestMimeType: String,
     val manifest: String

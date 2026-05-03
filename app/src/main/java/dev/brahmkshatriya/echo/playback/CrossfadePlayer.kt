@@ -8,6 +8,7 @@ import android.view.animation.LinearInterpolator
 import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE
@@ -47,11 +48,8 @@ class CrossfadePlayer(
                 }
 
                 if (transitionInProgress) {
-                    secondaryPlayer.pause()
-                    transitionInProgress = false
+                    cancelCrossfade()
                 }
-                fadeAnimatorMain?.cancel()
-                fadeAnimatorSecondary?.cancel()
                 mainPlayer.volume = 1f
                 crossfadeStartedForIndex = C.INDEX_UNSET
             }
@@ -60,6 +58,20 @@ class CrossfadePlayer(
                 crossfadeStartedForIndex = C.INDEX_UNSET
             }
         })
+
+        secondaryPlayer.addListener(object : Player.Listener {
+            override fun onPlayerError(error: PlaybackException) {
+                cancelCrossfade()
+            }
+        })
+    }
+
+    private fun cancelCrossfade() {
+        transitionInProgress = false
+        fadeAnimatorMain?.cancel()
+        fadeAnimatorSecondary?.cancel()
+        secondaryPlayer.pause()
+        secondaryPlayer.clearMediaItems()
     }
 
     private fun startCrossfadePolling() {
@@ -114,6 +126,7 @@ class CrossfadePlayer(
         }
         fadeVolume(secondaryPlayer, 1f, 0f, durationMs) {
             secondaryPlayer.pause()
+            secondaryPlayer.clearMediaItems()
         }
     }
 
