@@ -36,6 +36,48 @@ data class HifiUrlResponse(
 )
 
 @Serializable
+data class QobuzSearchResponse(
+    val data: QobuzSearchData? = null,
+    val success: Boolean = false
+)
+
+@Serializable
+data class QobuzSearchData(
+    val tracks: QobuzTrackList? = null
+)
+
+@Serializable
+data class QobuzTrackList(
+    val items: List<QobuzTrack> = emptyList()
+)
+
+@Serializable
+data class QobuzTrack(
+    val id: String,
+    val isrc: String? = null,
+    val audio_info: QobuzAudioInfo? = null
+)
+
+@Serializable
+data class QobuzAudioInfo(
+    val replaygain_track_gain: Float? = null,
+    val replaygain_track_peak: Float? = null,
+    val replaygain_album_gain: Float? = null,
+    val replaygain_album_peak: Float? = null
+)
+
+@Serializable
+data class QobuzDownloadResponse(
+    val success: Boolean = false,
+    val data: QobuzDownloadData? = null
+)
+
+@Serializable
+data class QobuzDownloadData(
+    val url: String? = null
+)
+
+@Serializable
 data class HifiTrackData(
     val manifestMimeType: String,
     val manifest: String

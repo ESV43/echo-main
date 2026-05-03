@@ -9,6 +9,8 @@ import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiSearchRespo
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiTrackManifestResponse
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiTrackResponse
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.HifiUrlResponse
+import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.QobuzDownloadResponse
+import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.models.QobuzSearchResponse
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import kotlin.io.encoding.Base64
@@ -21,38 +23,38 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
         streamable: Streamable,
         isDownload: Boolean
     ): Streamable.Media {
+        // Monochrome way: Search Qobuz by query and get high-res URL
+        runCatching {
+            val query = streamable.extras["searchQuery"] ?: streamable.title
+            getQobuzStreamBySearch(baseUrl, query)
+        }.getOrNull()?.let { return it }
+
         val trackId = streamable.extras["hifiTrackId"]
             ?: resolveTrackId(baseUrl, streamable)
 
-        // 1. Try /track/url (Monochrome/Qobuz Direct)
+        // Fallback 1: Try /track/url (Direct)
         runCatching {
             get<HifiUrlResponse>(
                 url = "$baseUrl/track/url",
-                params = mapOf(
-                    "id" to trackId,
-                    "quality" to "27" // HI_RES
-                )
+                params = mapOf("id" to trackId, "quality" to "27")
             )
         }.getOrNull()?.let { response ->
             val url = response.url ?: response.data
             if (!url.isNullOrBlank()) return url.toServerMedia()
         }
 
-        // 2. Try /track/stream (Fallback for some instances)
+        // Fallback 2: Try /track/stream
         runCatching {
             get<HifiUrlResponse>(
                 url = "$baseUrl/track/stream",
-                params = mapOf(
-                    "id" to trackId,
-                    "quality" to "27"
-                )
+                params = mapOf("id" to trackId, "quality" to "27")
             )
         }.getOrNull()?.let { response ->
             val url = response.url ?: response.data
             if (!url.isNullOrBlank()) return url.toServerMedia()
         }
 
-        // 3. Try /trackManifests (Tidal Legacy)
+        // Fallback 3: DASH Manifest
         val manifestResponse = runCatching {
             get<HifiTrackManifestResponse>(
                 url = "$baseUrl/trackManifests",
@@ -71,8 +73,23 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
             return it.toServerMedia(type = Streamable.SourceType.DASH)
         }
 
-        // 4. Legacy Fallback
         return getLegacyTrackStream(baseUrl, trackId)
+    }
+
+    private suspend fun getQobuzStreamBySearch(baseUrl: String, query: String): Streamable.Media {
+        val searchRes = get<QobuzSearchResponse>(
+            url = "$baseUrl/api/get-music",
+            params = mapOf("q" to query, "offset" to "0")
+        )
+        val items = searchRes.data?.tracks?.items ?: emptyList()
+        val track = items.firstOrNull() ?: throw Exception("No Qobuz match for $query")
+
+        val streamRes = get<QobuzDownloadResponse>(
+            url = "$baseUrl/api/download-music",
+            params = mapOf("track_id" to track.id, "quality" to "27")
+        )
+        val url = streamRes.data?.url ?: throw Exception("Failed to get Qobuz URL")
+        return url.toServerMedia()
     }
 
     suspend fun getLyrics(baseUrl: String, track: dev.brahmkshatriya.echo.common.models.Track): Lyrics.Lyric? {
