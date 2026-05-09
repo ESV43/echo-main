@@ -56,6 +56,9 @@
     <string name="repeat_all">Repeat All</string>
     <string name="home">Home</string>
     <string name="search">Search</string>
+    <string name="search_settings">Search settings</string>
+    <string name="clear">Clear</string>
+    <string name="recommended_for_you">Recommended for you</string>
     <string name="library">Library</string>
     <string name="more">More</string>
     <string name="extension">Extension</string>

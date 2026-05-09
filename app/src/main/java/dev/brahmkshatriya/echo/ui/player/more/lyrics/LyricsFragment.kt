@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.widget.doAfterTextChanged
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat.CONSUMED
 import androidx.core.view.isVisible
@@ -164,9 +165,20 @@ class LyricsFragment : Fragment() {
             viewModel.queryFlow.value = v.text.toString().trim()
             true
         }
+        var searchJob: Job? = null
+        binding.searchView.editText.doAfterTextChanged { editable ->
+            searchJob?.cancel()
+            searchJob = lifecycleScope.launch {
+                delay(350)
+                val query = editable?.toString()?.trim().orEmpty()
+                if (viewModel.queryFlow.value != query) viewModel.queryFlow.value = query
+            }
+        }
 
         observe(viewModel.queryFlow) {
-            binding.searchView.editText.setText(it)
+            if (binding.searchView.editText.text?.toString() != it) {
+                binding.searchView.editText.setText(it)
+            }
         }
 
         observe(viewModel.pagingFlow) {

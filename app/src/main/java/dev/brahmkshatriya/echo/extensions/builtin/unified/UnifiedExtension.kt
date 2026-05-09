@@ -363,7 +363,59 @@ class UnifiedExtension(
         }
     }
 
-    override suspend fun loadHomeFeed() = feed<HomeFeedClient> { loadHomeFeed() }
+    private suspend fun localRecommendations(): List<Track> {
+        val savedTracks = db.getSaved().filterIsInstance<Track>()
+        val recentlyPlayed = db.getRecentlyPlayed(40)
+        val mostPlayed = db.getMostPlayed(40)
+        val seeds = recentlyPlayed.take(15) + mostPlayed.take(15) + savedTracks.take(30)
+        if (seeds.isEmpty()) return emptyList()
+
+        val artistScores = seeds.flatMap { it.artists.map { artist -> artist.id } }
+            .groupingBy { it }.eachCount()
+        val genreScores = seeds.flatMap { it.genres }
+            .groupingBy { it.lowercase() }.eachCount()
+        val albumScores = seeds.mapNotNull { it.album?.id }
+            .groupingBy { it }.eachCount()
+        val recentlyPlayedIds = recentlyPlayed.take(10).map { it.extras.extensionId to it.id }.toSet()
+
+        return (savedTracks + mostPlayed).distinctBy { it.extras.extensionId to it.id }
+            .filterNot { it.extras.extensionId to it.id in recentlyPlayedIds }
+            .map { track ->
+                val artistScore = track.artists.sumOf { artist -> artistScores[artist.id] ?: 0 }
+                val genreScore = track.genres.sumOf { genre -> genreScores[genre.lowercase()] ?: 0 }
+                val albumScore = track.album?.id?.let { albumScores[it] } ?: 0
+                track to (artistScore * 3 + genreScore * 2 + albumScore)
+            }
+            .filter { it.second > 0 }
+            .sortedByDescending { it.second }
+            .map { it.first }
+            .take(25)
+    }
+
+    private fun Feed<Shelf>.withLocalRecommendations(): Feed<Shelf> = copy(
+        getPagedData = { tab ->
+            val data = getPagedData(tab)
+            val recommendations = localRecommendations()
+            if (recommendations.isEmpty()) data
+            else data.copy(
+                pagedData = PagedData.Concat(
+                    PagedData.Single<Shelf> {
+                        listOf(
+                            Shelf.Category(
+                                "local_recommendations",
+                                context.getString(R.string.recommended_for_you),
+                                context.getFeed(recommendations)
+                            )
+                        )
+                    },
+                    data.pagedData
+                )
+            )
+        }
+    )
+
+    override suspend fun loadHomeFeed() =
+        feed<HomeFeedClient> { loadHomeFeed() }.withLocalRecommendations()
 
     override suspend fun quickSearch(query: String): List<QuickSearchItem> = coroutineScope {
         extensions().map { extension ->

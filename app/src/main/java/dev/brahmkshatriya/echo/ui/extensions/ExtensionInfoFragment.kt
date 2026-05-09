@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.EditText
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.net.toUri
 import androidx.preference.Preference
@@ -133,6 +134,8 @@ class ExtensionInfoFragment : BaseSettingsFragment() {
     class ExtensionPreference : PreferenceFragmentCompat() {
         private val extensionId by lazy { arguments?.getString("id")!! }
         private val extensionType by lazy { arguments?.getString("type")!! }
+        private var settingsQuery = ""
+        private var lastState: ExtensionInfoViewModel.State? = null
         private val viewModel by lazy {
             requireParentFragment().viewModel<ExtensionInfoViewModel> {
                 parametersOf(ExtensionType.valueOf(extensionType), extensionId)
@@ -158,67 +161,156 @@ class ExtensionInfoFragment : BaseSettingsFragment() {
                 true
             }
             observe(viewModel.stateFlow) { state ->
-                val extension = state?.extension
-                val screen = preferenceManager.createPreferenceScreen(context)
-                preferenceScreen = screen
-                if (extension == null) {
-                    screen.addPreference(LoadingPreference(context))
-                    return@observe
-                }
-                val infoPreference = ExtensionInfoPreference(
-                    this@ExtensionPreference, extension, state.isLoginClient
-                )
-                screen.addPreference(infoPreference)
-                if (extension.type == ExtensionType.MUSIC) MaterialListPreference(context).apply {
-                    key = STREAM_QUALITY
-                    title = getString(R.string.stream_quality)
-                    summary = getString(R.string.x_specific_quality_summary, extension.name)
-                    entries =
-                        context.resources.getStringArray(R.array.stream_qualities) + getString(R.string.off)
-                    entryValues = streamQualities + "off"
-                    layoutResource = R.layout.preference
-                    isIconSpaceReserved = false
-                    setDefaultValue("off")
-                    screen.addPreference(this)
-                }
-                state.settings.forEach { it.addPreferenceTo(screen) }
+                lastState = state
+                render(state)
+            }
+        }
 
-                TransitionPreference(context).apply {
-                    key = "export"
-                    title = getString(R.string.export_settings)
-                    summary = getString(R.string.export_settings_summary)
-                    layoutResource = R.layout.preference
-                    isIconSpaceReserved = false
-                    screen.addPreference(this)
-                    setOnPreferenceClickListener {
-                        val contract = ActivityResultContracts.CreateDocument("application/json")
-                        requireActivity().registerActivityResultLauncher(contract) { uri ->
-                            uri?.let {
-                                context.exportExtensionSettings(extensionType, extensionId, it)
+        private fun render(state: ExtensionInfoViewModel.State?) {
+            val context = preferenceManager.context
+            val extension = state?.extension
+            val screen = preferenceManager.createPreferenceScreen(context)
+            preferenceScreen = screen
+            if (extension == null) {
+                screen.addPreference(LoadingPreference(context))
+                return
+            }
+
+            val infoPreference = ExtensionInfoPreference(
+                this@ExtensionPreference, extension, state.isLoginClient
+            )
+            screen.addPreference(infoPreference)
+            if (extension.type == ExtensionType.MUSIC) MaterialListPreference(context).apply {
+                key = STREAM_QUALITY
+                title = getString(R.string.stream_quality)
+                summary = getString(R.string.x_specific_quality_summary, extension.name)
+                entries =
+                    context.resources.getStringArray(R.array.stream_qualities) + getString(R.string.off)
+                entryValues = streamQualities + "off"
+                layoutResource = R.layout.preference
+                isIconSpaceReserved = false
+                setDefaultValue("off")
+                screen.addPreference(this)
+            }
+
+            if (state.settings.isNotEmpty()) addSettingsSearchPreference(screen)
+            state.settings.mapNotNull { it.filtered(settingsQuery) }
+                .forEach { it.addPreferenceTo(screen) }
+
+            if (settingsQuery.isBlank()) addImportExportPreferences(screen, extension)
+        }
+
+        private fun addSettingsSearchPreference(screen: PreferenceGroup) {
+            Preference(screen.context).apply {
+                title = getString(R.string.search_settings)
+                summary = settingsQuery.ifBlank { getString(R.string.value_not_set) }
+                isIconSpaceReserved = false
+                layoutResource = R.layout.preference
+                setOnPreferenceClickListener {
+                    val dialog = MaterialAlertDialogBuilder(screen.context)
+                        .setView(R.layout.item_edit_text)
+                        .setPositiveButton(R.string.okay, null)
+                        .setNegativeButton(R.string.cancel, null)
+                        .setNeutralButton(R.string.clear, null)
+                        .setTitle(R.string.search_settings)
+                        .create()
+                    dialog.setOnShowListener {
+                        val editText = dialog.findViewById<EditText>(R.id.edit_text)
+                        editText?.setText(settingsQuery)
+                        editText?.hint = getString(R.string.search_settings)
+                        dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                            .setOnClickListener {
+                                settingsQuery = editText?.text?.toString()?.trim().orEmpty()
+                                render(lastState)
+                                dialog.dismiss()
                             }
-                        }.launch("echo-$extensionType-$extensionId-settings.json".lowercase())
-                        true
+                        dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)
+                            .setOnClickListener {
+                                settingsQuery = ""
+                                render(lastState)
+                                dialog.dismiss()
+                            }
+                    }
+                    dialog.show()
+                    true
+                }
+                screen.addPreference(this)
+            }
+        }
+
+        private fun addImportExportPreferences(
+            screen: PreferenceGroup,
+            extension: Extension<*>,
+        ) {
+            val context = screen.context
+            TransitionPreference(context).apply {
+                key = "export"
+                title = getString(R.string.export_settings)
+                summary = getString(R.string.export_settings_summary)
+                layoutResource = R.layout.preference
+                isIconSpaceReserved = false
+                screen.addPreference(this)
+                setOnPreferenceClickListener {
+                    val contract = ActivityResultContracts.CreateDocument("application/json")
+                    requireActivity().registerActivityResultLauncher(contract) { uri ->
+                        uri?.let {
+                            context.exportExtensionSettings(extensionType, extensionId, it)
+                        }
+                    }.launch("echo-$extensionType-$extensionId-settings.json".lowercase())
+                    true
+                }
+            }
+
+            TransitionPreference(context).apply {
+                key = "import"
+                title = getString(R.string.import_settings)
+                summary = getString(R.string.import_settings_summary)
+                layoutResource = R.layout.preference
+                isIconSpaceReserved = false
+                screen.addPreference(this)
+                setOnPreferenceClickListener {
+                    val contract = ActivityResultContracts.OpenDocument()
+                    requireActivity().registerActivityResultLauncher(contract) {
+                        it?.let {
+                            context.importExtensionSettings(extensionType, extensionId, it)
+                            requireActivity().recreate()
+                        }
+                    }.launch(arrayOf("application/json"))
+                    true
+                }
+            }
+        }
+
+        private fun Setting.filtered(query: String): Setting? {
+            if (query.isBlank()) return this
+            return when (this) {
+                is SettingCategory -> {
+                    val items = items.mapNotNull { it.filtered(query) }
+                    when {
+                        matches(query) -> this
+                        items.isNotEmpty() -> copy(items = items)
+                        else -> null
                     }
                 }
 
-                TransitionPreference(context).apply {
-                    key = "import"
-                    title = getString(R.string.import_settings)
-                    summary = getString(R.string.import_settings_summary)
-                    layoutResource = R.layout.preference
-                    isIconSpaceReserved = false
-                    screen.addPreference(this)
-                    setOnPreferenceClickListener {
-                        val contract = ActivityResultContracts.OpenDocument()
-                        requireActivity().registerActivityResultLauncher(contract) {
-                            it?.let {
-                                context.importExtensionSettings(extensionType, extensionId, it)
-                                requireActivity().recreate()
-                            }
-                        }.launch(arrayOf("application/json"))
-                        true
-                    }
-                }
+                else -> takeIf { matches(query) }
+            }
+        }
+
+        private fun Setting.matches(query: String): Boolean {
+            val needle = query.lowercase()
+            fun String?.matches() = this?.lowercase()?.contains(needle) == true
+            return when (this) {
+                is SettingCategory -> title.matches() || key.matches()
+                is SettingItem -> title.matches() || key.matches() || summary.matches()
+                is SettingSwitch -> title.matches() || key.matches() || summary.matches()
+                is SettingList -> title.matches() || key.matches() || summary.matches() ||
+                        entryTitles.any { it.matches() }
+                is SettingMultipleChoice -> title.matches() || key.matches() || summary.matches() ||
+                        entryTitles.any { it.matches() }
+                is SettingTextInput -> title.matches() || key.matches() || summary.matches()
+                is SettingSlider -> title.matches() || key.matches() || summary.matches()
+                is SettingOnClick -> title.matches() || key.matches() || summary.matches()
             }
         }
 
