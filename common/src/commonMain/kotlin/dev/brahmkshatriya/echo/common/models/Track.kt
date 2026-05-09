@@ -8,7 +8,6 @@ import dev.brahmkshatriya.echo.common.clients.SaveClient
 import dev.brahmkshatriya.echo.common.clients.ShareClient
 import dev.brahmkshatriya.echo.common.clients.TrackClient
 import kotlinx.serialization.Serializable
-import java.util.Locale
 
 /**
  * A class representing a track that can be played in Echo.
@@ -143,8 +142,10 @@ data class Track(
             val minutes = seconds / 60
             val hours = minutes / 60
             return buildString {
-                if (hours > 0) append(String.format(Locale.getDefault(), "%02d:", hours))
-                append(String.format(Locale.getDefault(), "%02d:%02d", minutes % 60, seconds % 60))
+                if (hours > 0) append(hours.toString().padStart(2, '0')).append(":")
+                append((minutes % 60).toString().padStart(2, '0'))
+                append(":")
+                append((seconds % 60).toString().padStart(2, '0'))
             }.trim()
         }
     }

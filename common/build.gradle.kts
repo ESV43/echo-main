@@ -1,4 +1,5 @@
 import com.android.build.api.dsl.androidLibrary
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
     alias(libs.plugins.android.kmp.library)
@@ -15,6 +16,9 @@ java {
 
 kotlin {
     jvmToolchain(17)
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
 
     @Suppress("UnstableApiUsage")
     androidLibrary {
@@ -43,14 +47,14 @@ kotlin {
                 api(libs.bundles.kotlinx)
             }
         }
-        
-        val androidMain by getting {
+
+        androidMain {
             dependencies {
                 api(libs.okhttp)
                 api(libs.protobuf.java)
             }
         }
-        
+
         val jvmMain by getting {
             dependencies {
                 api(libs.okhttp)

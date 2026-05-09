@@ -2,10 +2,10 @@ package dev.brahmkshatriya.echo.common.clients
 
 import dev.brahmkshatriya.echo.common.models.DownloadContext
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
+import dev.brahmkshatriya.echo.common.models.PlatformFile
 import dev.brahmkshatriya.echo.common.models.Progress
 import dev.brahmkshatriya.echo.common.models.Streamable
 import kotlinx.coroutines.flow.MutableStateFlow
-import java.io.File
 
 /**
  * The client for downloading tracks. Needs to support the following:
@@ -79,7 +79,7 @@ interface DownloadClient : ExtensionClient {
         progressFlow: MutableStateFlow<Progress>,
         context: DownloadContext,
         source: Streamable.Source
-    ): File
+    ): PlatformFile
 
     /**
      * Merge the given media [files] into a single file.
@@ -92,8 +92,8 @@ interface DownloadClient : ExtensionClient {
     suspend fun merge(
         progressFlow: MutableStateFlow<Progress>,
         context: DownloadContext,
-        files: List<File>
-    ): File
+        files: List<PlatformFile>
+    ): PlatformFile
 
     /**
      * Tag a file with the given track metadata
@@ -108,6 +108,6 @@ interface DownloadClient : ExtensionClient {
     suspend fun tag(
         progressFlow: MutableStateFlow<Progress>,
         context: DownloadContext,
-        file: File
-    ): File
+        file: PlatformFile
+    ): PlatformFile
 }

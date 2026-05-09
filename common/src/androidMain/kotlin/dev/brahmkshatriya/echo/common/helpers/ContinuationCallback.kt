@@ -28,14 +28,11 @@ class ContinuationCallback(
     override fun invoke(cause: Throwable?) {
         try {
             call.cancel()
-        } catch (_: Throwable) {}
+        } catch (_: Throwable) {
+        }
     }
 
     companion object {
-        /**
-         * Suspends the current coroutine,
-         * performs the network call and resumes the coroutine with the response
-         */
         suspend inline fun Call.await(): Response {
             return suspendCancellableCoroutine { continuation ->
                 val callback = ContinuationCallback(this, continuation)
