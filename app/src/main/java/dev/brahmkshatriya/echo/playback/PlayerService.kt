@@ -96,7 +96,15 @@ class PlayerService : MediaLibraryService() {
     override fun onCreate() {
         super.onCreate()
         val aiAutoEqManager = AiAutoEqManager(this, eqAudioProcessor)
-        eqAudioProcessor.pcmCallback = { aiAutoEqManager.classifyAndApplyEq(it) }
+        eqAudioProcessor.pcmCallback = { pcm ->
+            aiAutoEqManager.classifyAndApplyEq(pcm)
+            var sum = 0.0
+            for (s in pcm) {
+                sum += s.toDouble() * s.toDouble()
+            }
+            val rms = kotlin.math.sqrt(sum / pcm.size).toFloat() / Short.MAX_VALUE
+            state.amplitude.value = rms
+        }
 
         setListener(MediaSessionServiceListener(this, getPendingIntent(this)))
 

@@ -11,6 +11,11 @@
         android:layout_height="match_parent"
         android:translationZ="-2dp">
 
+        <dev.brahmkshatriya.echo.ui.common.VisualizerView
+            android:id="@+id/visualizer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
         <com.flaviofaria.kenburnsview.KenBurnsView
             android:id="@+id/bg_image"
             android:layout_width="match_parent"

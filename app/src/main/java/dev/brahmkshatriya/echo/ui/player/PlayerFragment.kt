@@ -127,6 +127,12 @@ class PlayerFragment : Fragment() {
         configurePlayerControls()
         configureFluidLyrics()
         configureBackgroundPlayerView()
+        
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.playerState.amplitude.collect {
+                binding.visualizer.updateAmplitude(it)
+            }
+        }
     }
 
     override fun onDestroyView() {
