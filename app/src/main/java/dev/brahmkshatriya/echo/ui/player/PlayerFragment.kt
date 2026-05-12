@@ -130,7 +130,7 @@ class PlayerFragment : Fragment() {
         
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.playerState.amplitude.collect {
-                binding.visualizer.updateAmplitude(it)
+                binding.visualizer?.updateAmplitude(it)
             }
         }
     }
