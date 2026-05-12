@@ -127,4 +127,63 @@ class ListenTogetherFirebaseClient {
     }
 
     fun setPermission(code: String, level: Int) { db.getReference("sessions/$code/permission").setValue(level) }
+
+    // DEMOCRACY MODE
+    fun suggestTrack(code: String, msg: WsMessage) {
+        val ref = db.getReference("sessions/$code/suggestions").push()
+        val data = mutableMapOf(
+            "id" to ref.key,
+            "trackId" to msg.trackId,
+            "extensionId" to msg.extensionId,
+            "trackTitle" to msg.trackTitle,
+            "senderId" to msg.senderId,
+            "senderName" to msg.senderName,
+            "timestamp" to System.currentTimeMillis()
+        )
+        ref.setValue(data)
+    }
+
+    fun observeSuggestions(code: String): Flow<List<WsMessage>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val list = snapshot.children.mapNotNull { s ->
+                    WsMessage(
+                        type = "SUGGESTION",
+                        trackId = s.child("trackId").value?.toString(),
+                        extensionId = s.child("extensionId").value?.toString(),
+                        senderId = s.child("senderId").value?.toString() ?: "",
+                        senderName = s.child("senderName").value?.toString(),
+                        trackTitle = s.child("trackTitle").value?.toString(),
+                        queueContext = s.key // Use queueContext to store suggestion unique ID
+                    )
+                }
+                trySend(list)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        }
+        db.getReference("sessions/$code/suggestions").addValueEventListener(listener)
+        awaitClose { db.getReference("sessions/$code/suggestions").removeEventListener(listener) }
+    }
+
+    fun vote(code: String, suggestionId: String, userId: String, upvote: Boolean) {
+        val ref = db.getReference("sessions/$code/votes/$suggestionId/$userId")
+        if (upvote) ref.setValue(true) else ref.removeValue()
+    }
+
+    fun observeVotes(code: String): Flow<Map<String, Int>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val votes = snapshot.children.associate { it.key!! to it.childrenCount.toInt() }
+                trySend(votes)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        }
+        db.getReference("sessions/$code/votes").addValueEventListener(listener)
+        awaitClose { db.getReference("sessions/$code/votes").removeEventListener(listener) }
+    }
+
+    fun deleteSuggestion(code: String, suggestionId: String) {
+        db.getReference("sessions/$code/suggestions/$suggestionId").removeValue()
+        db.getReference("sessions/$code/votes/$suggestionId").removeValue()
+    }
 }

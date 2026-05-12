@@ -32,6 +32,7 @@ class ListenTogetherBottomSheet : BottomSheetDialogFragment() {
     private val playerVm: PlayerViewModel by activityViewModels()
     private val loginVm: LoginUserListViewModel by activityViewModels()
     private val participantAdapter = ParticipantAdapter()
+    private val suggestionAdapter = SuggestionAdapter()
     private var previousParticipants: List<Participant> = emptyList()
 
     override fun onCreateView(inflater: LayoutInflater, p: ViewGroup?, s: Bundle?): View {
@@ -50,7 +51,14 @@ class ListenTogetherBottomSheet : BottomSheetDialogFragment() {
         vm.setPlayingAction = { isPlaying -> playerVm.setPlaying(isPlaying) }
 
         binding.rvParticipants.adapter = participantAdapter
+        binding.rvSuggestions.adapter = suggestionAdapter
         viewLifecycleOwner.lifecycleScope.launch { vm.state.collect { renderState(it) } }
+        viewLifecycleOwner.lifecycleScope.launch { 
+            vm.suggestions.collect { suggestionAdapter.updateData(it, vm.votes.value, (vm.state.value as? ListenTogetherState.Active)?.isHost ?: false) } 
+        }
+        viewLifecycleOwner.lifecycleScope.launch { 
+            vm.votes.collect { suggestionAdapter.updateData(vm.suggestions.value, it, (vm.state.value as? ListenTogetherState.Active)?.isHost ?: false) } 
+        }
         viewLifecycleOwner.lifecycleScope.launch { 
             vm.event.collect { Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show() } 
         }
@@ -164,6 +172,38 @@ class ListenTogetherBottomSheet : BottomSheetDialogFragment() {
             val tvName: TextView = v.findViewById(R.id.tvName)
             val ivAvatar: com.google.android.material.imageview.ShapeableImageView = v.findViewById(R.id.ivAvatar)
             val badgeHost: View = v.findViewById(R.id.badgeHost)
+        }
+    }
+
+    inner class SuggestionAdapter : androidx.recyclerview.widget.RecyclerView.Adapter<SuggestionAdapter.VH>() {
+        private var items = listOf<WsMessage>()
+        private var votes = mapOf<String, Int>()
+        private var isHost = false
+
+        fun updateData(newItems: List<WsMessage>, newVotes: Map<String, Int>, host: Boolean) {
+            items = newItems.sortedByDescending { newVotes[it.queueContext] ?: 0 }
+            votes = newVotes
+            isHost = host
+            notifyDataSetChanged()
+        }
+
+        override fun onCreateViewHolder(p: ViewGroup, t: Int) = VH(LayoutInflater.from(p.context).inflate(R.layout.item_listen_together_suggestion, p, false))
+        override fun getItemCount() = items.size
+        override fun onBindViewHolder(h: VH, pos: Int) {
+            val item = items[pos]
+            h.tvTitle.text = item.trackTitle
+            h.tvUser.text = "Suggested by ${item.senderName}"
+            val count = votes[item.queueContext] ?: 0
+            h.btnVote.text = "Upvote ($count)"
+            h.btnVote.setOnClickListener { item.queueContext?.let { vm.vote(it, true) } }
+            h.btnApprove.isVisible = isHost
+            h.btnApprove.setOnClickListener { vm.approveSuggestion(item) }
+        }
+        inner class VH(v: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(v) {
+            val tvTitle: TextView = v.findViewById(R.id.tvTrackTitle)
+            val tvUser: TextView = v.findViewById(R.id.tvUser)
+            val btnVote: com.google.android.material.button.MaterialButton = v.findViewById(R.id.btnVote)
+            val btnApprove: View = v.findViewById(R.id.btnApprove)
         }
     }
 

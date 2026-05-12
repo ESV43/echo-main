@@ -95,6 +95,9 @@ class PlayerService : MediaLibraryService() {
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
+        val aiAutoEqManager = AiAutoEqManager(this, eqAudioProcessor)
+        eqAudioProcessor.pcmCallback = { aiAutoEqManager.classifyAndApplyEq(it) }
+
         setListener(MediaSessionServiceListener(this, getPendingIntent(this)))
 
         val shufflePlayer = ShufflePlayer(exoPlayer)

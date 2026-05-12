@@ -151,8 +151,6 @@ object WebViewUtils {
                 scope.launch(Dispatchers.IO) {
                     mutex.withLock {
                         if (done) return@withLock
-                        done = true
-                        onComplete(null)
                         val result = runCatching {
                             val headerRes = if (target is WebViewRequest.Headers)
                                 target.onStop(requests)
@@ -170,6 +168,9 @@ object WebViewUtils {
                             else null
                             evalRes ?: cookieRes ?: headerRes!!
                         }
+                        if (result.getOrNull() == null && result.isSuccess) return@withLock
+                        done = true
+                        onComplete(null)
                         stop(callback)
                         onComplete(result)
                     }

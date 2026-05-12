@@ -28,6 +28,9 @@
         <TextView android:id="@+id/tvParticipants" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Participants" android:textAppearance="?attr/textAppearanceLabelLarge" android:textColor="?attr/colorPrimary" />
         <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvParticipants" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" android:nestedScrollingEnabled="false" app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
+        <TextView android:id="@+id/tvSuggestions" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Suggestions (Democracy Mode)" android:textAppearance="?attr/textAppearanceLabelLarge" android:textColor="?attr/colorPrimary" />
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvSuggestions" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" android:nestedScrollingEnabled="false" app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
             <com.google.android.material.button.MaterialButton android:id="@+id/btnCopy" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/listen_together_copy" android:layout_marginEnd="8dp" style="@style/Widget.Material3.Button.OutlinedButton" />
             <com.google.android.material.button.MaterialButton android:id="@+id/btnSettings" android:layout_width="wrap_content" android:layout_height="wrap_content" app:icon="@drawable/ic_settings_outline" style="@style/IconButtonTonal" />

@@ -18,6 +18,11 @@ class EqAudioProcessor : BaseAudioProcessor() {
     private val gains = FloatArray(bands.size)
     private var filters: Array<Array<BiquadFilter>>? = null
 
+    var pcmCallback: ((ShortArray) -> Unit)? = null
+    private var sampleCount = 0
+    private val sampleInterval = 44100 * 2 // Sample every 2 seconds
+    private val pcmBuffer = ShortArray(16000)
+
     fun setGains(newGains: FloatArray) {
         if (newGains.size != gains.size) return
         newGains.copyInto(gains)
@@ -63,14 +68,24 @@ class EqAudioProcessor : BaseAudioProcessor() {
         while (inputBuffer.hasRemaining()) {
             for (c in 0 until channelCount) {
                 if (!inputBuffer.hasRemaining()) break
-                var sample = inputBuffer.short.toDouble()
+                val rawSample = inputBuffer.short
+                var sample = rawSample.toDouble()
                 
+                if (c == 0 && sampleCount < pcmBuffer.size) {
+                    pcmBuffer[sampleCount] = rawSample
+                }
+
                 for (b in bands.indices) {
                     sample = filters[c][b].process(sample)
                 }
                 
                 val outSample = sample.coerceIn(Short.MIN_VALUE.toDouble(), Short.MAX_VALUE.toDouble()).toInt().toShort()
                 buffer.putShort(outSample)
+            }
+            sampleCount++
+            if (sampleCount >= sampleInterval) {
+                pcmCallback?.invoke(pcmBuffer.copyOf())
+                sampleCount = 0
             }
         }
         buffer.flip()

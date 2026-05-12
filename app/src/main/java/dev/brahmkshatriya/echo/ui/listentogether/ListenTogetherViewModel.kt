@@ -38,6 +38,12 @@ class ListenTogetherViewModel(application: Application) : AndroidViewModel(appli
     private val _permission = MutableStateFlow(3)
     val permission: StateFlow<Int> = _permission
 
+    private val _suggestions = MutableStateFlow<List<WsMessage>>(emptyList())
+    val suggestions: StateFlow<List<WsMessage>> = _suggestions
+
+    private val _votes = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val votes: StateFlow<Map<String, Int>> = _votes
+
     private val _event = MutableSharedFlow<String>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val event = _event.asSharedFlow()
 
@@ -160,6 +166,49 @@ class ListenTogetherViewModel(application: Application) : AndroidViewModel(appli
         viewModelScope.launch {
             firebase.observePermission(code).collect { _permission.value = it }
         }
+
+        viewModelScope.launch {
+            firebase.observeSuggestions(code).collect { _suggestions.value = it }
+        }
+
+        viewModelScope.launch {
+            firebase.observeVotes(code).collect { _votes.value = it }
+        }
+    }
+
+    fun suggestTrack(track: Track, extensionId: String, name: String) {
+        val s = _state.value as? ListenTogetherState.Active ?: return
+        firebase.suggestTrack(s.sessionCode, WsMessage(
+            type = "SUGGESTION",
+            trackId = track.id,
+            extensionId = extensionId,
+            senderId = firebase.clientId,
+            senderName = name,
+            trackTitle = track.title
+        ))
+    }
+
+    fun vote(suggestionId: String, upvote: Boolean) {
+        val s = _state.value as? ListenTogetherState.Active ?: return
+        firebase.vote(s.sessionCode, suggestionId, firebase.clientId, upvote)
+    }
+
+    fun approveSuggestion(suggestion: WsMessage) {
+        val s = _state.value as? ListenTogetherState.Active ?: return
+        if (!s.isHost) return
+        val extId = suggestion.extensionId ?: ""
+        val trackToAdd = Track(
+            id = suggestion.trackId ?: "",
+            title = suggestion.trackTitle ?: "Added Song",
+            extras = mapOf("addedByName" to (suggestion.senderName ?: "Guest"))
+        )
+        addToQueueAction?.invoke(extId, trackToAdd)
+        // Send a SYNC/ADD_QUEUE message so others know it's added
+        firebase.send(s.sessionCode, WsMessage(
+            "ADD_QUEUE", suggestion.trackId, extId, 
+            senderId = firebase.clientId, senderName = "Host", trackTitle = suggestion.trackTitle
+        ))
+        suggestion.queueContext?.let { firebase.deleteSuggestion(s.sessionCode, it) }
     }
 
     private suspend fun applyRemoteState(msg: WsMessage) {
