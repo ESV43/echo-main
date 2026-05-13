@@ -127,6 +127,9 @@
     <string name="unmetered_stream_quality">Unmetered Stream Quality</string>
     <string name="unmetered_stream_quality_summary">The quality of the stream when connected to an unmetered network. This will override the default stream quality.</string>
 
+    <string name="ai_auto_eq">AI Auto EQ</string>
+    <string name="ai_auto_eq_summary">Automatically adjust equalizer settings based on music genre using AI.</string>
+
     <string name="behavior">Behavior</string>
 
     <string name="keep_queue">Keep Player Queue</string>

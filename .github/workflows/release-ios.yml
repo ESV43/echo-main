@@ -36,7 +36,7 @@ jobs:
         echo "Updating Info.plist with Version: $VERSION_NAME ($BUILD_NUMBER)"
         
         # Update Info.plist using PlistBuddy (Standard macOS tool)
-        PLIST="apple/iosApp/Info.plist"
+        PLIST="iosApp/Info.plist"
         if [ -f "$PLIST" ]; then
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION_NAME" "$PLIST"
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$PLIST"
@@ -44,7 +44,7 @@ jobs:
 
     - name: Build and Archive
       run: |
-        xcodebuild -project apple/iosApp/iosApp.xcodeproj \
+        xcodebuild -project iosApp/iosApp.xcodeproj \
                    -scheme iosApp \
                    -sdk iphoneos \
                    -configuration Release \

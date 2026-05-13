@@ -23,14 +23,15 @@ class AudioFocusListener(
             player.apply {
                 setAudioAttributes(audioAttributes, true)
                 seekTo(currentPosition)
+                playWhenReady = true
             }
             abandonRequest()
         }
     }
 
 
-    private fun requestFocus() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+    private fun requestFocus(): Int {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             audioManager.requestAudioFocus(focusRequest)
         else audioManager.requestAudioFocus(
             audioFocusChangeListener,
@@ -60,17 +61,29 @@ class AudioFocusListener(
             }
         }
 
-        //TODO fix this to support player to play in calls
-        // if the audio suppression was not there from the start
-        // https://github.com/androidx/media/issues/1716
         onPlaybackSuppressionReasonChanged(player.playbackSuppressionReason)
+    }
+
+    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+        if (playWhenReady && player.playbackSuppressionReason == Player.PLAYBACK_SUPPRESSION_REASON_NONE) {
+            val result = requestFocus()
+            if (result == AudioManager.AUDIOFOCUS_REQUEST_DELAYED || result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
+                player.apply {
+                    setAudioAttributes(audioAttributes, false)
+                    this.playWhenReady = false
+                    seekTo(currentPosition)
+                }
+            } else if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                abandonRequest()
+            }
+        }
     }
 
     override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: @PlaybackSuppressionReason Int) {
         if (playbackSuppressionReason == Player.PLAYBACK_SUPPRESSION_REASON_TRANSIENT_AUDIO_FOCUS_LOSS) {
             player.apply {
                 setAudioAttributes(audioAttributes, false)
-                player.playWhenReady = false
+                playWhenReady = false
                 seekTo(currentPosition)
             }
             requestFocus()
