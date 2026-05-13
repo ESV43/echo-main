@@ -84,6 +84,9 @@ dependencies {
     implementation(libs.kenburnsview)
     implementation(libs.nestedscrollwebview)
     implementation(libs.acsbendi.webview)
+    implementation(libs.google.webrtc)
+    implementation(libs.tensorflow.lite)
+    implementation(libs.tensorflow.lite.support)
 
     if (!hasGoogleServices) return@dependencies
     implementation(libs.bundles.firebase)
