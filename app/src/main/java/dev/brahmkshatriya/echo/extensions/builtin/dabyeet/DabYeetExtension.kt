@@ -153,7 +153,7 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
                     Shelf.Lists.Items(
                         id = index.toString(),
                         title = query.replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() },
-                        list = youtubeMusicApi.searchTracks(query).map { it.toTrack() },
+                        list = youtubeMusicApi.searchTracks(query, _ytmCookie).map { it.toTrack() },
                         type = Shelf.Lists.Type.Grid
                     )
                 }.getOrNull()
@@ -171,7 +171,7 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
                 id = "tracks",
                 title = "Tracks",
                 type = Shelf.Lists.Type.Grid,
-                list = youtubeMusicApi.searchTracks(query).map { it.toTrack() }
+                list = youtubeMusicApi.searchTracks(query, _ytmCookie).map { it.toTrack() }
             )
         ).toFeed()
     }
@@ -304,6 +304,9 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
 
             override suspend fun onStop(url: NetworkRequest, cookie: String): List<User>? {
                 if (!cookie.contains("SAPISID") && !cookie.contains("__Secure-3PAPISID"))
+                    return null
+                
+                if (!cookie.contains("LOGIN_INFO"))
                     return null
 
                 return listOf(
@@ -520,7 +523,7 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
     override suspend fun loadRadio(radio: Radio): Radio = radio
 
     override suspend fun loadTracks(radio: Radio): Feed<Track> {
-        val tracks = youtubeMusicApi.getUpNext(radio.id).map { it.toTrack() }
+        val tracks = youtubeMusicApi.getUpNext(radio.id, _ytmCookie).map { it.toTrack() }
         return tracks.toFeed()
     }
 

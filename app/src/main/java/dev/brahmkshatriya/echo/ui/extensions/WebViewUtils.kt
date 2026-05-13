@@ -49,7 +49,7 @@ import kotlin.coroutines.resumeWithException
 
 object WebViewUtils {
     private const val USER_AGENT =
-        "Mozilla/5.0 (Linux; Android 2; Jeff Bezos) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.158 Mobile Safari/537.36"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 
     @Suppress("DEPRECATION")
     @SuppressLint("SetJavaScriptEnabled")
@@ -68,6 +68,8 @@ object WebViewUtils {
         WebStorage.getInstance().deleteAllData()
         CookieManager.getInstance().run {
             removeAllCookies(null)
+            setAcceptCookie(true)
+            setAcceptThirdPartyCookies(webView, true)
             flush()
         }
         webView.settings.apply {
@@ -156,8 +158,14 @@ object WebViewUtils {
                                 target.onStop(requests)
                             else null
                             val cookieRes = if (target is WebViewRequest.Cookie) {
-                                val cookie =
-                                    CookieManager.getInstance().getCookie(request.url) ?: ""
+                                var cookie = ""
+                                repeat(3) {
+                                    cookie = CookieManager.getInstance().getCookie(request.url) ?: ""
+                                    if (cookie.contains("SAPISID") || cookie.contains("__Secure-3PAPISID")) {
+                                        return@repeat
+                                    }
+                                    delay(500)
+                                }
                                 target.onStop(request, cookie)
                             } else null
                             val evalRes = if (target is WebViewRequest.Evaluate)

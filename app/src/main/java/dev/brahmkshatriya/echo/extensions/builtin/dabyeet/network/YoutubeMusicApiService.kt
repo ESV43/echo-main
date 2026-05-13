@@ -26,7 +26,7 @@ class YoutubeMusicApiService(client: OkHttpClient, json: Json) : BaseHttpClient(
         val durationSeconds: Long?
     )
 
-    suspend fun searchTracks(query: String): List<Track> {
+    suspend fun searchTracks(query: String, cookie: String? = null): List<Track> {
         val body = buildJsonObject {
             put("context", buildJsonObject {
                 put("client", buildJsonObject {
@@ -38,11 +38,7 @@ class YoutubeMusicApiService(client: OkHttpClient, json: Json) : BaseHttpClient(
             put("params", "EgWKAQIIAWoKEAkQBRAKEAMQBQ%3D%3D")
         }.toString()
 
-        val request = Request.Builder()
-            .url("$BASE_URL/search?key=$INNERTUBE_KEY")
-            .header("Content-Type", "application/json")
-            .header("Origin", "https://music.youtube.com")
-            .header("Referer", "https://music.youtube.com/")
+        val request = buildYtmRequest("$BASE_URL/search?key=$INNERTUBE_KEY", cookie)
             .post(body.toRequestBody(jsonMediaType))
             .build()
 
@@ -84,7 +80,7 @@ class YoutubeMusicApiService(client: OkHttpClient, json: Json) : BaseHttpClient(
         )
     }
 
-    suspend fun getUpNext(videoId: String): List<Track> {
+    suspend fun getUpNext(videoId: String, cookie: String? = null): List<Track> {
         val body = buildJsonObject {
             put("context", buildJsonObject {
                 put("client", buildJsonObject {
@@ -95,11 +91,7 @@ class YoutubeMusicApiService(client: OkHttpClient, json: Json) : BaseHttpClient(
             put("videoId", videoId)
         }.toString()
 
-        val request = Request.Builder()
-            .url("$BASE_URL/next?key=$INNERTUBE_KEY")
-            .header("Content-Type", "application/json")
-            .header("Origin", "https://music.youtube.com")
-            .header("Referer", "https://music.youtube.com/")
+        val request = buildYtmRequest("$BASE_URL/next?key=$INNERTUBE_KEY", cookie)
             .post(body.toRequestBody(jsonMediaType))
             .build()
 
@@ -143,11 +135,7 @@ class YoutubeMusicApiService(client: OkHttpClient, json: Json) : BaseHttpClient(
             put("browseId", "FEmusic_liked_playlists")
         }.toString()
 
-        val request = Request.Builder()
-            .url("$BASE_URL/browse?key=$INNERTUBE_KEY")
-            .header("Cookie", cookie)
-            .header("Content-Type", "application/json")
-            .header("Origin", "https://music.youtube.com")
+        val request = buildYtmRequest("$BASE_URL/browse?key=$INNERTUBE_KEY", cookie)
             .post(body.toRequestBody(jsonMediaType))
             .build()
 
@@ -166,11 +154,7 @@ class YoutubeMusicApiService(client: OkHttpClient, json: Json) : BaseHttpClient(
             put("browseId", browseId)
         }.toString()
 
-        val request = Request.Builder()
-            .url("$BASE_URL/browse?key=$INNERTUBE_KEY")
-            .header("Cookie", cookie)
-            .header("Content-Type", "application/json")
-            .header("Origin", "https://music.youtube.com")
+        val request = buildYtmRequest("$BASE_URL/browse?key=$INNERTUBE_KEY", cookie)
             .post(body.toRequestBody(jsonMediaType))
             .build()
 
@@ -178,6 +162,19 @@ class YoutubeMusicApiService(client: OkHttpClient, json: Json) : BaseHttpClient(
         return findObjects(json.parseToJsonElement(response), "musicResponsiveListItemRenderer")
             .mapNotNull { parseTrack(it) }
             .distinctBy { it.videoId }
+    }
+
+    private fun buildYtmRequest(url: String, cookie: String?): Request.Builder {
+        val builder = Request.Builder()
+            .url(url)
+            .header("Content-Type", "application/json")
+            .header("Origin", "https://music.youtube.com")
+            .header("Referer", "https://music.youtube.com/")
+        if (cookie != null) {
+            builder.header("Cookie", cookie)
+            builder.header("X-Goog-AuthUser", "0")
+        }
+        return builder
     }
     private fun String.upscaleThumbnail(): String {
         return if (this.contains("googleusercontent.com") || this.contains("ggpht.com")) {

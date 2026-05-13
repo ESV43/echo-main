@@ -23,6 +23,12 @@ android {
         targetSdk = 36
         versionCode = if (gitCount > 0) gitCount else 1
         versionName = "v${version}_$gitHash($gitCount)"
+
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+        }
+
+        resConfigs("en", "hi", "zh")
     }
 
     buildTypes {
@@ -66,7 +72,6 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-database-ktx")
     implementation(project(":common"))
-    implementation(libs.kotlin.reflect)
     implementation(libs.bundles.androidx)
     implementation(libs.material)
     implementation(libs.bundles.paging)
