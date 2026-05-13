@@ -166,13 +166,14 @@ object WebViewUtils {
                                     evalJS(bridge, target.javascriptToEvaluate)
                                 )
                             else null
-                            evalRes ?: cookieRes ?: headerRes!!
+                            evalRes ?: cookieRes ?: headerRes
                         }
-                        if (result.getOrNull() == null && result.isSuccess) return@withLock
+                        val resultValue = result.getOrNull()
+                        if (resultValue == null && result.isSuccess) return@withLock
                         done = true
                         onComplete(null)
                         stop(callback)
-                        onComplete(result)
+                        onComplete(result.map { it!! })
                     }
                 }
             }

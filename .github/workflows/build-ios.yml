@@ -32,7 +32,7 @@ jobs:
 
     - name: Build Xcode Project
       run: |
-        xcodebuild -project apple/iosApp/iosApp.xcodeproj \
+        xcodebuild -project iosApp/iosApp.xcodeproj \
                    -scheme iosApp \
                    -sdk iphoneos \
                    -configuration Release \
