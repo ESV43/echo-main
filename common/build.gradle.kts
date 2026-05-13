@@ -83,12 +83,12 @@ mavenPublishing {
         name = "Echo common library"
         description = "A common library for echo extensions."
         inceptionYear = "2025"
-        url = "https://github.com/brahmkshatriya/echo"
+        url = "https://github.com/ESV43/echo-main"
         licenses {
             license {
                 name = "Unabandon Public License"
-                url = "https://github.com/brahmkshatriya/echo/blob/main/LICENSE.md"
-                distribution = "https://github.com/brahmkshatriya/echo/blob/main/LICENSE.md"
+                url = "https://github.com/ESV43/echo-main/blob/main/LICENSE.md"
+                distribution = "https://github.com/ESV43/echo-main/blob/main/LICENSE.md"
             }
         }
         developers {
@@ -99,9 +99,9 @@ mavenPublishing {
             }
         }
         scm {
-            url = "https://github.com/brahmkshatriya/echo/"
-            connection = "scm:git:git://github.com/brahmkshatriya/echo.git"
-            developerConnection = "scm:git:ssh://git@github.com/brahmkshatriya/echo.git"
+            url = "https://github.com/ESV43/echo-main/"
+            connection = "scm:git:git://github.com/ESV43/echo-main.git"
+            developerConnection = "scm:git:ssh://git@github.com/ESV43/echo-main.git"
         }
     }
 }
@@ -113,7 +113,7 @@ dokka {
         includes.from("README.md")
         sourceLink {
             localDirectory.set(file("src/main/java"))
-            remoteUrl("https://github.com/brahmkshatriya/echo/tree/main/common/src/main/java")
+            remoteUrl("https://github.com/ESV43/echo-main/tree/main/common/src/main/java")
             remoteLineSuffix.set("#L")
         }
     }

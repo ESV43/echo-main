@@ -103,7 +103,7 @@ object AppUpdater {
         client: OkHttpClient
     ) = runCatching {
         val url =
-            "https://api.github.com/repos/$githubRepo/actions/workflows/nightly.yml/runs?per_page=1&conclusion=success"
+            "https://api.github.com/repos/$githubRepo/actions/workflows/dev-release.yml/runs?per_page=1&conclusion=success"
         val request = Request.Builder().url(url).build()
         client.newCall(request).await().body.string().toData<GithubRunsResponse>().getOrThrow()
             .workflowRuns.firstOrNull { it.sha.take(7) != hash }?.id

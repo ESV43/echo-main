@@ -473,6 +473,7 @@ class PlayerFragment : Fragment() {
                 val binding = binding ?: return@submitList
                 val index = (viewModel.playerState.current.value?.index ?: -1).takeIf { it != -1 }
                     ?: return@submitList
+                if (index >= adapter.itemCount) return@submitList
                 val current = binding.viewPager.currentItem
                 val smooth = abs(index - current) <= 1
                 binding.viewPager.setCurrentItem(index, smooth)
