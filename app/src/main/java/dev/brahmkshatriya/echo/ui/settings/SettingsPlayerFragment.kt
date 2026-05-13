@@ -10,7 +10,6 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceImageHolder
-import dev.brahmkshatriya.echo.playback.PlayerService.Companion.AI_AUTO_EQ
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CACHE_SIZE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CLOSE_PLAYER
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE
@@ -18,6 +17,7 @@ import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE_DURATI
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FADE_CONTROLS
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FADE_DURATION
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FLUID_LYRICS
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.KEY_AI_AUTO_EQ
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.MORE_BRAIN_CAPACITY
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.PREFERRED_LYRICS_SOURCE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.SKIP_SILENCE
@@ -94,7 +94,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 }
 
                 SwitchPreferenceCompat(context).apply {
-                    key = AI_AUTO_EQ
+                    key = KEY_AI_AUTO_EQ
                     title = getString(R.string.ai_auto_eq)
                     summary = getString(R.string.ai_auto_eq_summary)
                     layoutResource = R.layout.preference_switch

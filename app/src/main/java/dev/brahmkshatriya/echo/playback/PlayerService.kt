@@ -98,7 +98,7 @@ class PlayerService : MediaLibraryService() {
         super.onCreate()
         val aiAutoEqManager by lazy { AiAutoEqManager(this, eqAudioProcessor) }
         eqAudioProcessor.pcmCallback = { pcm ->
-            if (app.settings.getBoolean(AI_AUTO_EQ, false)) {
+            if (app.settings.getBoolean(KEY_AI_AUTO_EQ, false)) {
                 aiAutoEqManager.classifyAndApplyEq(pcm)
             }
             var sum = 0.0
@@ -222,7 +222,7 @@ class PlayerService : MediaLibraryService() {
         const val CROSSFADE = "crossfade"
         const val CROSSFADE_DURATION = "crossfade_duration"
         const val EQ_GAINS = "eq_gains"
-        const val AI_AUTO_EQ = "ai_auto_eq"
+        const val KEY_AI_AUTO_EQ = "ai_auto_eq"
 
         const val PREFERRED_LYRICS_SOURCE = "preferred_lyrics_source"
         const val FLUID_LYRICS = "fluid_lyrics"
