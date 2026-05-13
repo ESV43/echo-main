@@ -31,6 +31,23 @@ android {
         resConfigs("en", "hi", "zh")
     }
 
+    signingConfigs {
+        create("release") {
+            val storeFilePath = project.findProperty("signing.store.file")
+                ?: project.findProperty("android.injected.signing.store.file")
+
+            storeFilePath?.let {
+                storeFile = file(it.toString())
+                storePassword = (project.findProperty("signing.store.password")
+                    ?: project.findProperty("android.injected.signing.store.password"))?.toString()
+                keyAlias = (project.findProperty("signing.key.alias")
+                    ?: project.findProperty("android.injected.signing.key.alias"))?.toString()
+                keyPassword = (project.findProperty("signing.key.password")
+                    ?: project.findProperty("android.injected.signing.key.password"))?.toString()
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -38,13 +55,16 @@ android {
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
             )
+            signingConfig = signingConfigs.getByName("release")
         }
         create("nightly") {
             initWith(getByName("release"))
             resValue("string", "app_name", "Echo Nightly")
+            signingConfig = signingConfigs.getByName("release")
         }
         create("stable") {
             initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 

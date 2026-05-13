@@ -49,7 +49,7 @@ import kotlin.coroutines.resumeWithException
 
 object WebViewUtils {
     private const val USER_AGENT =
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
     @Suppress("DEPRECATION")
     @SuppressLint("SetJavaScriptEnabled")
@@ -76,7 +76,12 @@ object WebViewUtils {
             javaScriptEnabled = true
             domStorageEnabled = true
             databaseEnabled = true
+            setSupportMultipleWindows(true)
+            javaScriptCanOpenWindowsAutomatically = true
             userAgentString = USER_AGENT
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                safeBrowsingEnabled = false
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                 isAlgorithmicDarkeningAllowed = true
         }
@@ -209,6 +214,7 @@ object WebViewUtils {
                     val headers = requestHeaders?.toMutableMap() ?: mutableMapOf()
                     val cookie = CookieManager.getInstance().getCookie(url.toString())
                     if (cookie != null) headers["Cookie"] = cookie
+                    headers["X-Requested-With"] = ""
                     intercept(NetworkRequest(url.toString(), headers))
                 }
                 return false
@@ -221,7 +227,9 @@ object WebViewUtils {
             else WebSettings.LOAD_DEFAULT
         target.initialUrl.run {
             settings.userAgentString = lowerCaseHeaders["user-agent"] ?: settings.userAgentString
-            loadUrl(url, headers)
+            val mutableHeaders = headers.toMutableMap()
+            mutableHeaders["X-Requested-With"] = ""
+            loadUrl(url, mutableHeaders)
         }
     }
 
