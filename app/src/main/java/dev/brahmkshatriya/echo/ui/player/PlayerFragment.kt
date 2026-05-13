@@ -495,7 +495,7 @@ class PlayerFragment : Fragment() {
                 )
             }
             submit()
-            it?.mediaItem ?: return@observe
+            it?.mediaItem?.takeIf { it.mediaMetadata.extras != null } ?: return@observe
             binding.applyCurrent(it.mediaItem)
         }
 
