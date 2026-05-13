@@ -131,9 +131,10 @@ abstract class AndroidAutoCallback(
                 getListsItems(context, id, extId)
             }
 
-            SHELF -> extension.getList<ExtensionClient> {
-                val id = parentId.substringAfter("$SHELF/").substringBefore("/")
-                getShelfItems(context, id, extId, page)
+            FEED -> extension.getList<ExtensionClient> {
+                val id = parentId.substringAfter("$FEED/").substringBefore("/")
+                val feed = feedMap[id] ?: return@getList emptyList()
+                feed.toMediaItems(id, context, extId, page)
             }
 
             HOME -> extension.getFeed<HomeFeedClient>(
@@ -301,7 +302,7 @@ abstract class AndroidAutoCallback(
         val errorIo = LibraryResult.ofError<ImmutableList<MediaItem>>(SessionError.ERROR_IO)
 
         suspend inline fun <reified C> Extension<*>.getList(
-            block: C.() -> List<MediaItem>
+            crossinline block: suspend C.() -> List<MediaItem>
         ): LibraryResult<ImmutableList<MediaItem>> = runCatching {
             val client = instance.value().getOrThrow() as? C ?: return@runCatching notSupported
             LibraryResult.ofItemList(
@@ -380,28 +381,16 @@ abstract class AndroidAutoCallback(
         }
 
 
-        // THIS PROBABLY BREAKS GOING BACK TBH, NEED TO TEST
-        private val shelvesMap = ConcurrentHashMap<String, PagedData<Shelf>>()
         private val continuations = ConcurrentHashMap<Pair<String, Int>, String?>()
-        private suspend fun getShelfItems(
-            context: Context, id: String, extId: String, page: Int
-        ): List<MediaItem> {
-            val shelf = shelvesMap[id]!!
-            val (list, next) = shelf.loadPage(continuations[id to page])
-            continuations[id to page + 1] = next
-            return listOfNotNull(
-                *list.map { it.toMediaItem(context, extId) }.toTypedArray()
-            )
-        }
 
         private val feedMap = ConcurrentHashMap<String, Feed<Shelf>>()
         private suspend fun Feed<Shelf>.toMediaItems(
             id: String, context: Context, extId: String, page: Int
         ): List<MediaItem> {
-            val id = "${id.hashCode()}"
-            feedMap[id] = this
-            //TODO
-            return listOf()
+            val pagedData = getPagedData(tabs.firstOrNull()).pagedData
+            val (list, next) = pagedData.loadPage(continuations[id to page])
+            continuations[id to page + 1] = next
+            return list.map { it.toMediaItem(context, extId) }
         }
 
         private suspend inline fun <reified T> Extension<*>.getFeed(
@@ -409,9 +398,11 @@ abstract class AndroidAutoCallback(
             parentId: String,
             page: String,
             pageNumber: Int,
-            getFeed: T.() -> Feed<Shelf>
+            crossinline getFeed: suspend T.() -> Feed<Shelf>
         ) = getList<T> {
-            TODO()
+            val id = "${parentId.hashCode()}"
+            val feed = feedMap.getOrPut(id) { getFeed() }
+            feed.toMediaItems(id, context, this@getFeed.id, pageNumber)
         }
 
         private val tracksMap = ConcurrentHashMap<String, Pair<EchoMediaItem, PagedData<Track>>>()
