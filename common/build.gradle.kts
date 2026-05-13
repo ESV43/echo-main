@@ -80,8 +80,8 @@ mavenPublishing {
     coordinates("dev.brahmkshatriya.echo", "common", "1.0.0")
 
     pom {
-        name = "Echo common library"
-        description = "A common library for echo extensions."
+        name = "Eko common library"
+        description = "A common library for eko extensions."
         inceptionYear = "2025"
         url = "https://github.com/ESV43/echo-main"
         licenses {

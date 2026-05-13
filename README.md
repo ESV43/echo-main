@@ -1,57 +1,52 @@
-# Echo: Music Player Plus
+# Eko
 
-<p align="center">
-  <img src="app/src/main/ic_launcher-playstore.png" width="150" alt="Echo Logo">
-</p>
+A modern, high-performance music player built with Kotlin Multiplatform and Jetpack Compose. Focus on speed, flexibility, and high-fidelity audio.
 
-<p align="center">
-  <b>An Extension-based Music Player for Android, designed with a clean and intuitive UI.</b>
-</p>
+[![Build Status](https://github.com/ESV43/echo-main/actions/workflows/stable.yml/badge.svg)](https://github.com/ESV43/echo-main/actions)
+[![Nightly](https://github.com/ESV43/echo-main/actions/workflows/dev-release.yml/badge.svg)](https://github.com/ESV43/echo-main/actions)
 
----
+## 🚀 Features
 
-> [!NOTE]
-> The developer of this application is not liable for any misuse or legal issues arising from its
-> use and is not affiliated with any content providers. This application hosts zero content.
->
-> Echo is intended for offline use only by default; the user manages any external sources. Echo does
-> not condone or supports piracy.
+- **Hi-Res Audio Support:** Lossless streaming and playback.
+- **Snappy UI:** Optimized animations and interactive elements for a fluid experience.
+- **Extensions Engine:** Modular support for multiple music sources.
+- **Dynamic Theming:** UI colors adapt to the currently playing track.
+- **Advanced Playback:** Gapless playback, crossfade, and AI-powered Auto EQ.
+- **Cross-Platform:** Shared core logic across Android and iOS.
 
-## ✨ Features
+## 📥 Installation
 
-- **Extension-based Architecture**: Support for various music and lyrics sources via a powerful extension system.
-- **Listen Together**: Sync music playback with friends in real-time using Firebase.
-- **Built-in Audio FX**: Professional Equalizer and Audio Effects for the best listening experience.
-- **HI-Res Music**: High-quality audio streaming and playback support.
-- **New Lyrics Engine**: Support for multiple lyrics sources with a beautiful, synchronized lyrics UI.
-- **DJ Crossfade**: Smooth transitions between tracks for an uninterrupted flow.
-- **Smart Search**: Unified search across all enabled extensions.
-- **Improved Authentication**: Standard web-view login for YouTube Music, with manual cookie fallback.
-- **Offline Mode**: Full support for local media files and downloaded content.
+### Stable
+Download the latest official release from the [Releases](https://github.com/ESV43/echo-main/releases/latest) page.
 
-## 🔌 Built-in Extensions
+### Nightly (Development)
+Get the latest cutting-edge builds via [nightly.link](https://nightly.link/ESV43/echo-main/workflows/dev-release.yml/main?status=completed).
 
-Echo comes with several powerful extensions out of the box:
-- **DabYeet**: Integration for YouTube and YouTube Music.
-- **Unified**: A smart bridge that merges content from all sources and manages cached/offline tracks.
-- **Offline**: Standard support for local device media.
-- **Lyrics**: Dedicated system for fetching and displaying track lyrics.
+## 🛠 Setup & Development
 
-## 🚀 Development
+### Prerequisites
+- Android Studio Ladybug or newer.
+- JDK 17.
+- Android SDK 35+.
 
-The focus of the app has now shifted to [Multiplatform](https://github.com/brahmkshatriya/echo/tree/compose) (using Jetpack Compose).
-- **Echo Desktop**: Under active development.
-- **Android Remake**: A modernized version of the Android app is also in progress.
+### Building from Source
+```bash
+git clone https://github.com/ESV43/echo-main.git
+cd echo-main
+./gradlew assembleDebug
+```
 
-If you are looking for the legacy Android version, please check our community channels.
+## 🧩 Extensions
+Eko uses a powerful extension system to fetch music from various providers. You can find templates and examples in the repository to build your own.
 
-## 🤝 Official Communities
+## 📜 Acknowledgments
 
-Join our communities to stay updated, get support, and contribute to the discussion:
+This project is a fork of the original [Echo](https://github.com/brahmkshatriya/echo) project by **brahmkshatriya**. We are deeply grateful to the original authors and contributors for their incredible work in building the foundation of this application.
 
-<a href="https://discord.gg/J3WvbBUU8Z" style="margin-right: 10px; display: inline-block;">
-  <img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/discord-round-color-icon.png" alt="Discord" height="40" style="vertical-align: middle;">
-</a>
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit Pull Requests or open Issues for bugs and feature requests.
 
 ---
-<p align="center">Made with ❤️ by Brahmkshatriya</p>
+
+**Maintained by [ESV43](https://github.com/ESV43)**

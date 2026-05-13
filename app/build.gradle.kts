@@ -59,7 +59,7 @@ android {
         }
         create("nightly") {
             initWith(getByName("release"))
-            resValue("string", "app_name", "Echo Nightly")
+            resValue("string", "app_name", "Eko Nightly")
             signingConfig = signingConfigs.getByName("release")
         }
         create("stable") {

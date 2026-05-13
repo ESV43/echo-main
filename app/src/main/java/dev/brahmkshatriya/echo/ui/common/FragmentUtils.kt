@@ -109,7 +109,7 @@ object FragmentUtils {
         }
         val uri = intent.data
         when (uri?.scheme) {
-            "echo" -> runCatching { openItemFragmentFromUri(uri) }
+            "eko" -> runCatching { openItemFragmentFromUri(uri) }
             "file" -> {
                 val viewModel by viewModel<ExtensionsViewModel>()
                 viewModel.installWithPrompt(listOf(uri.toFile()))

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Echo</string>
+    <string name="app_name" translatable="false">Eko</string>
     <string name="app_github_repo" translatable="false">ESV43/echo-main</string>
     <string name="okay">Okay</string>
     <string name="cancel">Cancel</string>

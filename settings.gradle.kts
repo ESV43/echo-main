@@ -26,6 +26,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Echo"
+rootProject.name = "Eko"
 include(":app")
 include(":common")

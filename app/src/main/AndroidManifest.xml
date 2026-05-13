@@ -100,7 +100,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="echo" />
+                <data android:scheme="eko" />
             </intent-filter>
         </activity>
 
@@ -127,7 +127,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="echo" />
+                <data android:scheme="eko" />
             </intent-filter>
         </activity>
 
