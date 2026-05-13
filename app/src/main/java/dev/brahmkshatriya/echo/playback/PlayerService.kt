@@ -96,9 +96,11 @@ class PlayerService : MediaLibraryService() {
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
-        val aiAutoEqManager = AiAutoEqManager(this, eqAudioProcessor)
+        val aiAutoEqManager by lazy { AiAutoEqManager(this, eqAudioProcessor) }
         eqAudioProcessor.pcmCallback = { pcm ->
-            aiAutoEqManager.classifyAndApplyEq(pcm)
+            if (app.settings.getBoolean(AI_AUTO_EQ, false)) {
+                aiAutoEqManager.classifyAndApplyEq(pcm)
+            }
             var sum = 0.0
             for (s in pcm) {
                 sum += s.toDouble() * s.toDouble()
@@ -220,6 +222,7 @@ class PlayerService : MediaLibraryService() {
         const val CROSSFADE = "crossfade"
         const val CROSSFADE_DURATION = "crossfade_duration"
         const val EQ_GAINS = "eq_gains"
+        const val AI_AUTO_EQ = "ai_auto_eq"
 
         const val PREFERRED_LYRICS_SOURCE = "preferred_lyrics_source"
         const val FLUID_LYRICS = "fluid_lyrics"

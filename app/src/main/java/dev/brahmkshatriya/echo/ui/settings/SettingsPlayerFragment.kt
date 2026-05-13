@@ -91,6 +91,16 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     setDefaultValue("off")
                     addPreference(this)
                 }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = AI_AUTO_EQ
+                    title = getString(R.string.ai_auto_eq)
+                    summary = getString(R.string.ai_auto_eq_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
             }
 
             PreferenceCategory(context).apply {
