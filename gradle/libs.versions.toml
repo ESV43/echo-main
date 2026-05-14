@@ -62,6 +62,8 @@ kenburnsview = { module = "com.flaviofaria:kenburnsview", version = "1.0.7" }
 nestedscrollwebview = { module = "com.telefonica:nestedscrollwebview", version = "0.1.6" }
 acsbendi-webview = { module = "com.github.acsbendi:Android-Request-Inspector-WebView", version = "1.0.12" }
 google-webrtc = { module = "com.infobip:google-webrtc", version = "1.0.45036" }
+junit = { group = "junit", name = "junit", version = "4.13.2" }
+mockk = { module = "io.mockk:mockk", version = "1.13.17" }
 tensorflow-lite = { module = "org.tensorflow:tensorflow-lite", version = "2.16.1" }
 tensorflow-lite-support = { module = "org.tensorflow:tensorflow-lite-support", version = "0.4.4" }
 

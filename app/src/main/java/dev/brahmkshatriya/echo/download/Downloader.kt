@@ -89,16 +89,42 @@ class Downloader(
         }
         ensureWorker()
     }
+private val workManager by lazy { WorkManager.getInstance(app.context) }
+private fun ensureWorker() {
+    val request = OneTimeWorkRequestBuilder<DownloadWorker>()
+        .setConstraints(Constraints(NetworkType.CONNECTED, requiresStorageNotLow = true))
+        .addTag(TAG)
+        .build()
+    workManager.enqueueUniqueWork(TAG, ExistingWorkPolicy.KEEP, request)
+}
 
-    private val workManager by lazy { WorkManager.getInstance(app.context) }
-    private fun ensureWorker() {
-        val request = OneTimeWorkRequestBuilder<DownloadWorker>()
-            .setConstraints(Constraints(NetworkType.CONNECTED, requiresStorageNotLow = true))
-            .addTag(TAG)
-            .build()
-        workManager.enqueueUniqueWork(TAG, ExistingWorkPolicy.KEEP, request)
+fun checkSmartDownloads() = scope.launch {
+    val prefs = app.context.getSharedPreferences(
+        dev.brahmkshatriya.echo.utils.ContextUtils.SETTINGS_NAME,
+        android.content.Context.MODE_PRIVATE
+    )
+    val rules = prefs.getStringSet(
+        dev.brahmkshatriya.echo.ui.settings.V4LabFragment.Keys.SMART_DOWNLOADS,
+        setOf("liked", "wifi", "storage")
+    ) ?: return@launch
+
+    if (rules.contains("liked")) {
+        val unified = extensionLoader.unified.value
+        val likedPlaylist = unified.db.getLikedPlaylist(app.context)
+        val tracks = unified.loadTracks(likedPlaylist).loadAll()
+
+        val toDownload = tracks.filter { track ->
+            dao.getDownloadEntity(track.id.toLong()) == null
+        }
+        if (toDownload.isNotEmpty()) {
+            add(toDownload.map { 
+                DownloadContext(it, it.extras[EXTENSION_ID] ?: "", null, 0) 
+            })
+        }
     }
-
+}
+...
+companion object {
     private val servers = ConcurrentHashMap<Long, Streamable.Media.Server>()
     private val mutexes = ConcurrentHashMap<Long, Mutex>()
 

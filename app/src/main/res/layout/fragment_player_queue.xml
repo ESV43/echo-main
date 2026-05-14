@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.recyclerview.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,9 +7,51 @@
     android:background="?echoBackground"
     android:backgroundTint="#54FFFFFF"
     android:backgroundTintMode="multiply"
-    android:clipToPadding="false"
-    android:paddingVertical="4dp"
-    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-    tools:listitem="@layout/item_playlist_track">
+    android:orientation="vertical">
 
-</androidx.recyclerview.widget.RecyclerView>
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:scrollbars="none">
+
+        <com.google.android.material.button.MaterialButtonGroup
+            style="@style/Widget.Material3.MaterialButtonGroup.Connected"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:spacing="-4dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/smartQueue"
+                style="@style/SideBarButton"
+                android:text="@string/v4_smart_queue_short"
+                app:icon="@drawable/ic_queue_music" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dedupeQueue"
+                style="@style/SideBarButton"
+                android:text="@string/v4_dedupe_short"
+                app:icon="@drawable/ic_playlist_add" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/fuseSources"
+                style="@style/SideBarButton"
+                android:text="@string/v4_fuse_sources_short"
+                app:icon="@drawable/ic_extension" />
+
+        </com.google.android.material.button.MaterialButtonGroup>
+    </HorizontalScrollView>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/queueList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingVertical="4dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        tools:listitem="@layout/item_playlist_track" />
+</LinearLayout>

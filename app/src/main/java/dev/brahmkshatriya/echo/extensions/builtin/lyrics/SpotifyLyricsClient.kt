@@ -26,11 +26,37 @@ class SpotifyLyricsClient : BaseLyricsClient() {
     )
 
     override suspend fun searchTrackLyrics(clientId: String, track: Track): dev.brahmkshatriya.echo.common.models.Feed<Lyrics> {
-        // This is a common public proxy for Spotify lyrics. 
-        // It requires a track ID, but sometimes works with a search.
-        // For this implementation, we'll assume we can't easily get the Spotify ID without a search.
-        // So we might skip it or use a search if the API supports it.
-        // Let's just provide it as a placeholder that could be expanded.
+        // Try to get Spotify ID from extras if it exists
+        val spotifyId = track.extras["spotify_id"] ?: return super.searchTrackLyrics(clientId, track)
+
+        val url = "https://spotify-lyric-api.herokuapp.com/?trackid=$spotifyId"
+        val request = Request.Builder().url(url).build()
+        val response = CallWait(request)
+        
+        if (response.isSuccessful) {
+            val body = response.body?.string() ?: return super.searchTrackLyrics(clientId, track)
+            val data = try {
+                json.decodeFromString<SpotifyLyricsResponse>(body)
+            } catch (e: Exception) {
+                null
+            } ?: return super.searchTrackLyrics(clientId, track)
+
+            val lines = data.lyrics?.lines ?: return super.searchTrackLyrics(clientId, track)
+            val items = lines.mapIndexed { index, line ->
+                val start = line.startTimeMs.toLong()
+                val nextStart = lines.getOrNull(index + 1)?.startTimeMs?.toLong() ?: (start + 5000)
+                Lyrics.Item(line.words, start, nextStart)
+            }
+
+            val lyrics = Lyrics(
+                id = "spotify_$spotifyId",
+                title = track.title,
+                subtitle = "Spotify Lyrics",
+                lyrics = Lyrics.Timed(items)
+            )
+            return listOf(lyrics).toFeed()
+        }
+
         return super.searchTrackLyrics(clientId, track)
     }
 }

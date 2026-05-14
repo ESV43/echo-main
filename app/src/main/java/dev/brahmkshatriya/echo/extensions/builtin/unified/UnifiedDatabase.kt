@@ -36,7 +36,7 @@ import java.util.Calendar
         UnifiedDatabase.SavedEntity::class,
         UnifiedDatabase.HistoryEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class UnifiedDatabase : RoomDatabase() {
@@ -73,12 +73,17 @@ abstract class UnifiedDatabase : RoomDatabase() {
         return dao.getMostPlayed(limit).map { it.item }
     }
 
-    suspend fun updateHistory(track: Track) {
+    suspend fun updateHistory(track: Track, isSkip: Boolean = false) {
         val extId = track.extras.extensionId
         val history = dao.getHistory(track.id, extId)
-        val playCount = (history?.playCount ?: 0) + 1
+        val playCount = (history?.playCount ?: 0) + (if (isSkip) 0 else 1)
+        val skipCount = (history?.skipCount ?: 0) + (if (isSkip) 1 else 0)
         val lastPlayed = System.currentTimeMillis()
-        dao.insertHistory(HistoryEntity(track.id, extId, playCount, lastPlayed, track.toJson()))
+        dao.insertHistory(
+            HistoryEntity(
+                track.id, extId, playCount, skipCount, lastPlayed, track.toJson()
+            )
+        )
     }
 
     private fun getDateNow(): Date {
@@ -226,6 +231,13 @@ abstract class UnifiedDatabase : RoomDatabase() {
 
     suspend fun getPlaylist(mediaItem: EchoMediaItem): Playlist? {
         return dao.getPlaylistByActualId(mediaItem.id)?.playlist
+    }
+
+    suspend fun getLibraryHealth(): Map<String, Int> {
+        val saved = getSaved()
+        val broken = saved.filterIsInstance<Track>().count { it.streamables.isEmpty() }
+        val duplicates = saved.groupBy { it.id }.count { it.value.size > 1 }
+        return mapOf("broken" to broken, "duplicates" to duplicates)
     }
 
     @Dao
@@ -391,6 +403,7 @@ abstract class UnifiedDatabase : RoomDatabase() {
         val id: String,
         val extId: String,
         val playCount: Long,
+        val skipCount: Long = 0,
         val lastPlayed: Long,
         val data: String,
     ) {

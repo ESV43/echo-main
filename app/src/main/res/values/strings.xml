@@ -168,6 +168,131 @@
     <string name="check_for_updates">Check for Updates</string>
     <string name="check_for_updates_summary">Look for new updates of both app and extensions, when you open the app.</string>
 
+    <string name="v4_lab">V4 Lab</string>
+    <string name="v4_status">Status</string>
+    <string name="v4_release_dashboard">V4 Release Dashboard</string>
+    <string name="v4_release_dashboard_summary">Review the local-only feature set for this major release.</string>
+    <string name="v4_release_dashboard_message">%1$d local switches enabled.\n\nLibrary Health: %2$d broken, %3$d duplicates.\nListening Stats: %4$d plays, %5$d skips.\n\nSmart Queue: %6$s\nPlayer Mode: %7$s</string>
+    <string name="v4_local_intelligence">Local Intelligence</string>
+    <string name="v4_local_music_intelligence">Local Music Intelligence</string>
+    <string name="v4_local_music_intelligence_summary">Build listening stats and taste signals on-device from playback history.</string>
+    <string name="v4_morning_mix">Morning Mix</string>
+    <string name="v4_night_mix">Late Night Mix</string>
+    <string name="v4_sound_profile">Sound Profile</string>
+    <string name="v4_sound_profile_summary">Choose how the app should shape local recommendations and recaps.</string>
+    <string-array name="v4_sound_profiles">
+        <item>Balanced</item>
+        <item>Mood-first</item>
+        <item>Replay-heavy</item>
+        <item>Discovery-heavy</item>
+    </string-array>
+    <string-array name="v4_sound_profile_values">
+        <item>balanced</item>
+        <item>mood</item>
+        <item>replay</item>
+        <item>discovery</item>
+    </string-array>
+    <string name="v4_contextual_home">Contextual Home</string>
+    <string name="v4_contextual_home_summary">Prepare local shelves for morning mixes, late-night queues, unfinished albums, and offline picks.</string>
+    <string name="v4_queue_and_search">Queue and Search</string>
+    <string name="v4_smart_queue_lab">Smart Queue Lab</string>
+    <string name="v4_smart_queue_lab_summary">Select the default client-side queue strategy.</string>
+    <string name="v4_smart_queue_short">Smart Queue</string>
+    <string name="v4_dedupe_short">Dedupe</string>
+    <string name="v4_fuse_sources_short">Fuse Sources</string>
+    <string name="v4_smart_queue_applied">Smart Queue applied</string>
+    <string name="v4_queue_deduped">Removed %1$d duplicate queue items</string>
+    <string name="v4_queue_sources_fused">Fused %1$d duplicate source items</string>
+    <string-array name="v4_smart_queue_modes">
+        <item>No repeats</item>
+        <item>Same vibe</item>
+        <item>Energy ramp</item>
+        <item>Chill down</item>
+        <item>Deep cuts</item>
+    </string-array>
+    <string-array name="v4_smart_queue_values">
+        <item>no_repeats</item>
+        <item>vibe</item>
+        <item>energy_ramp</item>
+        <item>chill_down</item>
+        <item>deep_cuts</item>
+    </string-array>
+    <string name="v4_queue_variety">Queue Variety</string>
+    <string name="v4_queue_variety_summary">How strongly Smart Queue should avoid repeating artists, albums, and sources.</string>
+    <string name="v4_command_palette">Command Palette</string>
+    <string name="v4_command_palette_summary">Enable a fast local action layer for playback, search, source, playlist, and settings commands.</string>
+    <string name="v4_command_play_pause">Play/Pause</string>
+    <string name="v4_multi_source_search">Multi-Source Search 2.0</string>
+    <string name="v4_multi_source_search_summary">Prefer merged results and local filters across enabled extensions.</string>
+    <string name="v4_sources_and_library">Sources and Library</string>
+    <string name="v4_source_fusion">Source Fusion</string>
+    <string name="v4_source_fusion_summary">Treat matching tracks across extensions as one library item with source choices.</string>
+    <string name="v4_audio_fingerprint">Local Audio Fingerprint Matching</string>
+    <string name="v4_audio_fingerprint_summary">Allow duration and metadata fingerprints to improve duplicate detection locally.</string>
+    <string name="v4_playlist_alchemist">Playlist Alchemist</string>
+    <string name="v4_playlist_alchemist_summary">Pick local playlist repair and transformation tools to expose.</string>
+    <string-array name="v4_playlist_tools">
+        <item>Dedupe tracks</item>
+        <item>Repair broken items</item>
+        <item>Sort by vibe or quality</item>
+        <item>Split into moods</item>
+        <item>Side A / Side B</item>
+    </string-array>
+    <string-array name="v4_playlist_tool_values">
+        <item>dedupe</item>
+        <item>repair</item>
+        <item>sort</item>
+        <item>moods</item>
+        <item>sides</item>
+    </string-array>
+    <string name="v4_library_health">Personal Library Health</string>
+    <string name="v4_library_health_summary">Track local diagnostics for duplicates, missing art, unavailable items, and low-quality sources.</string>
+    <string name="v4_offline_and_downloads">Offline and Downloads</string>
+    <string name="v4_offline_discovery">Offline Discovery Mode</string>
+    <string name="v4_offline_discovery_summary">Use cached and downloaded songs for local recommendations while offline.</string>
+    <string name="v4_smart_downloads">Smart Downloads</string>
+    <string name="v4_smart_downloads_summary">Choose client-side rules for liked songs, recent albums, source upgrades, Wi-Fi, and storage.</string>
+    <string-array name="v4_smart_download_rules">
+        <item>Liked songs</item>
+        <item>Recent albums</item>
+        <item>Upgrade low quality</item>
+        <item>Wi-Fi only</item>
+        <item>Storage aware</item>
+    </string-array>
+    <string-array name="v4_smart_download_values">
+        <item>liked</item>
+        <item>recent_albums</item>
+        <item>quality_upgrade</item>
+        <item>wifi</item>
+        <item>storage</item>
+    </string-array>
+    <string name="v4_player_and_lyrics">Player and Lyrics</string>
+    <string name="v4_visual_player_modes">Visual Player Modes</string>
+    <string name="v4_visual_player_modes_summary">Choose the preferred V4 player presentation.</string>
+    <string-array name="v4_visual_player_modes">
+        <item>Minimal hi-fi deck</item>
+        <item>Lyrics first</item>
+        <item>Album art immersive</item>
+        <item>Compact driving</item>
+        <item>AMOLED</item>
+    </string-array>
+    <string-array name="v4_visual_player_values">
+        <item>hifi</item>
+        <item>lyrics</item>
+        <item>immersive</item>
+        <item>driving</item>
+        <item>amoled</item>
+    </string-array>
+    <string name="v4_adaptive_audio_profiles">Adaptive Audio Profiles</string>
+    <string name="v4_adaptive_audio_profiles_summary">Switch local audio preferences by output device, genre, and context.</string>
+    <string name="v4_lyrics_studio">Lyrics Studio</string>
+    <string name="v4_lyrics_studio_summary">Enable local lyric offset, karaoke, and overlay controls where lyrics are available.</string>
+    <string name="v4_lyrics_offset_down">-250 ms</string>
+    <string name="v4_lyrics_offset_up">+250 ms</string>
+    <string name="v4_lyrics_offset_value">%1$d ms</string>
+    <string name="v4_extension_inspector">Extension Sandbox Inspector</string>
+    <string name="v4_extension_inspector_summary">Expose extension capabilities, update state, and recent local failures in extension management.</string>
+
     <string name="install">Install</string>
     <string name="app">App</string>
     <string name="file">File</string>

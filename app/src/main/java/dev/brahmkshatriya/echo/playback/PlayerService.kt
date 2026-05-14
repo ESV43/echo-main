@@ -60,6 +60,7 @@ class PlayerService : MediaLibraryService() {
     private val extensionLoader by inject<ExtensionLoader>()
     private val extensions by lazy { extensionLoader }
     private val eqAudioProcessor = EqAudioProcessor()
+    private val adaptiveAudioProfileManager by lazy { AdaptiveAudioProfileManager(this) }
     private val exoPlayer by lazy { createExoplayer() }
     private val secondaryExoPlayer by lazy { createExoplayer() }
 
@@ -96,6 +97,12 @@ class PlayerService : MediaLibraryService() {
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
+        adaptiveAudioProfileManager.onProfileChanged = { gains ->
+            app.settings.edit().putString(EQ_GAINS, gains).apply()
+            updateEqGains(app.settings)
+        }
+        adaptiveAudioProfileManager.updateProfile()
+        
         val aiAutoEqManager by lazy { AiAutoEqManager(this, eqAudioProcessor) }
         eqAudioProcessor.pcmCallback = { pcm ->
             if (app.settings.getBoolean(KEY_AI_AUTO_EQ, false)) {
@@ -152,6 +159,7 @@ class PlayerService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        adaptiveAudioProfileManager.release()
         app.settings.unregisterOnSharedPreferenceChangeListener(listener)
         mediaSession?.run {
             player.release()

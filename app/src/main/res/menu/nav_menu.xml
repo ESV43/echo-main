@@ -15,4 +15,14 @@
         android:icon="@drawable/anim_bookmark"
         android:title="@string/library" />
 
+    <item
+        android:id="@+id/queueFragment"
+        android:icon="@drawable/ic_playlist_play"
+        android:title="@string/up_next" />
+
+    <item
+        android:id="@+id/moreFragment"
+        android:icon="@drawable/ic_more_horiz"
+        android:title="@string/other" />
+
 </menu>

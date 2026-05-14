@@ -65,6 +65,7 @@
                 <com.google.android.material.button.MaterialButton android:id="@+id/player" style="@style/SideBarButton" android:text="@string/player" app:icon="@drawable/ic_play_circle" />
                 <com.google.android.material.button.MaterialButton android:id="@+id/lookAndFeel" style="@style/SideBarButton" android:text="@string/look_and_feel" app:icon="@drawable/ic_palette" />
                 <com.google.android.material.button.MaterialButton android:id="@+id/other" style="@style/SideBarButton" android:text="@string/other" app:icon="@drawable/ic_more_horiz" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/v4Lab" style="@style/SideBarButton" android:text="@string/v4_lab" app:icon="@drawable/ic_autorenew" />
             </com.google.android.material.button.MaterialButtonGroup>
 
             <com.google.android.material.card.MaterialCardView

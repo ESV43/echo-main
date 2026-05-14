@@ -75,7 +75,10 @@ class UnifiedExtension(
     HomeFeedClient, QuickSearchClient, LibraryFeedClient,
     PlaylistClient, AlbumClient, ArtistClient, TrackClient,
     FollowClient, RadioClient, LikeClient, SaveClient, HideClient, ShareClient,
-    PlaylistEditClient, PlaylistEditCoverClient, LyricsClient, TrackerMarkClient {
+    PlaylistEditClient, PlaylistEditCoverClient, LyricsClient, TrackerMarkClient,
+    org.koin.core.component.KoinComponent {
+
+    private val downloader: dev.brahmkshatriya.echo.download.Downloader by org.koin.core.component.inject()
 
     companion object {
         const val UNIFIED_ID = "unified"
@@ -392,22 +395,54 @@ class UnifiedExtension(
             .take(25)
     }
 
-    private fun Feed<Shelf>.withLocalRecommendations(): Feed<Shelf> = copy(
+    private suspend fun contextualSections(): List<Shelf> {
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val recentlyPlayed = db.getRecentlyPlayed(20)
+        
+        return buildList {
+            if (hour in 5..11) {
+                val morningTracks = recentlyPlayed.filter { 
+                    val time = db.dao.getHistory(it.id, it.extras.extensionId)?.lastPlayed ?: 0
+                    val h = Calendar.getInstance().apply { timeInMillis = time }.get(Calendar.HOUR_OF_DAY)
+                    h in 5..11
+                }
+                if (morningTracks.isNotEmpty()) {
+                    add(Shelf.Category("morning_mix", context.getString(R.string.v4_morning_mix), context.getFeed(morningTracks)))
+                }
+            } else if (hour in 21..23 || hour in 0..4) {
+                val nightTracks = recentlyPlayed.filter { 
+                    val time = db.dao.getHistory(it.id, it.extras.extensionId)?.lastPlayed ?: 0
+                    val h = Calendar.getInstance().apply { timeInMillis = time }.get(Calendar.HOUR_OF_DAY)
+                    h in 21..23 || h in 0..4
+                }
+                if (nightTracks.isNotEmpty()) {
+                    add(Shelf.Category("night_mix", context.getString(R.string.v4_night_mix), context.getFeed(nightTracks)))
+                }
+            }
+        }
+    }
+
+    private fun Feed<Shelf>.withContextualHome(): Feed<Shelf> = copy(
         getPagedData = { tab ->
             val data = getPagedData(tab)
+            val contextual = contextualSections()
             val recommendations = localRecommendations()
-            if (recommendations.isEmpty()) data
+            
+            val combined = mutableListOf<Shelf>()
+            combined.addAll(contextual)
+            if (recommendations.isNotEmpty()) {
+                combined.add(Shelf.Category(
+                    "local_recommendations",
+                    context.getString(R.string.recommended_for_you),
+                    context.getFeed(recommendations)
+                ))
+            }
+            
+            if (combined.isEmpty()) data
             else data.copy(
                 pagedData = PagedData.Concat(
-                    PagedData.Single<Shelf> {
-                        listOf(
-                            Shelf.Category(
-                                "local_recommendations",
-                                context.getString(R.string.recommended_for_you),
-                                context.getFeed(recommendations)
-                            )
-                        )
-                    },
+                    PagedData.Single { combined },
                     data.pagedData
                 )
             )
@@ -415,7 +450,7 @@ class UnifiedExtension(
     )
 
     override suspend fun loadHomeFeed() =
-        feed<HomeFeedClient> { loadHomeFeed() }.withLocalRecommendations()
+        feed<HomeFeedClient> { loadHomeFeed() }.withContextualHome()
 
     override suspend fun quickSearch(query: String): List<QuickSearchItem> = coroutineScope {
         extensions().map { extension ->
@@ -479,9 +514,15 @@ class UnifiedExtension(
         }
     }
 
+    private val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `HistoryEntity` ADD COLUMN `skipCount` INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
     val db = Room.databaseBuilder(
         context, UnifiedDatabase::class.java, "unified-db"
-    ).addMigrations(MIGRATION_6_7).fallbackToDestructiveMigration(true).build()
+    ).addMigrations(MIGRATION_6_7, MIGRATION_7_8).fallbackToDestructiveMigration(true).build()
 
     private suspend fun getCached() = cache.keys.mapNotNull {
         val key = context.getFromCache<String>(it, "player")
@@ -752,13 +793,20 @@ class UnifiedExtension(
         val id = details.track.extras.extensionId
         val extension = extensions().get(id)
         extension.clientOrNull<TrackerMarkClient, Unit> { onMarkAsPlayed(details) }
-        db.updateHistory(details.track)
+        db.updateHistory(details.track, false)
     }
 
     override suspend fun onPlayingStateChanged(details: TrackDetails?, isPlaying: Boolean) {
         val id = details?.track?.extras?.extensionId ?: return
         val extension = extensions().get(id)
         extension.clientOrNull<TrackerClient, Unit> { onPlayingStateChanged(details, isPlaying) }
+    }
+
+    override suspend fun onTrackSkipped(details: TrackDetails) {
+        val id = details.track.extras.extensionId
+        val extension = extensions().get(id)
+        extension.clientOrNull<TrackerClient, Unit> { onTrackSkipped(details) }
+        db.updateHistory(details.track, true)
     }
 
     override suspend fun getMarkAsPlayedDuration(details: TrackDetails): Long? {
@@ -794,8 +842,10 @@ class UnifiedExtension(
         if (item !is Track) throw ClientException.NotSupported("LikeItem only supports Track")
         val likedPlaylist = db.getLikedPlaylist(context)
         val tracks = loadTracks(likedPlaylist).loadAll()
-        if (shouldLike) addTracksToPlaylist(likedPlaylist, tracks, 0, listOf(item))
-        else removeTracksFromPlaylist(
+        if (shouldLike) {
+            addTracksToPlaylist(likedPlaylist, tracks, 0, listOf(item))
+            downloader.checkSmartDownloads()
+        } else removeTracksFromPlaylist(
             likedPlaylist, tracks, listOf(tracks.indexOfFirst { it.id == item.id })
         )
     }

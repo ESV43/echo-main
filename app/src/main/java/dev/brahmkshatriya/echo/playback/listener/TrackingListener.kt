@@ -67,9 +67,19 @@ class TrackingListener(
 
     private val mutex = Mutex()
     private val timers = mutableMapOf<String, PauseTimer>()
+    private var skipTimer: PauseTimer? = null
+    private var skipDetails: TrackDetails? = null
 
     private fun onTrackChanged(mediaItem: MediaItem?) {
         previousId = current?.extensionId
+        val prevDetails = skipDetails
+        if (prevDetails != null && skipTimer?.isFinished == false) {
+            trackMedia { _, _ -> onTrackSkipped(prevDetails) }
+        }
+        skipTimer?.cancel()
+        skipTimer = null
+        skipDetails = null
+
         current = mediaItem
         mediaItem?.track?.let { track ->
             listenTogetherManager?.updateNowPlaying(track, mediaItem.extensionId, player.currentPosition, player.isPlaying)
@@ -82,6 +92,14 @@ class TrackingListener(
             trackMedia { extension, details ->
                 onTrackChanged(details)
                 details ?: return@trackMedia
+
+                skipDetails = details
+                skipTimer = PauseTimer(scope, 10000L) {
+                    skipTimer = null
+                    skipDetails = null
+                }
+                if (player.isPlaying) skipTimer?.resume()
+
                 val duration = (this as? TrackerMarkClient)?.getMarkAsPlayedDuration(details) ?: return@trackMedia
                 mutex.withLock {
                     timers[extension.id] = PauseTimer(scope, duration) {
@@ -95,6 +113,7 @@ class TrackingListener(
     }
 
     override fun onIsPlayingChanged(isPlaying: Boolean) {
+        if (isPlaying) skipTimer?.resume() else skipTimer?.pause()
         scope.launch { playState.value = getDetails() to isPlaying }
     }
 

@@ -18,9 +18,11 @@ import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getAs
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getExtension
 import dev.brahmkshatriya.echo.extensions.cache.Cached
 import dev.brahmkshatriya.echo.ui.common.GridAdapter.Companion.configureGridLayout
+import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
 import dev.brahmkshatriya.echo.ui.common.UiViewModel
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.applyBackPressCallback
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.configure
+import dev.brahmkshatriya.echo.ui.download.DownloadFragment
 import dev.brahmkshatriya.echo.ui.feed.FeedAdapter.Companion.getFeedAdapter
 import dev.brahmkshatriya.echo.ui.feed.FeedAdapter.Companion.getTouchHelper
 import dev.brahmkshatriya.echo.ui.feed.FeedClickListener.Companion.getFeedListener
@@ -29,6 +31,8 @@ import dev.brahmkshatriya.echo.ui.feed.FeedViewModel
 import dev.brahmkshatriya.echo.ui.main.HeaderAdapter
 import dev.brahmkshatriya.echo.ui.main.MainFragment.Companion.applyInsets
 import dev.brahmkshatriya.echo.ui.main.search.SearchViewModel.Companion.saveInHistory
+import dev.brahmkshatriya.echo.ui.player.PlayerViewModel
+import dev.brahmkshatriya.echo.ui.settings.V4LabFragment
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.setupTransition
 import kotlinx.coroutines.flow.combine
@@ -80,6 +84,19 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentSearchBinding.bind(view)
         setupTransition(view, false, MaterialSharedAxis.Y)
+        val playerViewModel by activityViewModel<PlayerViewModel>()
+        binding.commandPlayPause.setOnClickListener {
+            playerViewModel.setPlaying(!playerViewModel.isPlaying.value)
+        }
+        binding.commandSmartQueue.setOnClickListener { playerViewModel.applySmartQueue() }
+        binding.commandDownloads.setOnClickListener {
+            binding.quickSearchView.hide()
+            requireActivity().openFragment<DownloadFragment>()
+        }
+        binding.commandV4Lab.setOnClickListener {
+            binding.quickSearchView.hide()
+            requireActivity().openFragment<V4LabFragment>()
+        }
         applyInsets(binding.recyclerView, binding.appBarOutline) {
             binding.swipeRefresh.configure(it)
         }

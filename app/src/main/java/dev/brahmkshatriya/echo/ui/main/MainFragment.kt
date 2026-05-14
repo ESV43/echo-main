@@ -56,6 +56,8 @@ class MainFragment : Fragment() {
             val toShow = when (it) {
                 1 -> addIfNull<SearchFragment>("search")
                 2 -> addIfNull<LibraryFragment>("library")
+                3 -> addIfNull<QueueFragment>("queue")
+                4 -> addIfNull<MoreFragment>("more")
                 else -> addIfNull<HomeFragment>("home")
             }
 

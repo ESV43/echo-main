@@ -27,6 +27,7 @@ import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getExtension
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.isClient
 import dev.brahmkshatriya.echo.extensions.MediaState
 import dev.brahmkshatriya.echo.playback.MediaItemUtils
+import dev.brahmkshatriya.echo.playback.MediaItemUtils.extensionId
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.serverWithDownloads
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.sourceIndex
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.track
@@ -38,6 +39,7 @@ import dev.brahmkshatriya.echo.playback.PlayerCommands.resumeCommand
 import dev.brahmkshatriya.echo.playback.PlayerCommands.sleepTimer
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.getController
 import dev.brahmkshatriya.echo.playback.PlayerState
+import dev.brahmkshatriya.echo.ui.settings.V4LabFragment
 import dev.brahmkshatriya.echo.utils.ContextUtils.listenFuture
 import dev.brahmkshatriya.echo.utils.Serializer.putSerialized
 import kotlinx.coroutines.Dispatchers
@@ -109,6 +111,75 @@ class PlayerViewModel(
 
     fun clearQueue() {
         withBrowser { it.clearMediaItems() }
+    }
+
+    fun applySmartQueue() {
+        withBrowser { controller ->
+            val currentIndex = controller.currentMediaItemIndex.takeIf { it >= 0 } ?: return@withBrowser
+            val list = controller.mediaItems()
+            val upcoming = list.drop(currentIndex + 1)
+            if (upcoming.size < 2) return@withBrowser
+
+            val mode = settings.getString(V4LabFragment.Keys.SMART_QUEUE_MODE, "vibe") ?: "vibe"
+            val current = list.getOrNull(currentIndex)
+            val reordered = when (mode) {
+                "no_repeats" -> upcoming.spreadByArtist()
+                "energy_ramp" -> upcoming.sortedBy { it.track.duration ?: Long.MAX_VALUE }
+                "chill_down" -> upcoming.sortedByDescending { it.track.duration ?: 0L }
+                "deep_cuts" -> upcoming.sortedWith(
+                    compareBy<MediaItem> { it.track.plays ?: 0L }
+                        .thenBy { it.track.playlistAddedDate?.toString().orEmpty() }
+                )
+                else -> upcoming.sameVibeAs(current)
+            }
+            controller.replaceQueue(list.take(currentIndex + 1) + reordered, currentIndex)
+            app.messageFlow.emit(Message(context.getString(R.string.v4_smart_queue_applied)))
+        }
+    }
+
+    fun dedupeQueue() {
+        withBrowser { controller ->
+            val currentIndex = controller.currentMediaItemIndex.takeIf { it >= 0 } ?: return@withBrowser
+            val list = controller.mediaItems()
+            val deduped = buildList {
+                val seen = mutableSetOf<String>()
+                list.forEachIndexed { index, item ->
+                    val key = item.fusionKey()
+                    if (index == currentIndex || seen.add(key)) add(item)
+                }
+            }
+            if (deduped.size == list.size) return@withBrowser
+            val newIndex = deduped.indexOfFirst { it.mediaId == list[currentIndex].mediaId }
+                .takeIf { it >= 0 } ?: currentIndex.coerceAtMost(deduped.lastIndex)
+            controller.replaceQueue(deduped, newIndex)
+            app.messageFlow.emit(
+                Message(context.getString(R.string.v4_queue_deduped, list.size - deduped.size))
+            )
+        }
+    }
+
+    fun fuseQueueSources() {
+        withBrowser { controller ->
+            val currentIndex = controller.currentMediaItemIndex.takeIf { it >= 0 } ?: return@withBrowser
+            val list = controller.mediaItems()
+            val fused = list
+                .groupBy { it.fusionKey() }
+                .values
+                .map { group ->
+                    group.maxWithOrNull(
+                        compareBy<MediaItem> { it.track.servers.size }
+                            .thenBy { it.track.streamables.size }
+                            .thenBy { if (it.extensionId == list[currentIndex].extensionId) 1 else 0 }
+                    ) ?: group.first()
+                }
+            if (fused.size == list.size) return@withBrowser
+            val newIndex = fused.indexOfFirst { it.mediaId == list[currentIndex].mediaId }
+                .takeIf { it >= 0 } ?: currentIndex.coerceAtMost(fused.lastIndex)
+            controller.replaceQueue(fused, newIndex)
+            app.messageFlow.emit(
+                Message(context.getString(R.string.v4_queue_sources_fused, list.size - fused.size))
+            )
+        }
     }
 
     fun seekTo(pos: Long) {
@@ -311,5 +382,62 @@ class PlayerViewModel(
 
     companion object {
         const val KEEP_QUEUE = "keep_queue"
+    }
+}
+
+private fun MediaController.mediaItems() = (0 until mediaItemCount).map { getMediaItemAt(it) }
+
+private fun MediaController.replaceQueue(items: List<MediaItem>, currentIndex: Int) {
+    val position = currentPosition
+    setMediaItems(items, currentIndex.coerceIn(items.indices), position)
+    prepare()
+}
+
+private fun MediaItem.fusionKey(): String {
+    val track = track
+    track.isrc?.takeIf { it.isNotBlank() }?.let { return "isrc:${it.lowercase()}" }
+    return listOf(
+        track.title.normalizedForMatch(),
+        track.artists.joinToString(",") { it.name.normalizedForMatch() },
+        track.duration?.div(5000)
+    ).joinToString("|")
+}
+
+private fun String.normalizedForMatch() = lowercase()
+    .replace(Regex("\\([^)]*\\)|\\[[^]]*]"), "")
+    .replace(Regex("[^a-z0-9]+"), " ")
+    .trim()
+
+private fun MediaItem.primaryArtist() =
+    track.artists.firstOrNull()?.name?.normalizedForMatch().orEmpty()
+
+private fun List<MediaItem>.spreadByArtist(): List<MediaItem> {
+    val buckets = groupBy { it.primaryArtist() }
+        .values
+        .map { it.toMutableList() }
+        .sortedByDescending { it.size }
+        .toMutableList()
+    return buildList {
+        while (buckets.any { it.isNotEmpty() }) {
+            buckets.sortByDescending { it.size }
+            val bucket = buckets.firstOrNull { it.isNotEmpty() } ?: break
+            add(bucket.removeAt(0))
+        }
+    }
+}
+
+private fun List<MediaItem>.sameVibeAs(current: MediaItem?): List<MediaItem> {
+    val currentTrack = current?.track
+    val currentGenres = currentTrack?.genres.orEmpty().map { it.normalizedForMatch() }.toSet()
+    val currentArtists = currentTrack?.artists.orEmpty().map { it.name.normalizedForMatch() }.toSet()
+    val currentAlbum = currentTrack?.album?.title?.normalizedForMatch()
+    val currentSource = current?.extensionId
+    return sortedByDescending { item ->
+        val track = item.track
+        val genreScore = track.genres.count { it.normalizedForMatch() in currentGenres } * 4
+        val artistScore = track.artists.count { it.name.normalizedForMatch() in currentArtists } * 3
+        val albumScore = if (track.album?.title?.normalizedForMatch() == currentAlbum) 2 else 0
+        val sourceScore = if (item.extensionId == currentSource) 1 else 0
+        genreScore + artistScore + albumScore + sourceScore
     }
 }

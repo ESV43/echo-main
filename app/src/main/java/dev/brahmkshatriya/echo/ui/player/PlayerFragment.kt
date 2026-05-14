@@ -133,6 +133,27 @@ class PlayerFragment : Fragment() {
                 binding.visualizer?.updateAmplitude(it)
             }
         }
+
+        observe(viewModel.settings) {
+            updatePlayerMode()
+        }
+    }
+
+    private fun updatePlayerMode() {
+        val binding = binding ?: return
+        val mode = viewModel.settings.getString(dev.brahmkshatriya.echo.ui.settings.V4LabFragment.Keys.VISUAL_PLAYER, "immersive")
+        
+        binding.bgContainer.isVisible = mode != "amoled"
+        binding.visualizer.isVisible = mode == "hifi" || mode == "immersive"
+        binding.expandedToolbar.isVisible = mode != "driving"
+        
+        if (mode == "lyrics") {
+            uiViewModel.changeMoreState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED)
+        }
+        
+        if (mode == "driving") {
+            binding.playerControls.root.setPadding(32, 32, 32, 32)
+        }
     }
 
     override fun onDestroyView() {

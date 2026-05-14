@@ -49,6 +49,9 @@ data class App(
         scope.launch {
             throwFlow.collectLatest {
                 it.printStackTrace()
+                if (it is dev.brahmkshatriya.echo.extensions.exceptions.AppException) {
+                    dev.brahmkshatriya.echo.extensions.ExtensionSandboxInspector.reportFailure(it.metadata.id, it)
+                }
             }
         }
         val connectivityManager =

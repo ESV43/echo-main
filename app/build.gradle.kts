@@ -11,7 +11,7 @@ plugins {
 val hasGoogleServices = file("google-services.json").exists()
 val gitHash = runCatching { execute("git", "rev-parse", "HEAD").take(7) }.getOrDefault("unknown")
 val gitCount = runCatching { execute("git", "rev-list", "--count", "HEAD").toInt() }.getOrDefault(0)
-val version = "3.0.$gitCount"
+val version = "4.0.$gitCount"
 
 android {
     namespace = "dev.brahmkshatriya.echo"
@@ -112,6 +112,9 @@ dependencies {
     implementation(libs.google.webrtc)
     implementation(libs.tensorflow.lite)
     implementation(libs.tensorflow.lite.support)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
 
     if (!hasGoogleServices) return@dependencies
     implementation(libs.bundles.firebase)

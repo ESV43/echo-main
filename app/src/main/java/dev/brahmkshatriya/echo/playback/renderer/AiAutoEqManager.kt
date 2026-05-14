@@ -25,13 +25,14 @@ class AiAutoEqManager(private val context: Context, private val eqProcessor: EqA
 
     init {
         runCatching {
-            // Placeholder: User must add 'genre_model.tflite' to assets
             val model = context.assets.open("genre_model.tflite").readBytes()
             val buffer = ByteBuffer.allocateDirect(model.size).apply {
                 order(ByteOrder.nativeOrder())
                 put(model)
             }
             interpreter = Interpreter(buffer)
+        }.onFailure {
+            android.util.Log.e("AiAutoEqManager", "Failed to load genre_model.tflite", it)
         }
     }
 

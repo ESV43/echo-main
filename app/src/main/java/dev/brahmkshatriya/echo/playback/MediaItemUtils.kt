@@ -278,4 +278,40 @@ object MediaItemUtils {
             "DOWNLOADED", Int.MAX_VALUE, context.getString(R.string.downloads)
         ).takeIf { !downloaded.isNullOrEmpty() }
     )
+
+    fun MediaItem.fusionKey(): String {
+        val t = track
+        return "${t.title.lowercase().trim()}|${t.artists.joinToString(",") { it.name.lowercase().trim() }}"
+    }
+
+    fun List<MediaItem>.spreadByArtist(): List<MediaItem> {
+        if (isEmpty()) return this
+        val result = mutableListOf<MediaItem>()
+        val remaining = toMutableList()
+        var lastArtistIds = setOf<String>()
+
+        while (remaining.isNotEmpty()) {
+            val next = remaining.find { item ->
+                item.track.artists.none { it.id in lastArtistIds }
+            } ?: remaining.first()
+            
+            result.add(next)
+            remaining.remove(next)
+            lastArtistIds = next.track.artists.map { it.id }.toSet()
+        }
+        return result
+    }
+
+    fun List<MediaItem>.sameVibeAs(anchor: MediaItem?): List<MediaItem> {
+        if (anchor == null || isEmpty()) return this
+        val genres = anchor.track.genres.map { it.lowercase() }.toSet()
+        val artists = anchor.track.artists.map { it.id }.toSet()
+
+        return sortedByDescending { item ->
+            var score = 0
+            if (item.track.genres.any { it.lowercase() in genres }) score += 10
+            if (item.track.artists.any { it.id in artists }) score += 5
+            score
+        }
+    }
 }

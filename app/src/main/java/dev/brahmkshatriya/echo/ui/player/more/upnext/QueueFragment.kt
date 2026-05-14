@@ -81,7 +81,11 @@ class QueueFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupTransition(view, false, axis = MaterialSharedAxis.Y)
-        val recyclerView = binding!!.root
+        binding!!.smartQueue.setOnClickListener { viewModel.applySmartQueue() }
+        binding!!.dedupeQueue.setOnClickListener { viewModel.dedupeQueue() }
+        binding!!.fuseSources.setOnClickListener { viewModel.fuseQueueSources() }
+
+        val recyclerView = binding!!.queueList
         recyclerView.adapter = queueAdapter
         touchHelper.attachToRecyclerView(recyclerView)
         val manager = recyclerView.layoutManager as LinearLayoutManager
@@ -96,7 +100,7 @@ class QueueFragment : Fragment() {
             }
             queueAdapter.submitList(it) {
                 currentIndex ?: return@submitList
-                binding?.root?.scrollToPosition(currentIndex)
+                binding?.queueList?.scrollToPosition(currentIndex)
             }
         }
 

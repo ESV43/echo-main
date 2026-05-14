@@ -181,6 +181,35 @@
             app:navigationIcon="@drawable/ic_search_outline"
             tools:ignore="RtlSymmetry" />
 
+        <LinearLayout
+            android:id="@+id/lyricsStudioControls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingBottom="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/lyricsOffsetDown"
+                style="@style/IconButtonTonal"
+                android:text="@string/v4_lyrics_offset_down" />
+
+            <TextView
+                android:id="@+id/lyricsOffsetValue"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                tools:text="0 ms" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/lyricsOffsetUp"
+                style="@style/IconButtonTonal"
+                android:text="@string/v4_lyrics_offset_up" />
+        </LinearLayout>
+
     </com.google.android.material.appbar.AppBarLayout>
 
     <TextView

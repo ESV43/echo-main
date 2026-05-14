@@ -7,6 +7,7 @@ import dev.brahmkshatriya.echo.common.models.Feed
 import dev.brahmkshatriya.echo.common.models.Feed.Companion.toFeed
 import dev.brahmkshatriya.echo.common.settings.Setting
 import dev.brahmkshatriya.echo.common.settings.Settings
+import dev.brahmkshatriya.echo.common.helpers.ClientException
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -37,7 +38,7 @@ abstract class BaseLyricsClient : LyricsClient {
     }
 
     override suspend fun searchTrackLyrics(clientId: String, track: Track): Feed<Lyrics> {
-        return listOf<Lyrics>().toFeed()
+        throw ClientException.NotSupported("Lyrics Search")
     }
 
     override suspend fun loadLyrics(lyrics: Lyrics): Lyrics {

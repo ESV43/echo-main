@@ -34,4 +34,11 @@ interface TrackerClient : ExtensionClient {
      * @param details the details of the track that is playing, or null if the player is empty.
      */
     suspend fun onPlayingStateChanged(details: TrackDetails?, isPlaying: Boolean)
+
+    /**
+     * Called when the user skips the current track.
+     *
+     * @param details the details of the track that was skipped.
+     */
+    suspend fun onTrackSkipped(details: TrackDetails)
 }
