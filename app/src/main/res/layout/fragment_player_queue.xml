@@ -17,12 +17,12 @@
         android:paddingVertical="8dp"
         android:scrollbars="none">
 
-        <com.google.android.material.button.MaterialButtonGroup
-            style="@style/Widget.Material3.MaterialButtonGroup.Connected"
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            style="@style/Widget.Material3.MaterialButtonToggleGroup.Connected"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:spacing="-4dp">
+            app:spacing="-4dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/smartQueue"
@@ -42,7 +42,7 @@
                 android:text="@string/v4_fuse_sources_short"
                 app:icon="@drawable/ic_extension" />
 
-        </com.google.android.material.button.MaterialButtonGroup>
+        </com.google.android.material.button.MaterialButtonToggleGroup>
     </HorizontalScrollView>
 
     <androidx.recyclerview.widget.RecyclerView

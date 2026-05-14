@@ -44,12 +44,12 @@
             app:singleSelection="true" />
 
 
-        <com.google.android.material.button.MaterialButtonGroup
-            style="@style/Widget.Material3.MaterialButtonGroup.Connected"
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            style="@style/Widget.Material3.MaterialButtonToggleGroup.Connected"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:spacing="4dp">
+            app:spacing="4dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/logout"
@@ -72,7 +72,7 @@
                 app:icon="@drawable/ic_add_circle"
                 android:text="@string/add" />
 
-        </com.google.android.material.button.MaterialButtonGroup>
+        </com.google.android.material.button.MaterialButtonToggleGroup>
     </LinearLayout>
 
 

@@ -7,7 +7,7 @@ import androidx.core.view.children
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.button.MaterialButtonGroup
+import com.google.android.material.button.MaterialButtonToggleGroup
 import dev.brahmkshatriya.echo.databinding.ItemTabBinding
 import dev.brahmkshatriya.echo.databinding.ItemTabContainerBinding
 import dev.brahmkshatriya.echo.ui.common.GridAdapter
@@ -35,7 +35,7 @@ class TabsAdapter<T>(
             parent?.let { apply(it) }
         }
 
-    var parent: MaterialButtonGroup? = null
+    var parent: MaterialButtonToggleGroup? = null
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         super.onBindViewHolder(holder, position)
         val parent = holder.binding.buttonGroup
@@ -49,7 +49,7 @@ class TabsAdapter<T>(
         }
     }
 
-    fun apply(parent: MaterialButtonGroup) {
+    fun apply(parent: MaterialButtonToggleGroup) {
         val tabs = data
         parent.isVisible = tabs.isNotEmpty()
         if (tabs.isEmpty()) return

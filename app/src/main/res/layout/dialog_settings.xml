@@ -55,18 +55,18 @@
                 android:textAppearance="?attr/textAppearanceTitleSmall"
                 android:layout_marginBottom="12dp" />
 
-            <com.google.android.material.button.MaterialButtonGroup
-                style="@style/Widget.Material3.MaterialButtonGroup.Connected"
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                style="@style/Widget.Material3.MaterialButtonToggleGroup.Connected"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
                 android:orientation="vertical"
-                android:spacing="-4dp">
+                app:spacing="-4dp">
                 <com.google.android.material.button.MaterialButton android:id="@+id/player" style="@style/SideBarButton" android:text="@string/player" app:icon="@drawable/ic_play_circle" />
                 <com.google.android.material.button.MaterialButton android:id="@+id/lookAndFeel" style="@style/SideBarButton" android:text="@string/look_and_feel" app:icon="@drawable/ic_palette" />
                 <com.google.android.material.button.MaterialButton android:id="@+id/other" style="@style/SideBarButton" android:text="@string/other" app:icon="@drawable/ic_more_horiz" />
                 <com.google.android.material.button.MaterialButton android:id="@+id/v4Lab" style="@style/SideBarButton" android:text="@string/v4_lab" app:icon="@drawable/ic_autorenew" />
-            </com.google.android.material.button.MaterialButtonGroup>
+            </com.google.android.material.button.MaterialButtonToggleGroup>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -94,25 +94,25 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <com.google.android.material.button.MaterialButtonGroup
-                style="@style/Widget.Material3.MaterialButtonGroup.Connected"
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                style="@style/Widget.Material3.MaterialButtonToggleGroup.Connected"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
                 android:orientation="vertical"
-                android:spacing="-4dp">
+                app:spacing="-4dp">
                 <com.google.android.material.button.MaterialButton android:id="@+id/language" style="@style/SideBarButton" android:text="@string/language_x" app:icon="@drawable/ic_translate" />
                 <com.google.android.material.button.MaterialButton android:id="@+id/wiki" style="@style/SideBarButton" android:text="@string/guide" app:icon="@drawable/ic_info" />
                 <com.google.android.material.button.MaterialButton android:id="@+id/contributors" style="@style/SideBarButton" android:text="@string/contributors" app:icon="@drawable/ic_person" />
                 <com.google.android.material.button.MaterialButton android:id="@+id/donate" style="@style/SideBarButton" android:backgroundTint="?colorSecondary" android:text="@string/donate" android:textColor="?colorOnSecondary" app:icon="@drawable/ic_heart_filled_40dp" app:iconTint="?colorOnSecondary" />
-            </com.google.android.material.button.MaterialButtonGroup>
+            </com.google.android.material.button.MaterialButtonToggleGroup>
 
-            <com.google.android.material.button.MaterialButtonGroup
-                android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_gravity="center" android:layout_marginTop="12dp" android:gravity="center" android:orientation="horizontal" android:spacing="0dp">
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_gravity="center" android:layout_marginTop="12dp" android:gravity="center" android:orientation="horizontal" app:spacing="0dp">
                 <com.google.android.material.button.MaterialButton android:id="@+id/discord" style="@style/IconButtonTonalBig" app:icon="@drawable/ic_discord" />
                 <com.google.android.material.button.MaterialButton android:id="@+id/github" style="@style/IconButtonTonalBig" app:icon="@drawable/ic_github" />
                 <com.google.android.material.button.MaterialButton android:id="@+id/telegram" style="@style/IconButtonTonalBig" app:icon="@drawable/ic_telegram" />
-            </com.google.android.material.button.MaterialButtonGroup>
+            </com.google.android.material.button.MaterialButtonToggleGroup>
 
             <TextView android:id="@+id/version" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:paddingVertical="20dp" android:text="@string/version" />
             <ImageView android:id="@+id/shivam" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="24dp" android:src="@drawable/art_shivam" />
