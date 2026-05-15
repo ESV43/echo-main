@@ -9,6 +9,7 @@ import androidx.annotation.OptIn
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.scale
 import androidx.core.os.bundleOf
+import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.Rating
 import androidx.media3.common.ThumbRating
@@ -417,31 +418,11 @@ class PlayerCallback(
                 )
             }.build()
             session.player.with {
-                val item = session.player.with { currentMediaItem }
-                    ?: return@future SessionResult(SessionError.ERROR_UNKNOWN)
                 val index = currentMediaItemIndex
-                if (index == C.INDEX_UNSET) return@future SessionResult(SessionError.ERROR_UNKNOWN)
-            val track = item.track
-            runCatching {
-                val extension = extensions.music.getExtensionOrThrow(item.extensionId)
-                extension.getAs<LikeClient, Unit> {
-                    likeItem(track, rating.isThumbsUp)
+                if (index != C.INDEX_UNSET) {
+                    replaceMediaItem(index, newItem)
                 }
-            }.getOrElse {
-                throwableFlow.emit(PlayerException(item, it))
-                return@future SessionResult(SessionError.ERROR_UNKNOWN)
             }
-            val liked = rating.isThumbsUp
-            val newItem = item.run {
-                buildUpon().setMediaMetadata(
-                    mediaMetadata.buildUpon().setUserRating(ThumbRating(liked)).build()
-                )
-            }.build()
-            session.player.with {
-                replaceMediaItem(index, newItem)
-            }
-            SessionResult(RESULT_SUCCESS, bundleOf("liked" to liked))
-        }
             SessionResult(RESULT_SUCCESS, bundleOf("liked" to liked))
         }
     }
