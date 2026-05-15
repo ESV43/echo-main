@@ -215,7 +215,7 @@ class PlayerCallback(
         is Album -> extension.getAs<AlbumClient, EchoMediaItem> { loadAlbum(item) }
         is Playlist -> extension.getAs<PlaylistClient, EchoMediaItem> { loadPlaylist(item) }
         is Artist -> extension.getAs<ArtistClient, EchoMediaItem> { loadArtist(item) }
-        is Radio -> throw IllegalStateException()
+        is Radio -> Result.success(item)
     }.getOrThrow()
 
     private suspend fun listTracks(

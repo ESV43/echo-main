@@ -13,25 +13,22 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.edit
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.viewModelScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.slider.Slider
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.databinding.DialogPlayerAudioFxBinding
 import dev.brahmkshatriya.echo.databinding.FragmentAudioFxBinding
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.BASS_BOOST
-import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.CHANGE_PITCH
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.CUSTOM_EFFECTS
+import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.PLAYBACK_PITCH
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.PLAYBACK_SPEED
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.deleteFxPrefs
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.getFxPrefs
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.globalFx
-import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.speedRange
 import dev.brahmkshatriya.echo.ui.player.PlayerViewModel
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.PermsUtils.registerActivityResultLauncher
 import dev.brahmkshatriya.echo.utils.ui.AutoClearedValue.Companion.autoCleared
-import dev.brahmkshatriya.echo.utils.ui.RulerAdapter
-import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
@@ -87,25 +84,31 @@ class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
         fun FragmentAudioFxBinding.bind(
             settings: SharedPreferences, onEqualizerClicked: () -> Unit
         ) {
-            val speed = settings.getInt(PLAYBACK_SPEED, speedRange.indexOf(1f))
-            val adapter = RulerAdapter(object : RulerAdapter.Listener<Int> {
-                override fun intervalText(value: Int) = "${speedRange.getOrNull(value) ?: 1f}x"
-                override fun onSelectItem(value: Int) {
-                    speedValue.text = "${speedRange.getOrNull(value) ?: 1f}x"
-                    settings.edit { putInt(PLAYBACK_SPEED, value) }
+            val currentSpeed = runCatching { settings.getFloat(PLAYBACK_SPEED, 1f) }
+                .getOrDefault(1f).coerceIn(0.25f, 4f)
+            val currentPitch = runCatching { settings.getFloat(PLAYBACK_PITCH, 1f) }
+                .getOrDefault(1f).coerceIn(0.25f, 4f)
+
+            speedValue.text = "%.2fx".format(currentSpeed)
+            speedSlider.value = currentSpeed
+            speedSlider.addOnChangeListener { _: Slider, value: Float, fromUser: Boolean ->
+                if (fromUser) {
+                    val v = value.coerceIn(0.25f, 4f)
+                    speedValue.text = "%.2fx".format(v)
+                    settings.edit { putFloat(PLAYBACK_SPEED, v) }
                 }
-            })
-
-            speedRecycler.adapter = adapter
-            adapter.submitList(List(speedRange.size) { index -> index to (index % 2 == 0) }, speed)
-
-            pitchSwitch.isChecked = settings.getBoolean(CHANGE_PITCH, true)
-            pitch.setOnClickListener {
-                pitchSwitch.isChecked = !pitchSwitch.isChecked
             }
-            pitchSwitch.setOnCheckedChangeListener { _, isChecked ->
-                settings.edit { putBoolean(CHANGE_PITCH, isChecked) }
+
+            pitchValue.text = "%.2fx".format(currentPitch)
+            pitchSlider.value = currentPitch
+            pitchSlider.addOnChangeListener { _: Slider, value: Float, fromUser: Boolean ->
+                if (fromUser) {
+                    val v = value.coerceIn(0.25f, 4f)
+                    pitchValue.text = "%.2fx".format(v)
+                    settings.edit { putFloat(PLAYBACK_PITCH, v) }
+                }
             }
+
             bassBoostSlider.value = settings.getInt(BASS_BOOST, 0).toFloat()
             bassBoostSlider.addOnChangeListener { _, value, _ ->
                 settings.edit { putInt(BASS_BOOST, value.toInt()) }

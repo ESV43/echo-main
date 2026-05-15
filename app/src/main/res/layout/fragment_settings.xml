@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="dev.brahmkshatriya.echo.ui.settings.SettingsFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="72dp">
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            style="@style/Widget.Material3Expressive.MaterialButtonToggleGroup.Connected"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="vertical"
+            app:spacing="-4dp">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/player"
+                style="@style/SideBarButton"
+                android:text="@string/player"
+                app:icon="@drawable/ic_play_circle" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/lookAndFeel"
+                style="@style/SideBarButton"
+                android:text="@string/look_and_feel"
+                app:icon="@drawable/ic_palette" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/other"
+                style="@style/SideBarButton"
+                android:text="@string/other"
+                app:icon="@drawable/ic_more_horiz" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/v4Lab"
+                style="@style/SideBarButton"
+                android:text="@string/v4_lab"
+                app:icon="@drawable/ic_autorenew" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/downloads"
+            style="@style/SideBarButton"
+            android:text="@string/downloads"
+            app:icon="@drawable/ic_download_for_offline" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

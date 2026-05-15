@@ -119,7 +119,8 @@ class PlayerService : MediaLibraryService() {
         setListener(MediaSessionServiceListener(this, getPendingIntent(this)))
 
         val shufflePlayer = ShufflePlayer(exoPlayer)
-        val player = CrossfadePlayer(shufflePlayer, secondaryExoPlayer, app.settings)
+        val fadePlayer = FadePlayer(shufflePlayer, app.settings)
+        val player = CrossfadePlayer(fadePlayer, secondaryExoPlayer, app.settings)
         scope.launch(Dispatchers.Main) {
             mediaChangeFlow.collect { (o, n) -> shufflePlayer.onMediaItemChanged(o, n) }
         }

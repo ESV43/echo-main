@@ -27,72 +27,60 @@
             android:layout_gravity="center"
             android:textColor="?colorPrimary"
             android:textSize="18sp"
-            app:drawableBottomCompat="@drawable/ic_expand_more"
-            app:drawableTint="?colorPrimary"
-            tools:text="1x" />
+            tools:text="1.00x" />
 
-        <com.bosphere.fadingedgelayout.FadingEdgeLayout
+        <com.google.android.material.slider.Slider
+            android:id="@+id/speedSlider"
             android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:stepSize="0.05"
+            android:value="1"
+            android:valueFrom="0.25"
+            android:valueTo="4" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginVertical="8dp"
+            android:alpha="0.15"
+            android:background="?attr/colorOnSurface" />
+
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="24dp"
-            android:layout_marginTop="8dp"
-            app:fel_edge="left|right"
-            app:fel_size_left="80dp"
-            app:fel_size_right="80dp">
+            android:text="@string/playback_pitch"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="18sp" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/speed_recycler"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_ruler" />
+        <TextView
+            android:id="@+id/pitchValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textColor="?colorPrimary"
+            android:textSize="18sp"
+            tools:text="1.00x" />
 
-        </com.bosphere.fadingedgelayout.FadingEdgeLayout>
-
-        <LinearLayout
-            android:id="@+id/pitch"
+        <com.google.android.material.slider.Slider
+            android:id="@+id/pitchSlider"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?selectableItemBackground"
-            android:baselineAligned="false"
-            android:orientation="horizontal"
-            android:paddingVertical="20dp">
+            android:layout_marginHorizontal="16dp"
+            android:stepSize="0.05"
+            android:value="1"
+            android:valueFrom="0.25"
+            android:valueTo="4" />
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:minHeight="44sp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/change_pitch_with_speed"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:alpha="0.66"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:text="@string/change_pitch_with_speed_desc" />
-
-            </LinearLayout>
-
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/pitchSwitch"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_marginEnd="24dp"
-                android:clickable="false" />
-
-        </LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginVertical="8dp"
+            android:alpha="0.15"
+            android:background="?attr/colorOnSurface" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -147,6 +135,5 @@
                 android:text="@string/equalizer_summary" />
         </LinearLayout>
     </LinearLayout>
-
 
 </me.zhanghai.android.fastscroll.FastScrollNestedScrollView>
