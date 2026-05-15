@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.transition.MaterialSharedAxis
+import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.databinding.FragmentPlayerQueueBinding
 import dev.brahmkshatriya.echo.ui.player.PlayerViewModel
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
@@ -81,26 +83,42 @@ class QueueFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupTransition(view, false, axis = MaterialSharedAxis.Y)
-        binding!!.smartQueue.setOnClickListener { viewModel.applySmartQueue() }
-        binding!!.dedupeQueue.setOnClickListener { viewModel.dedupeQueue() }
-        binding!!.fuseSources.setOnClickListener { viewModel.fuseQueueSources() }
 
-        val recyclerView = binding!!.queueList
+        val binding = binding!!
+        val recyclerView = binding.queueList
         recyclerView.adapter = queueAdapter
         touchHelper.attachToRecyclerView(recyclerView)
         val manager = recyclerView.layoutManager as LinearLayoutManager
         val screenHeight = view.resources.displayMetrics.heightPixels / 3
 
+        binding.queueActions.setOnClickListener { btn ->
+            val popup = android.widget.PopupMenu(requireContext(), btn)
+            popup.menu.add(0, 1, 0, R.string.v4_smart_queue_short)
+            popup.menu.add(0, 2, 0, R.string.v4_dedupe_short)
+            popup.menu.add(0, 3, 0, R.string.v4_fuse_sources_short)
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    1 -> viewModel.applySmartQueue()
+                    2 -> viewModel.dedupeQueue()
+                    3 -> viewModel.fuseQueueSources()
+                }
+                true
+            }
+            popup.show()
+        }
+
         fun submit() {
             val current = viewModel.playerState.current.value
             val currentIndex = current?.index
-            val it = viewModel.queue.mapIndexed { index, mediaItem ->
+            val items = viewModel.queue.mapIndexed { index, mediaItem ->
                 if (currentIndex == index) current.isPlaying to current.mediaItem
                 else null to mediaItem
             }
-            queueAdapter.submitList(it) {
+            binding.emptyView.isVisible = items.isEmpty()
+            binding.queueActions.isVisible = items.isNotEmpty()
+            queueAdapter.submitList(items) {
                 currentIndex ?: return@submitList
-                binding?.queueList?.scrollToPosition(currentIndex)
+                binding.queueList.scrollToPosition(currentIndex)
             }
         }
 

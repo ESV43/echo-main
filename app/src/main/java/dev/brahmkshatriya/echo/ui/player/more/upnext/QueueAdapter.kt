@@ -107,6 +107,8 @@ class QueueAdapter(
         binding.playlistItemClose.isVisible = !inactive
         binding.playlistItemDrag.isVisible = !inactive
         binding.playlistCurrentItem.isVisible = isCurrent
+        binding.playlistCurrentIndicator.isVisible = isCurrent
+        binding.playlistItemTitle.alpha = if (isCurrent) 1f else 0.87f
         binding.playlistProgressBar.isVisible = isCurrent && !item.isLoaded
         binding.playlistItem.alpha = if (inactive) 0.5f else 1f
     }

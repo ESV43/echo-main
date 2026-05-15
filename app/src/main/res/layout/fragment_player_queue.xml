@@ -1,57 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?echoBackground"
     android:backgroundTint="#54FFFFFF"
-    android:backgroundTintMode="multiply"
-    android:orientation="vertical">
-
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clipToPadding="false"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="8dp"
-        android:scrollbars="none">
-
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            style="@style/Widget.Material3Expressive.MaterialButtonToggleGroup.Connected"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:spacing="-4dp">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/smartQueue"
-                style="@style/SideBarButton"
-                android:text="@string/v4_smart_queue_short"
-                app:icon="@drawable/ic_queue_music" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/dedupeQueue"
-                style="@style/SideBarButton"
-                android:text="@string/v4_dedupe_short"
-                app:icon="@drawable/ic_playlist_add" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/fuseSources"
-                style="@style/SideBarButton"
-                android:text="@string/v4_fuse_sources_short"
-                app:icon="@drawable/ic_extension" />
-
-        </com.google.android.material.button.MaterialButtonToggleGroup>
-    </HorizontalScrollView>
+    android:backgroundTintMode="multiply">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/queueList"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
         android:clipToPadding="false"
         android:paddingVertical="4dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         tools:listitem="@layout/item_playlist_track" />
-</LinearLayout>
+
+    <TextView
+        android:id="@+id/emptyView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:alpha="0.5"
+        android:gravity="center"
+        android:text="@string/queue_empty"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/queueActions"
+        style="?attr/materialIconButtonStyle"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="8dp"
+        android:visibility="gone"
+        app:icon="@drawable/ic_more_horiz"
+        app:iconSize="20dp"
+        app:iconTint="?colorOnSurface" />
+</FrameLayout>

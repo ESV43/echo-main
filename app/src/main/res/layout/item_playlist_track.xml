@@ -12,7 +12,15 @@
         android:id="@+id/playlistCurrentItem"
         android:layout_width="match_parent"
         android:layout_height="@dimen/collapsed_cover_size"
-        android:alpha="0.15"
+        android:alpha="0.12"
+        android:visibility="gone"
+        android:background="@drawable/shape_rounded_item_corner"
+        android:backgroundTint="?colorPrimary" />
+
+    <View
+        android:id="@+id/playlistCurrentIndicator"
+        android:layout_width="3dp"
+        android:layout_height="@dimen/collapsed_cover_size"
         android:visibility="gone"
         android:background="@drawable/shape_rounded_item_corner"
         android:backgroundTint="?colorPrimary" />
