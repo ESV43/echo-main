@@ -13,14 +13,20 @@ class PauseTimer(
     private var job: Job? = null
     private var lastPauseTime: Long = System.currentTimeMillis()
     private var isTimerPaused: Boolean = true
+    var isFinished: Boolean = false
+        private set
 
     fun resume() {
-        if (isTimerPaused) {
+        if (isTimerPaused && !isFinished) {
             val diff = System.currentTimeMillis() - lastPauseTime
             val remainingTime =  millisInFuture - diff
-            if (remainingTime < 0) return
+            if (remainingTime < 0) {
+                isFinished = true
+                return
+            }
             job = scope.launch {
                 delay(remainingTime)
+                isFinished = true
                 onTimerFinish()
             }
             isTimerPaused = false
@@ -31,6 +37,11 @@ class PauseTimer(
         job?.cancel()
         lastPauseTime = System.currentTimeMillis()
         isTimerPaused = true
+    }
+
+    fun cancel() {
+        job?.cancel()
+        isFinished = true
     }
 
     init {

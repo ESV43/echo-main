@@ -298,13 +298,13 @@ class V4LabFragment : BaseSettingsFragment() {
 
             val unified = extensionLoader.music.value.find {
                 it.id == UnifiedExtension.UNIFIED_ID
-            }?.instance?.value?.getOrNull() as? UnifiedExtension
+            }?.instance?.value as? UnifiedExtension
 
             lifecycleScope.launch {
                 val health = unified?.db?.getLibraryHealth() ?: mapOf()
                 val history = unified?.db?.getRecentlyPlayed(1000) ?: listOf()
-                val plays = history.sumOf { (unified?.db?.dao?.getHistory(it.id, it.extras.extensionId)?.playCount ?: 0) }
-                val skips = history.sumOf { (unified?.db?.dao?.getHistory(it.id, it.extras.extensionId)?.skipCount ?: 0) }
+                val plays = history.sumOf { (unified?.db?.getHistory(it.id, it.extras.extensionId)?.playCount ?: 0) }
+                val skips = history.sumOf { (unified?.db?.getHistory(it.id, it.extras.extensionId)?.skipCount ?: 0) }
 
                 val message = getString(
                     R.string.v4_release_dashboard_message,

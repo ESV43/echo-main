@@ -66,6 +66,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import java.io.File
+import java.util.Calendar
+import org.koin.core.component.inject
 
 @OptIn(UnstableApi::class)
 class UnifiedExtension(
@@ -78,7 +80,7 @@ class UnifiedExtension(
     PlaylistEditClient, PlaylistEditCoverClient, LyricsClient, TrackerMarkClient,
     org.koin.core.component.KoinComponent {
 
-    private val downloader: dev.brahmkshatriya.echo.download.Downloader by org.koin.core.component.inject()
+    private val downloader: dev.brahmkshatriya.echo.download.Downloader by inject()
 
     companion object {
         const val UNIFIED_ID = "unified"
@@ -403,7 +405,7 @@ class UnifiedExtension(
         return buildList {
             if (hour in 5..11) {
                 val morningTracks = recentlyPlayed.filter { 
-                    val time = db.dao.getHistory(it.id, it.extras.extensionId)?.lastPlayed ?: 0
+                    val time = db.getHistory(it.id, it.extras.extensionId)?.lastPlayed ?: 0
                     val h = Calendar.getInstance().apply { timeInMillis = time }.get(Calendar.HOUR_OF_DAY)
                     h in 5..11
                 }
@@ -412,7 +414,7 @@ class UnifiedExtension(
                 }
             } else if (hour in 21..23 || hour in 0..4) {
                 val nightTracks = recentlyPlayed.filter { 
-                    val time = db.dao.getHistory(it.id, it.extras.extensionId)?.lastPlayed ?: 0
+                    val time = db.getHistory(it.id, it.extras.extensionId)?.lastPlayed ?: 0
                     val h = Calendar.getInstance().apply { timeInMillis = time }.get(Calendar.HOUR_OF_DAY)
                     h in 21..23 || h in 0..4
                 }

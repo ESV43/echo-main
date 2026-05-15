@@ -18,7 +18,7 @@ object ExtensionSandboxInspector {
     fun inspect(extension: MusicExtension): String {
         val meta = extension.metadata
         val clients = mutableListOf<String>()
-        val instance = extension.instance.value().getOrNull()
+        val instance = extension.instance.value
         
         if (instance is LoginClient) clients.add("Login")
         if (instance is HomeFeedClient) clients.add("Home")

@@ -10,6 +10,7 @@ import dev.brahmkshatriya.echo.common.clients.TrackClient
 import dev.brahmkshatriya.echo.common.models.DownloadContext
 import dev.brahmkshatriya.echo.common.models.Progress
 import dev.brahmkshatriya.echo.common.models.Streamable
+import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.download.db.DownloadDatabase
 import dev.brahmkshatriya.echo.download.db.models.ContextEntity
@@ -89,42 +90,42 @@ class Downloader(
         }
         ensureWorker()
     }
-private val workManager by lazy { WorkManager.getInstance(app.context) }
-private fun ensureWorker() {
-    val request = OneTimeWorkRequestBuilder<DownloadWorker>()
-        .setConstraints(Constraints(NetworkType.CONNECTED, requiresStorageNotLow = true))
-        .addTag(TAG)
-        .build()
-    workManager.enqueueUniqueWork(TAG, ExistingWorkPolicy.KEEP, request)
-}
 
-fun checkSmartDownloads() = scope.launch {
-    val prefs = app.context.getSharedPreferences(
-        dev.brahmkshatriya.echo.utils.ContextUtils.SETTINGS_NAME,
-        android.content.Context.MODE_PRIVATE
-    )
-    val rules = prefs.getStringSet(
-        dev.brahmkshatriya.echo.ui.settings.V4LabFragment.Keys.SMART_DOWNLOADS,
-        setOf("liked", "wifi", "storage")
-    ) ?: return@launch
+    private val workManager by lazy { WorkManager.getInstance(app.context) }
+    private fun ensureWorker() {
+        val request = OneTimeWorkRequestBuilder<DownloadWorker>()
+            .setConstraints(Constraints(NetworkType.CONNECTED, requiresStorageNotLow = true))
+            .addTag(TAG)
+            .build()
+        workManager.enqueueUniqueWork(TAG, ExistingWorkPolicy.KEEP, request)
+    }
 
-    if (rules.contains("liked")) {
-        val unified = extensionLoader.unified.value
-        val likedPlaylist = unified.db.getLikedPlaylist(app.context)
-        val tracks = unified.loadTracks(likedPlaylist).loadAll()
+    fun checkSmartDownloads() = scope.launch {
+        val prefs = app.context.getSharedPreferences(
+            dev.brahmkshatriya.echo.utils.ContextUtils.SETTINGS_NAME,
+            android.content.Context.MODE_PRIVATE
+        )
+        val rules = prefs.getStringSet(
+            dev.brahmkshatriya.echo.ui.settings.V4LabFragment.Keys.SMART_DOWNLOADS,
+            setOf("liked", "wifi", "storage")
+        ) ?: return@launch
 
-        val toDownload = tracks.filter { track ->
-            dao.getDownloadEntity(track.id.toLong()) == null
-        }
-        if (toDownload.isNotEmpty()) {
-            add(toDownload.map { 
-                DownloadContext(it, it.extras[EXTENSION_ID] ?: "", null, 0) 
-            })
+        if (rules.contains("liked")) {
+            val unified = extensionLoader.unified.value
+            val likedPlaylist = unified.db.getLikedPlaylist(app.context)
+            val tracks = unified.loadTracks(likedPlaylist).loadAll()
+
+            val toDownload = tracks.filter { track ->
+                dao.getDownloadEntity(track.id.toLong()) == null
+            }
+            if (toDownload.isNotEmpty()) {
+                add(toDownload.map {
+                    DownloadContext(it, it.extras[EXTENSION_ID] ?: "", null, 0)
+                })
+            }
         }
     }
-}
-...
-companion object {
+
     private val servers = ConcurrentHashMap<Long, Streamable.Media.Server>()
     private val mutexes = ConcurrentHashMap<Long, Mutex>()
 
@@ -233,12 +234,6 @@ companion object {
         }
     }
 
-    data class Info(
-        val download: DownloadEntity,
-        val context: ContextEntity?,
-        val workers: List<Pair<TaskType, Progress>>
-    )
-
     val flow = downloadInfoFlow.combine(taskManager.progressFlow) { downloads, info ->
         downloads.map { (dl, context) ->
             val workers = info.filter { it.first.trackId == dl.id }.map { (a, b) -> a.type to b }
@@ -266,5 +261,11 @@ companion object {
 
     companion object {
         private const val TAG = "Downloader"
+
+        data class Info(
+            val download: DownloadEntity,
+            val context: ContextEntity?,
+            val workers: List<Pair<TaskType, Progress>>
+        )
     }
 }

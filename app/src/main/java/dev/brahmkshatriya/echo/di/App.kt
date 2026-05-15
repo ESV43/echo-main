@@ -50,7 +50,7 @@ data class App(
             throwFlow.collectLatest {
                 it.printStackTrace()
                 if (it is dev.brahmkshatriya.echo.extensions.exceptions.AppException) {
-                    dev.brahmkshatriya.echo.extensions.ExtensionSandboxInspector.reportFailure(it.metadata.id, it)
+                    dev.brahmkshatriya.echo.extensions.ExtensionSandboxInspector.reportFailure(it.extension.id, it)
                 }
             }
         }

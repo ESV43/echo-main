@@ -38,6 +38,10 @@ class TrackerTestExtension : TrackerMarkClient {
         println("onMarkAsPlayed: ${details.track.id}")
     }
 
+    override suspend fun onTrackSkipped(details: TrackDetails) {
+        println("onTrackSkipped: ${details.track.id}")
+    }
+
     override suspend fun onPlayingStateChanged(details: TrackDetails?, isPlaying: Boolean) {
         println("onPlayingStateChanged $isPlaying: ${details?.track?.id}")
     }

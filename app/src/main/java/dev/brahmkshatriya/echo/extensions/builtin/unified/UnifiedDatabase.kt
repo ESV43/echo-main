@@ -61,6 +61,8 @@ abstract class UnifiedDatabase : RoomDatabase() {
         dao.insertSaved(item.toEntity())
     }
 
+    suspend fun getHistory(id: String, extId: String) = dao.getHistory(id, extId)
+
     suspend fun deleteSaved(item: EchoMediaItem) {
         dao.deleteSaved(item.toEntity())
     }

@@ -196,6 +196,10 @@ class UiViewModel(
         changeMoreState(STATE_COLLAPSED)
     }
 
+    fun expandPlayer() {
+        changePlayerState(STATE_EXPANDED)
+    }
+
     private var playerBehaviour = WeakReference<BottomSheetBehavior<View>>(null)
     fun changePlayerState(state: Int) {
         val behavior = playerBehaviour.get() ?: return

@@ -301,6 +301,10 @@ class TestExtension : ExtensionClient, LoginClient.CustomInput, TrackClient, Log
         println("onPlayingStateChanged $isPlaying : $details")
     }
 
+    override suspend fun onTrackSkipped(details: TrackDetails) {
+        println("onTrackSkipped : $details")
+    }
+
     override suspend fun getMarkAsPlayedDuration(details: TrackDetails) = 10000L
     override suspend fun onMarkAsPlayed(details: TrackDetails) {
         println("onMarkAsPlayed : $details")
