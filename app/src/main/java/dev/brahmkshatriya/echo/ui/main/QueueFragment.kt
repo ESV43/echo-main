@@ -38,9 +38,7 @@ class QueueFragment : Fragment(R.layout.fragment_queue) {
         binding.actionFuse.setOnClickListener { playerViewModel.fuseQueueSources() }
         binding.actionClear.setOnClickListener { playerViewModel.clearQueue() }
 
-        with(MainFragment) {
-            applyInsets(binding.recyclerView, binding.appBarOutline)
-        }
+        applyInsets(binding.recyclerView, binding.appBarOutline, 0) { }
         applyBackPressCallback()
     }
 }

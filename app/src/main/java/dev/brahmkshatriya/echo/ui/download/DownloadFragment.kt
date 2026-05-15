@@ -63,9 +63,7 @@ class DownloadFragment : Fragment(R.layout.fragment_download) {
         }
 
         applyBackPressCallback()
-        with(MainFragment) {
-            applyInsets(binding.recyclerView, binding.toolbarOutline)
-        }
+        applyInsets(binding.recyclerView, binding.toolbarOutline, 0) { }
 
         binding.fabCancel.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())

@@ -24,7 +24,7 @@ import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getAs
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getExtensionOrThrow
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.isClient
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.EXTENSION_ID
-import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.extensionId
+import dev.brahmkshatriya.echo.extensions.builtin.unified.extensionId
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.withExtensionId
 import dev.brahmkshatriya.echo.utils.Serializer.toJson
 import kotlinx.coroutines.CoroutineName

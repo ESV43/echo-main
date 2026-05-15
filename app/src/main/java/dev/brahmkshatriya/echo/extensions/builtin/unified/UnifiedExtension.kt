@@ -69,6 +69,9 @@ import java.io.File
 import java.util.Calendar
 import org.koin.core.component.inject
 
+val Map<String, String>.extensionId
+    get() = this[UnifiedExtension.EXTENSION_ID] ?: throw Exception("Extension id not found")
+
 @OptIn(UnstableApi::class)
 class UnifiedExtension(
     private val app: App,
@@ -85,9 +88,6 @@ class UnifiedExtension(
     companion object {
         const val UNIFIED_ID = "unified"
         const val EXTENSION_ID = "extension_id"
-
-        val Map<String, String>.extensionId
-            get() = this[EXTENSION_ID] ?: throw Exception("Extension id not found")
 
         val metadata = Metadata(
             "UnifiedExtension",
