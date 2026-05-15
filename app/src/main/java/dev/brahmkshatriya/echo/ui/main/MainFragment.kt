@@ -18,6 +18,7 @@ import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.BACKGROUND_GRADIE
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.applyGradient
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.applyInsets
 import dev.brahmkshatriya.echo.ui.main.search.SearchFragment
+import dev.brahmkshatriya.echo.ui.player.more.upnext.QueueFragment
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.setupTransition
@@ -42,7 +43,7 @@ class MainFragment : Fragment() {
         return binding.root
     }
 
-    private inline fun <reified F : Fragment> Fragment.addIfNull(tag: String): String {
+    private inline fun <reified F : Fragment> addFragmentIfNull(tag: String): String {
         addIfNull<F>(R.id.main_fragment_container_view, tag)
         return tag
     }
@@ -54,11 +55,11 @@ class MainFragment : Fragment() {
         }
         observe(viewModel.navigation) {
             val toShow = when (it) {
-                1 -> addIfNull<SearchFragment>("search")
-                2 -> addIfNull<LibraryFragment>("library")
-                3 -> addIfNull<QueueFragment>("queue")
-                4 -> addIfNull<MoreFragment>("more")
-                else -> addIfNull<HomeFragment>("home")
+                1 -> addFragmentIfNull<SearchFragment>("search")
+                2 -> addFragmentIfNull<LibraryFragment>("library")
+                3 -> addFragmentIfNull<QueueFragment>("queue")
+                4 -> addFragmentIfNull<MoreFragment>("more")
+                else -> addFragmentIfNull<HomeFragment>("home")
             }
 
             childFragmentManager.commit(true) {
