@@ -16,6 +16,7 @@ import dev.brahmkshatriya.echo.ui.common.GridAdapter.Companion.configureGridLayo
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.applyBackPressCallback
 import dev.brahmkshatriya.echo.ui.download.DownloadsAdapter.Companion.toItems
 import dev.brahmkshatriya.echo.ui.download.DownloadsAdapter.Filter
+import dev.brahmkshatriya.echo.ui.main.MainFragment
 import dev.brahmkshatriya.echo.ui.main.MainFragment.Companion.applyInsets
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.setupTransition

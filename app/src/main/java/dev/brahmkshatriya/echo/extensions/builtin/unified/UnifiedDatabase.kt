@@ -23,7 +23,6 @@ import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedDatabase.Playli
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedDatabase.SavedEntity.Companion.toEntity
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.EXTENSION_ID
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.UNIFIED_ID
-import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.extensionId
 import dev.brahmkshatriya.echo.utils.Serializer.toData
 import dev.brahmkshatriya.echo.utils.Serializer.toJson
 import java.io.File
