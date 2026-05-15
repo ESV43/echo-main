@@ -8,6 +8,7 @@ import androidx.work.WorkManager
 import dev.brahmkshatriya.echo.common.clients.DownloadClient
 import dev.brahmkshatriya.echo.common.clients.TrackClient
 import dev.brahmkshatriya.echo.common.models.DownloadContext
+import dev.brahmkshatriya.echo.common.models.Feed.Companion.loadAll
 import dev.brahmkshatriya.echo.common.models.Progress
 import dev.brahmkshatriya.echo.common.models.Streamable
 import dev.brahmkshatriya.echo.common.models.Track
@@ -23,6 +24,7 @@ import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getAs
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getExtensionOrThrow
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.isClient
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.EXTENSION_ID
+import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.extensionId
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.withExtensionId
 import dev.brahmkshatriya.echo.utils.Serializer.toJson
 import kotlinx.coroutines.CoroutineName
@@ -39,6 +41,12 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+
+data class Info(
+    val download: DownloadEntity,
+    val context: ContextEntity?,
+    val workers: List<Pair<TaskType, Progress>>
+)
 
 class Downloader(
     val app: App,
@@ -79,7 +87,7 @@ class Downloader(
             dao.insertDownloadEntity(
                 DownloadEntity(
                     0,
-                    it.track.extras[EXTENSION_ID] ?: it.extensionId,
+                    it.track.extras.extensionId,
                     it.track.id,
                     contexts[it.context?.id],
                     it.sortOrder,
@@ -115,12 +123,15 @@ class Downloader(
             val likedPlaylist = unified.db.getLikedPlaylist(app.context)
             val tracks = unified.loadTracks(likedPlaylist).loadAll()
 
-            val toDownload = tracks.filter { track ->
-                dao.getDownloadEntity(track.id.toLong()) == null
+            val toDownload = mutableListOf<Track>()
+            tracks.forEach { track ->
+                if (dao.getDownloadEntity(track.id.toLong()) == null) {
+                    toDownload.add(track)
+                }
             }
             if (toDownload.isNotEmpty()) {
                 add(toDownload.map {
-                    DownloadContext(it, it.extras[EXTENSION_ID] ?: "", null, 0)
+                    DownloadContext(it, it.extras.extensionId, null, 0)
                 })
             }
         }
@@ -235,9 +246,9 @@ class Downloader(
     }
 
     val flow = downloadInfoFlow.combine(taskManager.progressFlow) { downloads, info ->
-        downloads.map { (dl, context) ->
-            val workers = info.filter { it.first.trackId == dl.id }.map { (a, b) -> a.type to b }
-            Info(dl, context, workers)
+        downloads.map { dl ->
+            val workers = info.filter { it.first.trackId == dl.download.id }.map { (a, b) -> a.type to b }
+            dl.copy(workers = workers)
         }.sortedByDescending { it.workers.size }
     }.stateIn(scope, SharingStarted.Eagerly, listOf())
 
@@ -261,11 +272,5 @@ class Downloader(
 
     companion object {
         private const val TAG = "Downloader"
-
-        data class Info(
-            val download: DownloadEntity,
-            val context: ContextEntity?,
-            val workers: List<Pair<TaskType, Progress>>
-        )
     }
 }

@@ -20,6 +20,7 @@ import dev.brahmkshatriya.echo.common.models.Streamable
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.download.Downloader
+import dev.brahmkshatriya.echo.download.Info
 import dev.brahmkshatriya.echo.extensions.MediaState
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.selectServerIndex
 import dev.brahmkshatriya.echo.utils.Serializer.getSerialized
@@ -34,7 +35,7 @@ object MediaItemUtils {
 
     fun build(
         app: App,
-        downloads: List<Downloader.Info>,
+        downloads: List<Info>,
         state: MediaState.Unloaded<Track>,
         context: EchoMediaItem?,
     ): MediaItem {
@@ -48,7 +49,7 @@ object MediaItemUtils {
 
     fun buildLoaded(
         app: App,
-        downloads: List<Downloader.Info>,
+        downloads: List<Info>,
         mediaItem: MediaItem,
         state: MediaState.Loaded<Track>,
     ): MediaItem = with(mediaItem) {
@@ -160,7 +161,7 @@ object MediaItemUtils {
     @OptIn(UnstableApi::class)
     private fun MediaState<Track>.toMetaData(
         bundle: Bundle,
-        downloads: List<Downloader.Info>,
+        downloads: List<Info>,
         context: EchoMediaItem? = bundle.getSerialized<EchoMediaItem>("context")?.getOrNull(),
         loaded: Boolean = bundle.getBoolean("loaded"),
         app: App,

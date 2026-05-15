@@ -3,8 +3,10 @@ package dev.brahmkshatriya.echo.utils
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build.SUPPORTED_ABIS
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -35,6 +37,17 @@ object ContextUtils {
         lifecycleScope.launch {
             flow.flowWithLifecycle(lifecycle).collectLatest(block)
         }
+
+    fun LifecycleOwner.observe(prefs: SharedPreferences, block: () -> Unit) {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> block() }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onDestroy(owner: LifecycleOwner) {
+                prefs.unregisterOnSharedPreferenceChangeListener(listener)
+            }
+        })
+        block()
+    }
 
     fun <T> LifecycleOwner.collect(flow: Flow<T>, block: suspend (T) -> Unit) =
         lifecycleScope.launch {

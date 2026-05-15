@@ -15,6 +15,7 @@ import dev.brahmkshatriya.echo.common.models.Playlist
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.databinding.DialogMediaMoreBinding
 import dev.brahmkshatriya.echo.download.Downloader
+import dev.brahmkshatriya.echo.download.Info
 import dev.brahmkshatriya.echo.extensions.MediaState
 import dev.brahmkshatriya.echo.extensions.builtin.offline.OfflineExtension
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.EXTENSION_ID
@@ -144,7 +145,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
         client: ExtensionClient?,
         state: MediaState.Loaded<*>?,
         loaded: Boolean,
-        downloads: List<Downloader.Info>,
+        downloads: List<Info>,
         sleepTimer: Long?
     ) = getPlayerButtons(sleepTimer) +
             getPlayButtons(client, state?.item ?: item, loaded) +
@@ -238,7 +239,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     }
 
     fun getDownloadButtons(
-        client: ExtensionClient?, state: MediaState<*>?, downloads: List<Downloader.Info>
+        client: ExtensionClient?, state: MediaState<*>?, downloads: List<Info>
     ) = run {
         val item = state?.item ?: item
         val shouldShowDelete = when (item) {

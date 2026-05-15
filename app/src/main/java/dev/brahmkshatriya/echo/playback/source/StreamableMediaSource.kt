@@ -22,6 +22,7 @@ import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import dev.brahmkshatriya.echo.common.models.Streamable
 import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.download.Downloader
+import dev.brahmkshatriya.echo.download.Info
 import dev.brahmkshatriya.echo.extensions.ExtensionLoader
 import dev.brahmkshatriya.echo.playback.MediaItemUtils
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.backgroundIndex
@@ -160,7 +161,7 @@ class StreamableMediaSource(
         private val state: PlayerState,
         extensions: ExtensionLoader,
         cache: SimpleCache,
-        downloadFlow: StateFlow<List<Downloader.Info>>,
+        downloadFlow: StateFlow<List<Info>>,
         private val changeFlow: MutableSharedFlow<Pair<MediaItem, MediaItem>>,
     ) : MediaSource.Factory {
 

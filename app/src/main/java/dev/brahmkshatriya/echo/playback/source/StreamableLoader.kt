@@ -9,6 +9,7 @@ import dev.brahmkshatriya.echo.common.models.Streamable.Source.Companion.toSourc
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.download.Downloader
+import dev.brahmkshatriya.echo.download.Info
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getExtensionOrThrow
 import dev.brahmkshatriya.echo.extensions.MediaState
 import dev.brahmkshatriya.echo.extensions.cache.Cached
@@ -33,7 +34,7 @@ import java.io.File
 class StreamableLoader(
     private val app: App,
     private val extensionListFlow: StateFlow<List<MusicExtension>>,
-    private val downloadFlow: StateFlow<List<Downloader.Info>>
+    private val downloadFlow: StateFlow<List<Info>>
 ) {
     suspend fun load(mediaItem: MediaItem) = withContext(Dispatchers.IO) {
         extensionListFlow.first { it.isNotEmpty() }

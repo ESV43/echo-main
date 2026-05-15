@@ -11,6 +11,7 @@ import dev.brahmkshatriya.echo.common.models.Progress
 import dev.brahmkshatriya.echo.databinding.ItemDownloadBinding
 import dev.brahmkshatriya.echo.databinding.ItemDownloadTaskBinding
 import dev.brahmkshatriya.echo.download.Downloader
+import dev.brahmkshatriya.echo.download.Info
 import dev.brahmkshatriya.echo.download.db.models.ContextEntity
 import dev.brahmkshatriya.echo.download.db.models.DownloadEntity
 import dev.brahmkshatriya.echo.download.db.models.TaskType
@@ -168,7 +169,7 @@ class DownloadsAdapter(
 
 
     companion object {
-        fun List<Downloader.Info>.toItems(
+        fun List<Info>.toItems(
             extensions: List<Extension<*>>,
             filter: Filter = Filter.Active
         ) = filter {

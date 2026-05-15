@@ -10,6 +10,7 @@ import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.Feed
 import dev.brahmkshatriya.echo.databinding.FragmentDownloadBinding
 import dev.brahmkshatriya.echo.download.Downloader
+import dev.brahmkshatriya.echo.download.Info
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.getFeed
 import dev.brahmkshatriya.echo.ui.common.ExceptionFragment
@@ -39,7 +40,7 @@ class DownloadFragment : Fragment(R.layout.fragment_download) {
 
     private val vm by viewModel<DownloadViewModel>()
     private var filter = Filter.Active
-    private var latestInfos = emptyList<Downloader.Info>()
+    private var latestInfos = emptyList<Info>()
     private val downloadsAdapter by lazy {
         DownloadsAdapter(object : DownloadsAdapter.Listener {
             override fun onCancel(trackId: Long) = vm.cancel(trackId)
@@ -49,104 +50,81 @@ class DownloadFragment : Fragment(R.layout.fragment_download) {
         })
     }
 
-    private val feedViewModel by viewModel<FeedViewModel>()
-    private val feedData by lazy {
-        val flow = vm.downloader.unified.downloadFeed
-        feedViewModel.getFeedData(
-            "downloads", Feed.Buttons(), false, flow
-        ) {
-            val feed = requireContext().getFeed(flow.value)
-            FeedData.State(UnifiedExtension.metadata.id, null, feed)
-        }
-    }
-
-    private val feedListener by lazy { getFeedListener() }
-    private val feedAdapter by lazy {
-        getFeedAdapter(feedData, feedListener)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentDownloadBinding.bind(view)
         setupTransition(view)
-        applyBackPressCallback()
-        binding.appBarLayout.configureAppBar { offset ->
-            binding.toolbarOutline.alpha = offset
-            binding.iconContainer.alpha = 1 - offset
-        }
-        binding.toolBar.setNavigationOnClickListener {
-            parentFragmentManager.popBackStack()
-        }
-        applyInsets {
-            binding.recyclerView.applyContentInsets(it, 20, 8, 72)
-            binding.fabContainer.applyFabInsets(it, systemInsets.value)
-        }
+        configureAppBar(binding.appBarLayout, binding.toolbar, binding.appBarOutline)
         FastScrollerHelper.applyTo(binding.recyclerView)
-        val lineAdapter = LineAdapter()
-        val downloadTabs = listOf(
-            R.string.active to Filter.Active,
-            R.string.completed to Filter.Completed,
-            R.string.failed to Filter.Failed
-        )
-        downloadTabs.forEach { (title, _) ->
-            binding.downloadTabs.addTab(binding.downloadTabs.newTab().setText(title))
-        }
-        binding.downloadTabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+
+        binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
-                filter = downloadTabs[tab.position].second
-                submitDownloads(binding)
+                filter = Filter.entries[tab.position]
+                updateItems()
             }
 
-            override fun onTabReselected(tab: TabLayout.Tab) = onTabSelected(tab)
-            override fun onTabUnselected(tab: TabLayout.Tab) {}
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+            override fun onTabReselected(tab: TabLayout.Tab?) {}
         })
-        binding.recyclerView.itemAnimator = null
+
+        val extensionId = "offline"
+        val feedData = FeedData("downloads", FeedViewModel.Args.Normal(extensionId)) {
+            vm.downloadFeed
+        }
+        val feedAdapter = getFeedAdapter(feedData)
+        val feedListener = getFeedListener(extensionId, "downloads")
         getTouchHelper(feedListener).attachToRecyclerView(binding.recyclerView)
+
+        val headerAdapter = LineAdapter()
+        val loadingAdapter = GridAdapter.Loading(this, feedData)
         configureGridLayout(
             binding.recyclerView,
             GridAdapter.Concat(
+                headerAdapter,
                 downloadsAdapter,
-                lineAdapter,
-                feedAdapter.withLoading(this)
+                feedAdapter,
+                loadingAdapter
             )
         )
-        binding.fabCancel.setOnClickListener {
-            when (filter) {
-                Filter.Active -> vm.cancelAll()
-                Filter.Failed -> vm.restartFailed()
-                Filter.Completed -> Unit
+
+        observe(vm.downloadFeed) {
+            headerAdapter.submitList(if (it.tabs.isNotEmpty()) listOf(SimpleItemSpan) else listOf())
+        }
+
+        observe(vm.downloadFlow) {
+            latestInfos = it
+            updateItems()
+        }
+
+        observe(feedData.loadStateFlow) {
+            if (it is LoadState.Error) {
+                headerAdapter.submitList(listOf())
             }
         }
-        observe(vm.flow) { infos ->
-            latestInfos = infos
-            lineAdapter.loadState = if (infos.any { it.download.finalFile == null })
-                LoadState.Loading
-            else LoadState.NotLoading(false)
-            submitDownloads(binding)
+
+        binding.swipeRefresh.run {
+            setOnRefreshListener { feedData.refresh() }
+            observe(feedData.isRefreshingFlow) { isRefreshing = it }
+        }
+
+        applyBackPressCallback()
+        applyInsets(binding.recyclerView, binding.appBarOutline)
+        applyContentInsets(binding.tabLayout)
+        applyFabInsets(binding.actionFab, binding.appBarOutline)
+
+        binding.actionFab.setOnClickListener {
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.delete_all_downloads)
+                .setMessage(R.string.delete_all_downloads_message)
+                .setPositiveButton(R.string.delete) { _, _ ->
+                    vm.cancelAll()
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
         }
     }
 
-    private fun submitDownloads(binding: FragmentDownloadBinding) {
-        downloadsAdapter.submitList(latestInfos.toItems(vm.extensions.music.value, filter))
-        binding.fabCancel.isVisible = when (filter) {
-            Filter.Active -> latestInfos.any {
-                it.download.finalFile == null && it.download.exception == null
-            }
-
-            Filter.Failed -> latestInfos.any { it.download.exception != null }
-            Filter.Completed -> false
-        }
-        when (filter) {
-            Filter.Active -> {
-                binding.fabCancel.text = getString(R.string.cancel_all)
-                binding.fabCancel.setIconResource(R.drawable.ic_close)
-            }
-
-            Filter.Failed -> {
-                binding.fabCancel.text = getString(R.string.retry_all)
-                binding.fabCancel.setIconResource(R.drawable.ic_refresh)
-            }
-
-            Filter.Completed -> Unit
-        }
+    private fun updateItems() {
+        downloadsAdapter.submitList(latestInfos.toItems(requireContext(), filter))
+        binding?.actionFab?.isVisible = filter == Filter.Active && latestInfos.isNotEmpty()
     }
 }

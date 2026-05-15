@@ -42,6 +42,7 @@ import dev.brahmkshatriya.echo.common.models.Shelf
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.download.Downloader
+import dev.brahmkshatriya.echo.download.Info
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.isClient
 import dev.brahmkshatriya.echo.extensions.MediaState
 import dev.brahmkshatriya.echo.extensions.builtin.offline.OfflineExtension
@@ -58,7 +59,7 @@ abstract class AndroidAutoCallback(
     open val app: App,
     open val scope: CoroutineScope,
     open val extensionList: StateFlow<List<MusicExtension>>,
-    open val downloadFlow: StateFlow<List<Downloader.Info>>
+    open val downloadFlow: StateFlow<List<Info>>
 ) : MediaLibrarySession.Callback {
 
     val context get() = app.context

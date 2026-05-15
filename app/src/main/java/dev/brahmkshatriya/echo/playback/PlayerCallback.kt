@@ -41,6 +41,7 @@ import dev.brahmkshatriya.echo.common.models.Shelf
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.download.Downloader
+import dev.brahmkshatriya.echo.download.Info
 import dev.brahmkshatriya.echo.extensions.ExtensionLoader
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.get
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getAs
@@ -77,7 +78,7 @@ class PlayerCallback(
     private val extensions: ExtensionLoader,
     private val radioFlow: MutableStateFlow<PlayerState.Radio>,
     private val state: PlayerState,
-    override val downloadFlow: StateFlow<List<Downloader.Info>>,
+    override val downloadFlow: StateFlow<List<Info>>,
 ) : AndroidAutoCallback(app, scope, extensions.music, downloadFlow) {
 
     override fun onConnect(

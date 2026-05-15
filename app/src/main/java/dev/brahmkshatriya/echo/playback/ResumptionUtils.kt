@@ -8,6 +8,7 @@ import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.download.Downloader
+import dev.brahmkshatriya.echo.download.Info
 import dev.brahmkshatriya.echo.extensions.MediaState
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.context
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.extensionId
@@ -68,7 +69,7 @@ object ResumptionUtils {
 
     private fun Context.recoverQueue(
         app: App,
-        downloads: List<Downloader.Info>,
+        downloads: List<Info>,
         withClear: Boolean = false
     ): List<MediaItem>? {
         val tracks = recoverTracks(withClear) ?: return null
@@ -93,7 +94,7 @@ object ResumptionUtils {
 
     fun Context.recoverPlaylist(
         app: App,
-        downloads: List<Downloader.Info>,
+        downloads: List<Info>,
         withClear: Boolean = false
     ): Triple<List<MediaItem>, Int, Long> {
         val items = recoverQueue(app, downloads, withClear) ?: emptyList()

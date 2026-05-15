@@ -23,11 +23,9 @@ class QueueFragment : Fragment(R.layout.fragment_queue) {
         val binding = FragmentQueueBinding.bind(view)
         setupTransition(view, false, MaterialSharedAxis.Y)
         
-        val adapter = PlayerTrackAdapter(object : PlayerTrackAdapter.Listener {
+        val adapter = PlayerTrackAdapter(uiViewModel, playerViewModel.playerState.current, object : PlayerTrackAdapter.Listener {
             override fun onClick() = uiViewModel.expandPlayer()
-            override fun onStartDoubleClick() {}
-            override fun onEndDoubleClick() {}
-        }, true)
+        })
 
         binding.recyclerView.adapter = adapter
         

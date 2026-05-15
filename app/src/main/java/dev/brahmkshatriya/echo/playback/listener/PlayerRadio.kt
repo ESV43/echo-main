@@ -13,6 +13,7 @@ import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Feed.Companion.pagedDataOfFirst
 import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.download.Downloader
+import dev.brahmkshatriya.echo.download.Info
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.get
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getExtension
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getIf
@@ -38,7 +39,7 @@ class PlayerRadio(
     private val throwFlow: MutableSharedFlow<Throwable>,
     private val stateFlow: MutableStateFlow<PlayerState.Radio>,
     private val extensionList: StateFlow<List<MusicExtension>>,
-    private val downloadFlow: StateFlow<List<Downloader.Info>>
+    private val downloadFlow: StateFlow<List<Info>>
 ) : Player.Listener {
 
     companion object {
@@ -61,7 +62,7 @@ class PlayerRadio(
 
         suspend fun play(
             player: Player,
-            downloadFlow: StateFlow<List<Downloader.Info>>,
+            downloadFlow: StateFlow<List<Info>>,
             app: App,
             stateFlow: MutableStateFlow<PlayerState.Radio>,
             loaded: PlayerState.Radio.Loaded
@@ -137,4 +138,3 @@ class PlayerRadio(
         scope.launch { startRadio() }
     }
 }
-

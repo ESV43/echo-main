@@ -17,6 +17,7 @@ import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSliderPreference
 import androidx.lifecycle.lifecycleScope
 import dev.brahmkshatriya.echo.extensions.ExtensionLoader
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension
+import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.extensionId
 import dev.brahmkshatriya.echo.utils.ui.prefs.TransitionPreference
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
