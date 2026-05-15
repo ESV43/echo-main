@@ -85,6 +85,10 @@ class UnifiedExtension(
     companion object {
         const val UNIFIED_ID = "unified"
         const val EXTENSION_ID = "extension_id"
+
+        val Map<String, String>.extensionId
+            get() = this[EXTENSION_ID] ?: throw Exception("Extension id not found")
+
         val metadata = Metadata(
             "UnifiedExtension",
             "",
@@ -135,9 +139,6 @@ class UnifiedExtension(
             find { it.id == id } ?: throw Exception("Extension $id not found")
 
         private fun List<Extension<*>>.getOrNull(id: String?) = find { it.id == id }
-
-        val Map<String, String>.extensionId
-            get() = this[EXTENSION_ID] ?: throw Exception("Extension id not found")
 
         fun Track.withExtensionId(
             id: String, client: Any?, cached: Boolean = false,

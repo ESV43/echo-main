@@ -131,7 +131,7 @@ class Downloader(
             }
             if (toDownload.isNotEmpty()) {
                 add(toDownload.map {
-                    DownloadContext(it, it.extras.extensionId, null, 0)
+                    DownloadContext(it.extras.extensionId, it, 0, null)
                 })
             }
         }
