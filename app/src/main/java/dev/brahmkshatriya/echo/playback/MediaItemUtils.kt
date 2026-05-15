@@ -55,7 +55,7 @@ object MediaItemUtils {
     ): MediaItem = with(mediaItem) {
         val item = buildUpon()
         val metadata = state.toMetaData(
-            mediaMetadata.extras!!, downloads, context, true, app
+            mediaMetadata.extras ?: Bundle(), downloads, context, true, app
         )
         item.setMediaMetadata(metadata)
         return item.build()
@@ -63,7 +63,7 @@ object MediaItemUtils {
 
     fun buildServer(mediaItem: MediaItem, index: Int): MediaItem = with(mediaItem) {
         val bundle = Bundle().apply {
-            putAll(mediaMetadata.extras!!)
+            mediaMetadata.extras?.let(this::putAll)
             putInt("serverIndex", index)
             putInt("retries", 0)
         }
@@ -72,7 +72,7 @@ object MediaItemUtils {
 
     fun buildSource(mediaItem: MediaItem, index: Int) = with(mediaItem) {
         val bundle = Bundle().apply {
-            putAll(mediaMetadata.extras!!)
+            mediaMetadata.extras?.let(this::putAll)
             putInt("sourceIndex", index)
             putInt("retries", 0)
         }
@@ -81,7 +81,7 @@ object MediaItemUtils {
 
     fun buildBackground(mediaItem: MediaItem, index: Int): MediaItem = with(mediaItem) {
         val bundle = Bundle().apply {
-            putAll(mediaMetadata.extras!!)
+            mediaMetadata.extras?.let(this::putAll)
             putInt("backgroundIndex", index)
         }
         buildWithBundle(this, bundle)
@@ -89,7 +89,7 @@ object MediaItemUtils {
 
     fun buildSubtitle(mediaItem: MediaItem, index: Int): MediaItem = with(mediaItem) {
         val bundle = Bundle().apply {
-            putAll(mediaMetadata.extras!!)
+            mediaMetadata.extras?.let(this::putAll)
             putInt("subtitleIndex", index)
         }
         buildWithBundle(this, bundle)
@@ -97,7 +97,7 @@ object MediaItemUtils {
 
     fun withRetry(item: MediaItem): MediaItem {
         val bundle = Bundle().apply {
-            putAll(item.mediaMetadata.extras!!)
+            item.mediaMetadata.extras?.let(this::putAll)
             val retries = getInt("retries") + 1
             putBoolean("loaded", false)
             putInt("retries", retries)
@@ -144,7 +144,7 @@ object MediaItemUtils {
         background: Streamable.Media.Background?,
         subtitle: Streamable.Media.Subtitle?,
     ) = with(mediaItem) {
-        val bundle = mediaMetadata.extras!!
+        val bundle = mediaMetadata.extras ?: Bundle()
         bundle.putSerialized("background", background)
         val item = buildUpon()
         item.setSubtitleConfigurations(
@@ -234,23 +234,23 @@ object MediaItemUtils {
     val Bundle?.addedByName get() = this?.getString("addedByName")
     val Bundle?.addedByAvatar get() = this?.getString("addedByAvatar")
 
-    val MediaItem.state get() = mediaMetadata.extras!!.state
-    val MediaItem.track get() = mediaMetadata.extras!!.track
-    val MediaItem.extensionId get() = mediaMetadata.extras!!.extensionId
-    val MediaItem.context get() = mediaMetadata.extras!!.context
-    val MediaItem.isLoaded get() = mediaMetadata.extras!!.isLoaded
-    val MediaItem.serverIndex get() = mediaMetadata.extras!!.serverIndex
-    val MediaItem.sourceIndex get() = mediaMetadata.extras!!.sourceIndex
-    val MediaItem.backgroundIndex get() = mediaMetadata.extras!!.backgroundIndex
-    val MediaItem.subtitleIndex get() = mediaMetadata.extras!!.subtitleIndex
-    val MediaItem.background get() = mediaMetadata.extras!!.background
+    val MediaItem.state get() = mediaMetadata.extras.state
+    val MediaItem.track get() = mediaMetadata.extras.track
+    val MediaItem.extensionId get() = mediaMetadata.extras.extensionId
+    val MediaItem.context get() = mediaMetadata.extras.context
+    val MediaItem.isLoaded get() = mediaMetadata.extras.isLoaded
+    val MediaItem.serverIndex get() = mediaMetadata.extras.serverIndex
+    val MediaItem.sourceIndex get() = mediaMetadata.extras.sourceIndex
+    val MediaItem.backgroundIndex get() = mediaMetadata.extras.backgroundIndex
+    val MediaItem.subtitleIndex get() = mediaMetadata.extras.subtitleIndex
+    val MediaItem.background get() = mediaMetadata.extras.background
     val MediaMetadata.isLiked get() = (userRating as? ThumbRating)?.isThumbsUp == true
     val MediaItem.isLiked get() = mediaMetadata.isLiked
-    val MediaItem.retries get() = mediaMetadata.extras!!.retries
-    val MediaItem.unloadedCover get() = mediaMetadata.extras!!.unloadedCover
-    val MediaItem.downloaded get() = mediaMetadata.extras!!.downloaded
-    val MediaItem.addedByName get() = mediaMetadata.extras!!.addedByName
-    val MediaItem.addedByAvatar get() = mediaMetadata.extras!!.addedByAvatar
+    val MediaItem.retries get() = mediaMetadata.extras.retries
+    val MediaItem.unloadedCover get() = mediaMetadata.extras.unloadedCover
+    val MediaItem.downloaded get() = mediaMetadata.extras.downloaded
+    val MediaItem.addedByName get() = mediaMetadata.extras.addedByName
+    val MediaItem.addedByAvatar get() = mediaMetadata.extras.addedByAvatar
 
     private fun Streamable.SubtitleType.toMimeType() = when (this) {
         Streamable.SubtitleType.VTT -> MimeTypes.TEXT_VTT

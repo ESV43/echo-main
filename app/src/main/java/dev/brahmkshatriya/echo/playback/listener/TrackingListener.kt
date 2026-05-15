@@ -101,10 +101,12 @@ class TrackingListener(
                 if (player.isPlaying) skipTimer?.resume()
 
                 val duration = (this as? TrackerMarkClient)?.getMarkAsPlayedDuration(details) ?: return@trackMedia
-                mutex.withLock {
-                    timers[extension.id] = PauseTimer(scope, duration) {
-                        scope.launch {
-                            extension.runIf<TrackerMarkClient>(throwableFlow) { onMarkAsPlayed(details) }
+                scope.launch {
+                    mutex.withLock {
+                        timers[extension.id] = PauseTimer(scope, duration) {
+                            scope.launch {
+                                extension.runIf<TrackerMarkClient>(throwableFlow) { onMarkAsPlayed(details) }
+                            }
                         }
                     }
                 }

@@ -244,18 +244,18 @@ class LyricsFragment : Fragment() {
             currentLyrics = lyricsItem?.lyrics
             val list = when (val lyrics = currentLyrics) {
                 is Lyrics.Simple -> listOf(LyricAdapter.LyricLine(lyrics.text, 0, 0))
-                is Lyrics.Timed -> lyrics.list.map {
+                is Lyrics.Timed -> lyrics.list?.map {
                     LyricAdapter.LyricLine(it.text, it.startTime, it.endTime)
-                }
+                }.orEmpty()
 
-                is Lyrics.WordByWord -> lyrics.list.map { words ->
+                is Lyrics.WordByWord -> lyrics.list?.map { words ->
                     LyricAdapter.LyricLine(
                         words.joinToString(" ") { it.text },
                         words.firstOrNull()?.startTime ?: 0,
                         words.lastOrNull()?.endTime ?: 0,
                         words
                     )
-                }
+                }.orEmpty()
 
                 null -> emptyList()
             }

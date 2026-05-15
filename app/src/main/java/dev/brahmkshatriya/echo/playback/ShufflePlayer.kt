@@ -43,7 +43,8 @@ class ShufflePlayer(
     private fun changeQueue(list: List<MediaItem>) {
         log("Change queue")
         if (list.size <= 1) return
-        val currentMediaItem = list.first { it.mediaId == currentMediaItem?.mediaId }
+        val currentId = currentMediaItem?.mediaId ?: return
+        val currentMediaItem = list.find { it.mediaId == currentId } ?: return
         val index = list.indexOf(currentMediaItem)
         val before = list.take(index) - currentMediaItem
         val after = list.takeLast(list.size - index) - currentMediaItem
@@ -86,25 +87,28 @@ class ShufflePlayer(
     }
 
     private fun getItemAt(index: Int) = player.getMediaItemAt(index).let {
-        original.first { item -> item.mediaId == it.mediaId }
+        original.find { item -> item.mediaId == it.mediaId }
     }
 
     override fun removeMediaItem(index: Int) {
-        original = original - getItemAt(index)
+        val item = getItemAt(index) ?: return
+        original = original - item
         player.removeMediaItem(index)
         log("Remove media item at $index")
     }
 
     override fun removeMediaItems(fromIndex: Int, toIndex: Int) {
-        original =
-            original - (fromIndex until toIndex).map { getItemAt(it) }.toSet()
+        val items = (fromIndex until toIndex).mapNotNull { getItemAt(it) }
+        if (items.isEmpty()) return
+        original = original - items.toSet()
         player.removeMediaItems(fromIndex, toIndex)
         log("Remove media items from $fromIndex to $toIndex")
     }
 
     override fun replaceMediaItem(index: Int, mediaItem: MediaItem) {
+        val old = getItemAt(index) ?: return
         original = original.toMutableList().apply {
-            val originalIndex = indexOf(getItemAt(index)).takeIf { it != -1 }!!
+            val originalIndex = indexOf(old).takeIf { it != -1 } ?: return
             set(originalIndex, mediaItem)
         }
         player.replaceMediaItem(index, mediaItem)
@@ -114,10 +118,13 @@ class ShufflePlayer(
     override fun replaceMediaItems(
         fromIndex: Int, toIndex: Int, mediaItems: MutableList<MediaItem>
     ) {
+        val items = (fromIndex until toIndex).mapNotNull { getItemAt(it) }
+        if (items.size != toIndex - fromIndex) return
         original = original.toMutableList().apply {
-            val originalIndexes = (fromIndex until toIndex).map { i ->
-                indexOf(getItemAt(i)).takeIf { it != -1 }!!
+            val originalIndexes = items.mapNotNull { item ->
+                indexOf(item).takeIf { it != -1 }
             }
+            if (originalIndexes.size != items.size) return
             originalIndexes.forEachIndexed { i, originalIndex ->
                 set(originalIndex, mediaItems[i])
             }

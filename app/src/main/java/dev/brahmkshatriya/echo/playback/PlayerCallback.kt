@@ -381,7 +381,8 @@ class PlayerCallback(
         }
         player.with {
             if (mediaItemCount == 0) playWhenReady = true
-            addMediaItems(currentMediaItemIndex + 1 + next, mediaItems)
+            val startIndex = (currentMediaItemIndex + 1 + next).coerceAtLeast(0)
+            addMediaItems(startIndex, mediaItems)
             prepare()
         }
         next += mediaItems.size
@@ -416,8 +417,31 @@ class PlayerCallback(
                 )
             }.build()
             session.player.with {
-                replaceMediaItem(currentMediaItemIndex, newItem)
+                val item = session.player.with { currentMediaItem }
+                    ?: return@future SessionResult(SessionError.ERROR_UNKNOWN)
+                val index = currentMediaItemIndex
+                if (index == C.INDEX_UNSET) return@future SessionResult(SessionError.ERROR_UNKNOWN)
+            val track = item.track
+            runCatching {
+                val extension = extensions.music.getExtensionOrThrow(item.extensionId)
+                extension.getAs<LikeClient, Unit> {
+                    likeItem(track, rating.isThumbsUp)
+                }
+            }.getOrElse {
+                throwableFlow.emit(PlayerException(item, it))
+                return@future SessionResult(SessionError.ERROR_UNKNOWN)
             }
+            val liked = rating.isThumbsUp
+            val newItem = item.run {
+                buildUpon().setMediaMetadata(
+                    mediaMetadata.buildUpon().setUserRating(ThumbRating(liked)).build()
+                )
+            }.build()
+            session.player.with {
+                replaceMediaItem(index, newItem)
+            }
+            SessionResult(RESULT_SUCCESS, bundleOf("liked" to liked))
+        }
             SessionResult(RESULT_SUCCESS, bundleOf("liked" to liked))
         }
     }

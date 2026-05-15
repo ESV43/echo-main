@@ -22,7 +22,7 @@ class LyricAdapter(
 ) : ScrollAnimListAdapter<LyricAdapter.LyricLine, LyricAdapter.ViewHolder>(DiffCallback) {
     
     data class LyricLine(
-        val text: String,
+        val text: String?,
         val startTime: Long,
         val endTime: Long,
         val words: List<Lyrics.Item>? = null
@@ -78,7 +78,7 @@ class LyricAdapter(
         if (pos == currentPos) {
             binding.root.alpha = 1f
             binding.root.animate().scaleX(1.05f).scaleY(1.05f).setDuration(300).start()
-            if (line.words != null) {
+            if (line.words != null && line.text != null) {
                 val spannable = SpannableString(line.text)
                 var startIndex = 0
                 line.words.forEach { word ->
@@ -106,13 +106,13 @@ class LyricAdapter(
                 binding.root.text = spannable
             } else {
                 binding.root.setTextColor(activeColor)
-                binding.root.text = line.text
+                binding.root.text = line.text ?: "♪"
             }
         } else {
             binding.root.animate().scaleX(1f).scaleY(1f).setDuration(300).start()
             binding.root.setTextColor(inactiveColor)
             binding.root.alpha = if (pos < currentPos) 0.8f else 0.4f
-            binding.root.text = line.text
+            binding.root.text = line.text ?: "♪"
         }
     }
 
@@ -124,7 +124,7 @@ class LyricAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val line = getItem(position) ?: return
-        holder.binding.root.text = line.text.trim().trim('\n').ifEmpty { "♪" }
+        holder.binding.root.text = line.text?.trim()?.trim('\n')?.ifEmpty { "♪" } ?: "♪"
         holder.updateColors()
         holder.updateCurrent()
         holder.itemView.applyTranslationYAnimation(scrollY)
