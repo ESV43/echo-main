@@ -68,7 +68,7 @@
         </com.bosphere.fadingedgelayout.FadingEdgeLayout>
 
         <com.google.android.material.button.MaterialButtonToggleGroup
-            style="@style/Widget.Material3.MaterialButtonToggleGroup.Connected"
+            style="@style/Widget.Material3Expressive.MaterialButtonToggleGroup.Connected"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="-4dp"
@@ -102,7 +102,7 @@
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <com.google.android.material.button.MaterialButtonToggleGroup
-            style="@style/Widget.Material3.MaterialButtonToggleGroup.Connected"
+            style="@style/Widget.Material3Expressive.MaterialButtonToggleGroup.Connected"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:spacing="4dp">
