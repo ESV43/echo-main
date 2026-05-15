@@ -192,6 +192,10 @@
         <item name="backgroundTint">?echoBackground</item>
     </style>
 
+    <style name="Widget.Material3Expressive.MaterialButtonToggleGroup.Connected" parent="Widget.Material3.MaterialButtonToggleGroup">
+        <item name="spacing">-1dp</item>
+    </style>
+
     <style name="PlayerMoreToggleGroup">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
