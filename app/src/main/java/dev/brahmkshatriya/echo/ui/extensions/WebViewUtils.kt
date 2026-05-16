@@ -49,7 +49,18 @@ import kotlin.coroutines.resumeWithException
 
 object WebViewUtils {
     private const val USER_AGENT =
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+        "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.49 Mobile Safari/537.36"
+
+    private const val BROWSER_EVASION_JS = """
+        (function() {
+            try {
+                Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+                Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+                Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+                Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
+            } catch(e) {}
+        })();
+    """
 
     @Suppress("DEPRECATION")
     @SuppressLint("SetJavaScriptEnabled")
@@ -67,6 +78,7 @@ object WebViewUtils {
         }
         WebStorage.getInstance().deleteAllData()
         CookieManager.getInstance().run {
+            removeAllCookies(null)
             setAcceptCookie(true)
             setAcceptThirdPartyCookies(webView, true)
             flush()
@@ -177,16 +189,7 @@ object WebViewUtils {
                 super.onPageStarted(view, url, favicon)
                 progress.show()
                 if (done) return
-                view.evaluateJavascript("""
-                    (function() {
-                        try {
-                            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-                            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-                            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
-                            Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
-                        } catch(e) {}
-                    })();
-                """.trimIndent(), null)
+                view.evaluateJavascript(BROWSER_EVASION_JS, null)
                 if (target is WebViewRequest.Evaluate) {
                     target.javascriptToEvaluateOnPageStart?.let { js ->
                         scope.launch {
@@ -202,7 +205,10 @@ object WebViewUtils {
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 progress.hide()
-                if (!done && url != null) checkStop(url)
+                if (!done && url != null) {
+                    view?.evaluateJavascript(BROWSER_EVASION_JS, null)
+                    checkStop(url)
+                }
             }
 
             override fun shouldOverrideUrlLoading(
@@ -215,8 +221,8 @@ object WebViewUtils {
             override fun shouldInterceptRequest(
                 view: WebView, request: WebResourceRequest,
             ): WebResourceResponse? {
+                val url = request.url.toString()
                 if (target is WebViewRequest.Headers) {
-                    val url = request.url.toString()
                     if (interceptRegex == null || interceptRegex.matches(url)) {
                         requests.add(
                             NetworkRequest(

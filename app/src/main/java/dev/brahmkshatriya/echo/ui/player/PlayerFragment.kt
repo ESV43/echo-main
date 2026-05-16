@@ -130,11 +130,12 @@ class PlayerFragment : Fragment() {
         
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.playerState.amplitude.collect {
-                binding.visualizer?.updateAmplitude(it)
+                binding?.visualizer?.updateAmplitude(it)
             }
         }
 
         observe(viewModel.settings) {
+            if (!isAdded) return@observe
             updatePlayerMode()
         }
     }
@@ -176,8 +177,9 @@ class PlayerFragment : Fragment() {
         }
 
         observe(viewModel.progress) { (progress, _) ->
+            val b = binding ?: return@observe
             if (!settings.getBoolean(FLUID_LYRICS, false)) {
-                binding.playerControls.fluidLyricsContainer.isVisible = false
+                b.playerControls.fluidLyricsContainer.isVisible = false
                 return@observe
             }
 
@@ -246,14 +248,14 @@ class PlayerFragment : Fragment() {
                     Color.green(activeColor),
                     Color.blue(activeColor)
                 )
-                binding.playerControls.fluidLyricsContainer.backgroundTintList =
+                b.playerControls.fluidLyricsContainer.backgroundTintList =
                     ColorStateList.valueOf(bgColor)
-                binding.playerControls.fluidLyricsContainer.isVisible = !currentLine.isNullOrBlank()
-                binding.playerControls.fluidLyricsText.text = currentLine
-                binding.playerControls.fluidLyricsNextText.text = nextLine
-                binding.playerControls.fluidLyricsNextText.isVisible = !nextLine.isNullOrBlank()
+                b.playerControls.fluidLyricsContainer.isVisible = !currentLine.isNullOrBlank()
+                b.playerControls.fluidLyricsText.text = currentLine
+                b.playerControls.fluidLyricsNextText.text = nextLine
+                b.playerControls.fluidLyricsNextText.isVisible = !nextLine.isNullOrBlank()
             } else {
-                binding.playerControls.fluidLyricsContainer.isVisible = false
+                b.playerControls.fluidLyricsContainer.isVisible = false
             }
         }
     }
@@ -373,15 +375,17 @@ class PlayerFragment : Fragment() {
 
         view.doOnLayout { updateCollapsed() }
         observe(uiViewModel.combined) {
+            if (!isAdded) return@observe
+            val b = binding ?: return@observe
             val system = uiViewModel.systemInsets.value
-            binding.constraintLayout.applyInsets(system, 64, 0)
-            binding.expandedToolbar.applyInsets(system)
+            b.constraintLayout.applyInsets(system, 64, 0)
+            b.expandedToolbar.applyInsets(system)
             val insets = uiViewModel.run {
                 if (playerSheetState.value == STATE_EXPANDED) system
                 else getCombined()
             }
-            binding.playerCollapsedContainer.root.applyHorizontalInsets(insets)
-            binding.playerControls.root.applyHorizontalInsets(
+            b.playerCollapsedContainer.root.applyHorizontalInsets(insets)
+            b.playerControls.root.applyHorizontalInsets(
                 insets,
                 requireActivity().isLandscape()
             )
@@ -398,6 +402,7 @@ class PlayerFragment : Fragment() {
             adapter.moreOffsetUpdated()
         }
         observe(uiViewModel.playerSheetOffset) {
+            if (!isAdded) return@observe
             updateCollapsed()
             adapter.playerOffsetUpdated()
 
@@ -509,6 +514,7 @@ class PlayerFragment : Fragment() {
             likeListener.onCheckedStateChanged(btn, state)
         }
         observe(viewModel.playerState.current) {
+            val b = binding ?: return@observe
             if (!isAdded) return@observe
             uiViewModel.run {
                 if (it == null) return@run changePlayerState(STATE_HIDDEN)
@@ -520,13 +526,14 @@ class PlayerFragment : Fragment() {
             }
             submit()
             it?.mediaItem?.takeIf { it.mediaMetadata.extras != null } ?: return@observe
-            binding.applyCurrent(it.mediaItem)
+            b.applyCurrent(it.mediaItem)
         }
 
         observe(viewModel.queueFlow) { submit() }
 
         val playPauseListener = CheckBoxListener {
-            binding.playerControls.trackPlayPause.hapticFeedback()
+            val b = binding ?: return@CheckBoxListener
+            b.playerControls.trackPlayPause.hapticFeedback()
             viewModel.setPlaying(it)
         }
         binding.playerControls.trackPlayPause
@@ -537,7 +544,8 @@ class PlayerFragment : Fragment() {
                 playPauseListener.onCheckedStateChanged(btn, state)
             }
         observe(viewModel.isPlaying) {
-            binding.run {
+            val b = binding ?: return@observe
+            b.run {
                 playPauseListener.enabled = false
                 playerControls.trackPlayPause.isChecked = it
                 playerCollapsedContainer.collapsedTrackPlayPause.isChecked = it
@@ -545,16 +553,18 @@ class PlayerFragment : Fragment() {
             }
         }
         observe(viewModel.buffering) {
-            binding.playerControls.playingIndicator.alpha = if (it) 1f else 0f
-            binding.playerCollapsedContainer.collapsedPlayingIndicator.alpha = if (it) 1f else 0f
+            val b = binding ?: return@observe
+            b.playerControls.playingIndicator.alpha = if (it) 1f else 0f
+            b.playerCollapsedContainer.collapsedPlayingIndicator.alpha = if (it) 1f else 0f
         }
 
         observe(viewModel.progress) { (curr, buff) ->
-            binding.playerCollapsedContainer.run {
+            val b = binding ?: return@observe
+            b.playerCollapsedContainer.run {
                 collapsedBuffer.progress = buff.toInt()
                 collapsedSeekbar.progress = curr.toInt()
             }
-            binding.playerControls.run {
+            b.playerControls.run {
                 if (!seekBar.isPressed) {
                     bufferBar.progress = buff.toInt()
                     seekBar.value = max(0f, min(curr.toFloat(), seekBar.valueTo))
@@ -564,12 +574,13 @@ class PlayerFragment : Fragment() {
         }
 
         observe(viewModel.totalDuration) {
+            val b = binding ?: return@observe
             val duration = it ?: viewModel.playerState.current.value?.track?.duration ?: 0
-            binding.playerCollapsedContainer.run {
+            b.playerCollapsedContainer.run {
                 collapsedSeekbar.max = duration.toInt()
                 collapsedBuffer.max = duration.toInt()
             }
-            binding.playerControls.run {
+            b.playerControls.run {
                 bufferBar.max = duration.toInt()
                 seekBar.apply {
                     value = max(0f, min(value, duration.toFloat()))
@@ -602,10 +613,13 @@ class PlayerFragment : Fragment() {
         binding.playerControls.trackRepeat.icon =
             drawables[repeatModes.indexOf(viewModel.repeatMode.value)]
 
-        fun changeRepeatDrawable(repeatMode: Int) = binding.playerControls.trackRepeat.run {
-            val index = repeatModes.indexOf(repeatMode)
-            icon = animatedVectorDrawables[index]
-            (icon as Animatable).start()
+        fun changeRepeatDrawable(repeatMode: Int) {
+            val b = binding ?: return
+            b.playerControls.trackRepeat.run {
+                val index = repeatModes.indexOf(repeatMode)
+                icon = animatedVectorDrawables[index]
+                (icon as Animatable).start()
+            }
         }
 
         binding.playerControls.run {
@@ -639,7 +653,8 @@ class PlayerFragment : Fragment() {
             observe(viewModel.previousEnabled) { trackPrevious.isEnabled = it }
 
             val shuffleListener = CheckBoxListener {
-                binding.playerControls.trackShuffle.hapticFeedback()
+                val b = binding ?: return@CheckBoxListener
+                b.playerControls.trackShuffle.hapticFeedback()
                 viewModel.setShuffle(it)
             }
             trackShuffle.addOnCheckedStateChangedListener(shuffleListener)
@@ -680,6 +695,7 @@ class PlayerFragment : Fragment() {
                 viewModel.settings.edit { putBoolean(CROSSFADE, enabled) }
             }
             observe(viewModel.serverAndTracks) { (tracks, server, index) ->
+                if (!isAdded) return@observe
                 trackSubtitle.text = tracks?.getDetails(requireContext(), server, index)
                     ?.joinToString(" ⦿ ")?.takeIf { it.isNotBlank() }
             }
@@ -864,7 +880,10 @@ class PlayerFragment : Fragment() {
                 EDGE_TYPE_OUTLINE, Color.BLACK, null
             )
         )
-        observe(viewModel.serverAndTracks) { applyPlayer() }
+        observe(viewModel.serverAndTracks) {
+            if (!isAdded) return@observe
+            applyPlayer()
+        }
     }
 
     companion object {
