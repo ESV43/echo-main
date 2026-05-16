@@ -149,7 +149,7 @@ object WebViewUtils {
                             is WebViewRequest.Evaluate -> {
                                 target.onStop(
                                     NetworkRequest(url, method = NetworkRequest.Method.GET),
-                                    evalJS(bridge, target.javascriptToEvaluate).getOrNull()
+                                    evalJS(bridge, target.javascriptToEvaluate)
                                 )
                             }
                             is WebViewRequest.Headers -> {
@@ -210,11 +210,11 @@ object WebViewUtils {
                     if (interceptRegex == null || interceptRegex.matches(url)) {
                         requests.add(
                             NetworkRequest(
+                                url = url,
+                                headers = request.requestHeaders ?: emptyMap(),
                                 method = runCatching {
                                     NetworkRequest.Method.valueOf(request.method)
                                 }.getOrDefault(NetworkRequest.Method.GET),
-                                url = url,
-                                headers = request.requestHeaders ?: emptyMap(),
                             )
                         )
                     }
