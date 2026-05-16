@@ -13,13 +13,13 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebStorage
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.add
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
-import com.acsbendi.requestinspectorwebview.RequestInspectorWebViewClient
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.helpers.WebViewRequest
@@ -49,7 +49,7 @@ import kotlin.coroutines.resumeWithException
 
 object WebViewUtils {
     private const val USER_AGENT =
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
 
     @Suppress("DEPRECATION")
     @SuppressLint("SetJavaScriptEnabled")
@@ -67,7 +67,6 @@ object WebViewUtils {
         }
         WebStorage.getInstance().deleteAllData()
         CookieManager.getInstance().run {
-            removeAllCookies(null)
             setAcceptCookie(true)
             setAcceptThirdPartyCookies(webView, true)
             flush()
@@ -121,103 +120,106 @@ object WebViewUtils {
                 )
             )
         } else null
-        webViewClient = object : RequestInspectorWebViewClient(this@load) {
-            override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
-                callback.isEnabled = canGoBack()
-            }
 
-            var done = false
-            override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
-                super.onPageStarted(view, url, favicon)
-                progress.show()
-                if (done) return
-                if (target !is WebViewRequest.Evaluate) return
-                target.javascriptToEvaluateOnPageStart?.let { js ->
-                    scope.launch {
-                        runCatching { evalJS(null, js) }.onFailure {
-                            stop(callback)
-                            onComplete(Result.failure(it))
-                        }
-                    }
-                }
-            }
+        val mutex = Mutex()
+        var done = false
 
-            override fun onPageFinished(view: WebView?, url: String?) {
-                progress.hide()
-            }
-
-            val mutex = Mutex()
-            fun intercept(request: NetworkRequest) {
-                if (target is WebViewRequest.Headers) {
-                    if (interceptRegex == null || interceptRegex.matches(request.url)) {
-                        requests.add(request)
-                    }
-                }
-                if (stopRegex.find(request.url) == null) return
-                timeoutJob?.cancel()
-                scope.launch(Dispatchers.IO) {
-                    mutex.withLock {
-                        if (done) return@withLock
-                        val result = runCatching {
-                            val headerRes = if (target is WebViewRequest.Headers)
-                                target.onStop(requests)
-                            else null
-                            val cookieRes = if (target is WebViewRequest.Cookie) {
+        fun checkStop(url: String) {
+            if (stopRegex.find(url) == null) return
+            timeoutJob?.cancel()
+            scope.launch(Dispatchers.IO) {
+                mutex.withLock {
+                    if (done) return@withLock
+                    val result = runCatching {
+                        when (target) {
+                            is WebViewRequest.Cookie -> {
                                 var cookie = ""
                                 repeat(10) {
-                                    cookie = CookieManager.getInstance().getCookie(request.url) ?: ""
+                                    cookie = CookieManager.getInstance().getCookie(url) ?: ""
                                     if (cookie.contains("SAPISID") || cookie.contains("__Secure-3PAPISID")) {
                                         return@repeat
                                     }
                                     delay(500)
                                 }
-                                target.onStop(request, cookie)
-                            } else null
-                            val evalRes = if (target is WebViewRequest.Evaluate)
                                 target.onStop(
-                                    request,
-                                    evalJS(bridge, target.javascriptToEvaluate)
+                                    NetworkRequest(url, method = NetworkRequest.Method.GET),
+                                    cookie
                                 )
-                            else null
-                            evalRes ?: cookieRes ?: headerRes
+                            }
+                            is WebViewRequest.Evaluate -> {
+                                target.onStop(
+                                    NetworkRequest(url, method = NetworkRequest.Method.GET),
+                                    evalJS(bridge, target.javascriptToEvaluate).getOrNull()
+                                )
+                            }
+                            is WebViewRequest.Headers -> {
+                                target.onStop(requests)
+                            }
+                            else -> null
                         }
-                        val resultValue = result.getOrNull()
-                        if (resultValue == null && result.isSuccess) return@withLock
-                        done = true
-                        onComplete(null)
-                        stop(callback)
-                        onComplete(result.map { it!! })
                     }
+                    val resultValue = result.getOrNull()
+                    if (resultValue == null && result.isSuccess) return@withLock
+                    done = true
+                    onComplete(null)
+                    stop(callback)
+                    onComplete(result.map { it!! })
                 }
             }
+        }
 
-            override fun shouldInterceptRequest(
-                view: WebView, webViewRequest: com.acsbendi.requestinspectorwebview.WebViewRequest,
-            ): WebResourceResponse? {
-                intercept(
-                    webViewRequest.run {
-                        NetworkRequest(
-                            NetworkRequest.Method.valueOf(method),
-                            url,
-                            headers,
-                            body.encodeToByteArray()
-                        )
+        webViewClient = object : WebViewClient() {
+            override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+                callback.isEnabled = view?.canGoBack() ?: false
+            }
+
+            override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+                progress.show()
+                if (done) return
+                if (target is WebViewRequest.Evaluate) {
+                    target.javascriptToEvaluateOnPageStart?.let { js ->
+                        scope.launch {
+                            runCatching { evalJS(null, js) }.onFailure {
+                                stop(callback)
+                                onComplete(Result.failure(it))
+                            }
+                        }
                     }
-                )
-                return null
+                }
+                checkStop(url)
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                progress.hide()
+                if (!done && url != null) checkStop(url)
             }
 
             override fun shouldOverrideUrlLoading(
                 view: WebView?, request: WebResourceRequest?,
             ): Boolean {
-                request?.run {
-                    val headers = requestHeaders?.toMutableMap() ?: mutableMapOf()
-                    val cookie = CookieManager.getInstance().getCookie(url.toString())
-                    if (cookie != null) headers["Cookie"] = cookie
-                    headers["X-Requested-With"] = ""
-                    intercept(NetworkRequest(url.toString(), headers))
-                }
+                request?.url?.toString()?.let { checkStop(it) }
                 return false
+            }
+
+            override fun shouldInterceptRequest(
+                view: WebView, request: WebResourceRequest,
+            ): WebResourceResponse? {
+                if (target is WebViewRequest.Headers) {
+                    val url = request.url.toString()
+                    if (interceptRegex == null || interceptRegex.matches(url)) {
+                        requests.add(
+                            NetworkRequest(
+                                method = runCatching {
+                                    NetworkRequest.Method.valueOf(request.method)
+                                }.getOrDefault(NetworkRequest.Method.GET),
+                                url = url,
+                                headers = request.requestHeaders ?: emptyMap(),
+                            )
+                        )
+                    }
+                }
+                return null
             }
         }
 
@@ -227,9 +229,7 @@ object WebViewUtils {
             else WebSettings.LOAD_DEFAULT
         target.initialUrl.run {
             settings.userAgentString = lowerCaseHeaders["user-agent"] ?: settings.userAgentString
-            val mutableHeaders = headers.toMutableMap()
-            mutableHeaders["X-Requested-With"] = ""
-            loadUrl(url, mutableHeaders)
+            loadUrl(url, headers)
         }
     }
 
@@ -368,4 +368,3 @@ object WebViewUtils {
         }
     }
 }
-
