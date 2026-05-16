@@ -215,6 +215,7 @@ object WebViewUtils {
                                 method = runCatching {
                                     NetworkRequest.Method.valueOf(request.method)
                                 }.getOrDefault(NetworkRequest.Method.GET),
+                                bodyBase64 = null,
                             )
                         )
                     }
