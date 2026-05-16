@@ -94,6 +94,11 @@ class PlayerService : MediaLibraryService() {
     private val downloader by inject<Downloader>()
     private val downloadFlow by lazy { downloader.flow }
 
+    private var audioFocusListener: AudioFocusListener? = null
+    private var playerEventListener: PlayerEventListener? = null
+    private var playerRadio: PlayerRadio? = null
+    private var trackingListener: TrackingListener? = null
+
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
@@ -134,19 +139,24 @@ class PlayerService : MediaLibraryService() {
             .setSessionActivity(getPendingIntent(this))
             .build()
 
-        player.addListener(AudioFocusListener(this, player))
-        player.addListener(
-            PlayerEventListener(this, scope, session, state.current, extensions, app.throwFlow)
-        )
-        player.addListener(
-            PlayerRadio(
-                app, scope, player, app.throwFlow, state.radio, extensions.music, downloadFlow
-            )
-        )
-        player.addListener(
-            TrackingListener(player, scope, extensions, state.current, app.throwFlow,
-                    null)
-        )
+        AudioFocusListener(this, player).also {
+            player.addListener(it)
+            audioFocusListener = it
+        }
+        PlayerEventListener(this, scope, session, state.current, extensions, app.throwFlow).also {
+            player.addListener(it)
+            playerEventListener = it
+        }
+        PlayerRadio(
+            app, scope, player, app.throwFlow, state.radio, extensions.music, downloadFlow
+        ).also {
+            player.addListener(it)
+            playerRadio = it
+        }
+        TrackingListener(player, scope, extensions, state.current, app.throwFlow, null).also {
+            player.addListener(it)
+            trackingListener = it
+        }
         player.addListener(effects)
         app.settings.registerOnSharedPreferenceChangeListener(listener)
 
@@ -162,6 +172,13 @@ class PlayerService : MediaLibraryService() {
     override fun onDestroy() {
         adaptiveAudioProfileManager.release()
         app.settings.unregisterOnSharedPreferenceChangeListener(listener)
+        mediaSession?.player?.let { p ->
+            audioFocusListener?.let { p.removeListener(it) }
+            playerEventListener?.let { p.removeListener(it) }
+            playerRadio?.let { p.removeListener(it) }
+            trackingListener?.let { p.removeListener(it) }
+            p.removeListener(effects)
+        }
         mediaSession?.run {
             player.release()
             release()

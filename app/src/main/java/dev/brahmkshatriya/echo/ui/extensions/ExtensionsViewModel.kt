@@ -185,7 +185,6 @@ class ExtensionsViewModel(
                 createLinksDialog(it.first, it.second)
             }
 
-            viewModel.update(this, false)
             var currentFile: File? = null
             collect(viewModel.installFileFlow) {
                 currentFile = it

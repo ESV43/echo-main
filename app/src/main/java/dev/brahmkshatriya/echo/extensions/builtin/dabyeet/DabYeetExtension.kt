@@ -305,9 +305,6 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
             override suspend fun onStop(url: NetworkRequest, cookie: String): List<User>? {
                 if (!cookie.contains("SAPISID") && !cookie.contains("__Secure-3PAPISID"))
                     return null
-                
-                if (!cookie.contains("LOGIN_INFO"))
-                    return null
 
                 return listOf(
                     User(

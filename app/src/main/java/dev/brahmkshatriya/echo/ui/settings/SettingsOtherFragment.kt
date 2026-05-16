@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SwitchPreferenceCompat
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceImageHolder
 import dev.brahmkshatriya.echo.ui.extensions.ExtensionsViewModel
@@ -12,7 +13,6 @@ import dev.brahmkshatriya.echo.utils.ContextUtils.SETTINGS_NAME
 import dev.brahmkshatriya.echo.utils.PermsUtils.registerActivityResultLauncher
 import dev.brahmkshatriya.echo.utils.exportSettings
 import dev.brahmkshatriya.echo.utils.importSettings
-import dev.brahmkshatriya.echo.utils.ui.prefs.SwitchLongClickPreference
 import dev.brahmkshatriya.echo.utils.ui.prefs.TransitionPreference
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
@@ -35,7 +35,7 @@ class SettingsOtherFragment : BaseSettingsFragment() {
             val screen = preferenceManager.createPreferenceScreen(context)
             preferenceScreen = screen
 
-            SwitchLongClickPreference(context).apply {
+            SwitchPreferenceCompat(context).apply {
                 title = getString(R.string.check_for_updates)
                 summary = getString(R.string.check_for_updates_summary)
                 key = "check_for_updates"
@@ -43,9 +43,19 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                 isIconSpaceReserved = false
                 setDefaultValue(true)
                 screen.addPreference(this)
-                setOnLongClickListener {
+            }
+
+            TransitionPreference(context).apply {
+                key = "check_now"
+                title = getString(R.string.check_now)
+                summary = getString(R.string.check_now_summary)
+                layoutResource = R.layout.preference
+                isIconSpaceReserved = false
+                screen.addPreference(this)
+                setOnPreferenceClickListener {
                     val viewModel by activityViewModel<ExtensionsViewModel>()
                     viewModel.update(requireActivity(), true)
+                    true
                 }
             }
 

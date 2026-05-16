@@ -164,7 +164,7 @@ object WebViewUtils {
                             else null
                             val cookieRes = if (target is WebViewRequest.Cookie) {
                                 var cookie = ""
-                                repeat(3) {
+                                repeat(10) {
                                     cookie = CookieManager.getInstance().getCookie(request.url) ?: ""
                                     if (cookie.contains("SAPISID") || cookie.contains("__Secure-3PAPISID")) {
                                         return@repeat

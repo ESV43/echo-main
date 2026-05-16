@@ -168,6 +168,8 @@
     <string name="system">System</string>
     <string name="check_for_updates">Check for Updates</string>
     <string name="check_for_updates_summary">Look for new updates of both app and extensions, when you open the app.</string>
+    <string name="check_now">Check for Updates Now</string>
+    <string name="check_now_summary">Manually check for updates to the app and extensions</string>
 
     <string name="v4_lab">V4 Lab</string>
     <string name="v4_status">Status</string>
