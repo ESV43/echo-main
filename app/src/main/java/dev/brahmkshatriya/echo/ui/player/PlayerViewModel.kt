@@ -75,9 +75,13 @@ class PlayerViewModel(
     var queue: List<MediaItem> = emptyList()
     val queueFlow = MutableSharedFlow<Unit>()
     private val context = app.context
+    private var playerUiListener: PlayerUiListener? = null
     val controllerFutureRelease = getController(context) { player ->
         browser.value = player
-        player.addListener(PlayerUiListener(player, this))
+        PlayerUiListener(player, this).also {
+            playerUiListener = it
+            player.addListener(it)
+        }
 
         if (player.mediaItemCount != 0) return@getController
         if (!settings.getBoolean(KEEP_QUEUE, true)) return@getController
@@ -87,6 +91,9 @@ class PlayerViewModel(
 
     override fun onCleared() {
         super.onCleared()
+        playerUiListener?.let {
+            browser.value?.removeListener(it)
+        }
         controllerFutureRelease()
     }
 

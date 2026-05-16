@@ -409,6 +409,7 @@ class PlayerFragment : Fragment() {
         }
 
         observe(uiViewModel.playerSheetState) {
+            if (!isAdded) return@observe
             updateCollapsed()
             if (isFinalState(it)) adapter.playerSheetStateUpdated()
             if (it == STATE_HIDDEN) viewModel.clearQueue()
@@ -420,6 +421,7 @@ class PlayerFragment : Fragment() {
             adapter.playerControlsHeightUpdated()
         }
         observe(uiViewModel.playerBgVisible) {
+            if (!isAdded) return@observe
             binding.fgContainer.animateVisibility(!it)
             binding.playerMoreContainer.animateVisibility(!it)
             requireActivity().hideSystemUi(it)
@@ -507,6 +509,7 @@ class PlayerFragment : Fragment() {
             likeListener.onCheckedStateChanged(btn, state)
         }
         observe(viewModel.playerState.current) {
+            if (!isAdded) return@observe
             uiViewModel.run {
                 if (it == null) return@run changePlayerState(STATE_HIDDEN)
                 if (!isFinalState(playerSheetState.value)) return@run
@@ -691,6 +694,7 @@ class PlayerFragment : Fragment() {
         adapter.currentDrawableListener = { drawable ->
             if (last != drawable) {
                 last = drawable
+                if (!isAdded) return@let
                 val context = requireContext()
                 uiViewModel.playerDrawable.value = drawable
                 val colors =
@@ -703,6 +707,7 @@ class PlayerFragment : Fragment() {
         val bufferView =
             binding?.playerView?.findViewById<ProgressBar>(androidx.media3.ui.R.id.exo_buffering)
         observe(uiViewModel.playerColors) {
+            if (!isAdded) return@observe
             val context = requireContext()
             if (context.isPlayerColor() && context.isDynamic()) {
                 if (uiViewModel.currentAppColor != viewModel.playerState.current.value?.track?.id) {
@@ -713,7 +718,7 @@ class PlayerFragment : Fragment() {
                 }
             }
             val colors = it ?: context.defaultPlayerColors()
-            val binding = binding!!
+            val binding = binding ?: return@observe
             adapter.onColorsUpdated()
 
             binding.run {

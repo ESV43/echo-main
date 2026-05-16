@@ -204,13 +204,13 @@ class UiViewModel(
     fun changePlayerState(state: Int) {
         val behavior = playerBehaviour.get() ?: return
         if (state == STATE_HIDDEN) behavior.isHideable = true
-        behavior.state = state
+        runCatching { behavior.state = state }
     }
 
     private var moreBehaviour = WeakReference<BottomSheetBehavior<View>>(null)
     fun changeMoreState(state: Int) {
         val behavior = moreBehaviour.get() ?: return
-        behavior.state = state
+        runCatching { behavior.state = state }
     }
 
     var lastMoreTab = R.id.queue

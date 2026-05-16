@@ -39,7 +39,8 @@ sealed class QuickSearchItem {
     @Serializable
     data class Media(
         val media: EchoMediaItem,
-        override val searched: Boolean
+        override val searched: Boolean,
+        val extensionId: String? = null,
     ) : QuickSearchItem()
 
     open val title: String

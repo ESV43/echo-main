@@ -177,6 +177,16 @@ object WebViewUtils {
                 super.onPageStarted(view, url, favicon)
                 progress.show()
                 if (done) return
+                view.evaluateJavascript("""
+                    (function() {
+                        try {
+                            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+                            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+                            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+                            Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
+                        } catch(e) {}
+                    })();
+                """.trimIndent(), null)
                 if (target is WebViewRequest.Evaluate) {
                     target.javascriptToEvaluateOnPageStart?.let { js ->
                         scope.launch {

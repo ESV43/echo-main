@@ -163,7 +163,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                     }
 
                     is QuickSearchItem.Media -> {
-                        val extensionId = item.extensionId
+                        val extensionId = actualItem.extensionId ?: item.extensionId
                         listener.onMediaClicked(transitionView, extensionId, actualItem.media, null)
                     }
                 }
@@ -184,7 +184,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                     }
 
                     is QuickSearchItem.Media -> {
-                        val extensionId = item.extensionId
+                        val extensionId = actualItem.extensionId ?: item.extensionId
                         listener.onMediaLongClicked(
                             transitionView, extensionId, actualItem.media,
                             null, null, -1

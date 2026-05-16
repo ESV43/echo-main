@@ -458,9 +458,13 @@ class UnifiedExtension(
     override suspend fun quickSearch(query: String): List<QuickSearchItem> = coroutineScope {
         extensions().map { extension ->
             async {
-                extension.clientOrNull<QuickSearchClient, List<QuickSearchItem>> {
+                val items = extension.clientOrNull<QuickSearchClient, List<QuickSearchItem>> {
                     quickSearch(query)
                 } ?: listOf()
+                items.map { item ->
+                    if (item is QuickSearchItem.Media) item.copy(extensionId = extension.id)
+                    else item
+                }
             }
         }.awaitAll().flatten().distinctBy { it.title }.take(15)
     }
