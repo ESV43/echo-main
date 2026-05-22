@@ -26,11 +26,21 @@ class SearchViewModel(
     val quickFeed = MutableStateFlow<List<QuickSearchItem>>(emptyList())
     fun quickSearch(extensionId: String, query: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val extension = music.getExtension(extensionId)
-            val list = extension?.getIf<QuickSearchClient, List<QuickSearchItem>>(app.throwFlow) {
-                quickSearch(query)
-            } ?: defaultQuickSearch(extension, app.context, query)
-            quickFeed.value = list
+            val multiSource = app.settings.getBoolean("v4_multi_source_search", false)
+            if (multiSource && query.isNotBlank()) {
+                val results = music.value.mapNotNull { ext ->
+                    ext.getIf<QuickSearchClient, List<QuickSearchItem>>(app.throwFlow) {
+                        quickSearch(query)
+                    }
+                }.flatten().distinctBy { it.title }
+                quickFeed.value = results
+            } else {
+                val extension = music.getExtension(extensionId)
+                val list = extension?.getIf<QuickSearchClient, List<QuickSearchItem>>(app.throwFlow) {
+                    quickSearch(query)
+                } ?: defaultQuickSearch(extension, app.context, query)
+                quickFeed.value = list
+            }
         }
     }
 

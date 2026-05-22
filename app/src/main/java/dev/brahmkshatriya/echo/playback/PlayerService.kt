@@ -72,6 +72,8 @@ class PlayerService : MediaLibraryService() {
 
     private var smartSkipPredictor: SmartSkipPredictor? = null
     private var predictiveCacheManager: PredictiveCacheManager? = null
+    private var autoSkipListener: Player.Listener? = null
+    private var isDestroyed = false
 
     private val app by inject<App>()
     private val state by inject<PlayerState>()
@@ -174,7 +176,7 @@ class PlayerService : MediaLibraryService() {
         val loader = StreamableLoader(app, extensions.music, downloadFlow)
         predictiveCacheManager = PredictiveCacheManager(cache, loader, scope, state.servers)
 
-        player.addListener(object : Player.Listener {
+        val skipListener = object : Player.Listener {
             private var lastAutoSkippedTrackId: String? = null
 
             override fun onPositionDiscontinuity(
@@ -182,6 +184,7 @@ class PlayerService : MediaLibraryService() {
                 newPosition: Player.PositionInfo,
                 reason: Int
             ) {
+                if (isDestroyed) return
                 val oldItem = oldPosition.mediaItem ?: return
                 val newItem = newPosition.mediaItem
                 if (newItem == null || oldItem.mediaId != newItem.mediaId) {
@@ -201,6 +204,7 @@ class PlayerService : MediaLibraryService() {
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                if (isDestroyed) return
                 if (mediaItem != null && app.settings.getBoolean(AUTO_SKIP, false)) {
                     if (smartSkipPredictor?.shouldAutoSkip(mediaItem.mediaId) == true) {
                         lastAutoSkippedTrackId = mediaItem.mediaId
@@ -208,7 +212,9 @@ class PlayerService : MediaLibraryService() {
                     }
                 }
             }
-        })
+        }
+        player.addListener(skipListener)
+        autoSkipListener = skipListener
 
         eqAudioProcessor.beatDetector.onBpmEstimated = { bpm ->
             scope.launch(Dispatchers.Main) {
@@ -238,6 +244,8 @@ class PlayerService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        isDestroyed = true
+        scope.cancel()
         predictiveCacheManager?.cancel()
         adaptiveAudioProfileManager.release()
         app.settings.unregisterOnSharedPreferenceChangeListener(listener)
@@ -247,13 +255,13 @@ class PlayerService : MediaLibraryService() {
             playerRadio?.let { p.removeListener(it) }
             trackingListener?.let { p.removeListener(it) }
             p.removeListener(effects)
+            autoSkipListener?.let { p.removeListener(it) }
         }
         mediaSession?.run {
             player.release()
             release()
             mediaSession = null
         }
-        scope.cancel()
         super.onDestroy()
     }
 

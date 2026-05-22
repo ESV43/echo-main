@@ -41,8 +41,11 @@ class CrossfadePlayer(
         }
     }
 
+    private var mainListener: Player.Listener? = null
+    private var secondaryListener: Player.Listener? = null
+
     init {
-        mainPlayer.addListener(object : Player.Listener {
+        val ml = object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 if (isReleased) return
                 if (isPlaying) startCrossfadePolling()
@@ -66,14 +69,18 @@ class CrossfadePlayer(
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                 crossfadeStartedForIndex = C.INDEX_UNSET
             }
-        })
+        }
+        mainPlayer.addListener(ml)
+        mainListener = ml
 
-        secondaryPlayer.addListener(object : Player.Listener {
+        val sl = object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
                 if (isReleased) return
                 cancelCrossfade()
             }
-        })
+        }
+        secondaryPlayer.addListener(sl)
+        secondaryListener = sl
     }
 
     private fun cancelCrossfade() {
@@ -208,6 +215,8 @@ class CrossfadePlayer(
         stopCrossfadePolling()
         fadeAnimatorMain?.cancel()
         fadeAnimatorSecondary?.cancel()
+        mainListener?.let { mainPlayer.removeListener(it) }
+        secondaryListener?.let { secondaryPlayer.removeListener(it) }
         runCatching {
             secondaryPlayer.stop()
             secondaryPlayer.release()

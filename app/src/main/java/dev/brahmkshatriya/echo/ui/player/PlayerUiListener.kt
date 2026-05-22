@@ -39,6 +39,7 @@ class PlayerUiListener(
         viewModel.previousEnabled.value = player.currentMediaItemIndex >= 0
     }
 
+    private var stopped = false
     private val delay = 200L
     private val threshold = 0.2f
     private val updateProgressRunnable = Runnable { updateProgress() }
@@ -46,7 +47,13 @@ class PlayerUiListener(
         it.post(updateProgressRunnable)
     }
 
+    fun stop() {
+        stopped = true
+        handler.removeCallbacks(updateProgressRunnable)
+    }
+
     private fun updateProgress() {
+        if (stopped) return
         viewModel.progress.value =
             player.currentPosition to player.bufferedPosition
         viewModel.totalDuration.value = player.duration.takeIf { it != TIME_UNSET }

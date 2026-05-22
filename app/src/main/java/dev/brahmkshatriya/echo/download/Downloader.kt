@@ -131,6 +131,19 @@ class Downloader(
                 })
             }
         }
+
+        if (rules.contains("frequent")) {
+            val unified = extensionLoader.unified.value
+            val topTracks = unified.db.getMostPlayed(20)
+            val downloadedTrackIds = downloadFlow.first().map { it.trackId }.toSet()
+            val toDownload = topTracks.filter { it.id !in downloadedTrackIds }
+            if (toDownload.isNotEmpty()) {
+                add(toDownload.map {
+                    val extId = it.extras.extensionId
+                    DownloadContext(extId, it, 0, null)
+                })
+            }
+        }
     }
 
     private val servers = ConcurrentHashMap<Long, Streamable.Media.Server>()

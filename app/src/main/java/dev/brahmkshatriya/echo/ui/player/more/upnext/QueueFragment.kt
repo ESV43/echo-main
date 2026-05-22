@@ -126,6 +126,7 @@ class QueueFragment : Fragment() {
             popup.menu.add(0, 1, 0, R.string.v4_smart_queue_short)
             popup.menu.add(0, 2, 0, R.string.v4_dedupe_short)
             popup.menu.add(0, 3, 0, R.string.v4_fuse_sources_short)
+            popup.menu.add(0, 6, 0, R.string.v4_save_queue)
             if (a.selectionMode) {
                 popup.menu.add(0, 5, 0, R.string.v4_select_none)
                 val selectedCount = a.selectedItems.size
@@ -141,6 +142,20 @@ class QueueFragment : Fragment() {
                     1 -> viewModel.applySmartQueue()
                     2 -> viewModel.dedupeQueue()
                     3 -> viewModel.fuseQueueSources()
+                    6 -> {
+                        val input = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                        input.setTitle(R.string.v4_save_queue)
+                        val editText = android.widget.EditText(requireContext()).apply {
+                            setHint(R.string.playlist_name)
+                            setText("Queue ${java.text.SimpleDateFormat("MMM d", java.util.Locale.getDefault()).format(java.util.Date())}")
+                        }
+                        input.setView(editText)
+                        input.setPositiveButton(R.string.save) { _, _ ->
+                            viewModel.saveQueueAsPlaylist(editText.text.toString())
+                        }
+                        input.setNegativeButton(R.string.cancel, null)
+                        input.show()
+                    }
                     4 -> {
                         val indices = a.selectedItems.sortedDescending()
                         indices.forEach { viewModel.removeQueueItem(it) }

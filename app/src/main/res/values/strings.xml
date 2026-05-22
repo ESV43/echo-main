@@ -175,7 +175,7 @@
     <string name="v4_status">Status</string>
     <string name="v4_release_dashboard">V4 Release Dashboard</string>
     <string name="v4_release_dashboard_summary">Review the local-only feature set for this major release.</string>
-    <string name="v4_release_dashboard_message">%1$d local switches enabled.\n\nLibrary Health: %2$d broken, %3$d duplicates.\nListening Stats: %4$d plays, %5$d skips.\n\nSmart Queue: %6$s\nPlayer Mode: %7$s</string>
+    <string name="v4_release_dashboard_message">%1$d local switches enabled.\n\nLibrary Health: %2$d broken, %3$d duplicates.\nListening Stats: %4$d total plays, %5$d skips\nTop Tracks: %6$s\n\nSmart Queue: %7$s\nPlayer Mode: %8$s</string>
     <string name="v4_local_intelligence">Local Intelligence</string>
     <string name="v4_local_music_intelligence">Local Music Intelligence</string>
     <string name="v4_local_music_intelligence_summary">Build listening stats and taste signals on-device from playback history.</string>
@@ -207,6 +207,7 @@
     <string name="v4_queue_deduped">Removed %1$d duplicate queue items</string>
     <string name="v4_queue_sources_fused">Fused %1$d duplicate source items</string>
     <string name="v4_edit_tags">Edit Tags</string>
+    <string name="v4_save_queue">Save Queue</string>
     <string name="v4_edit_tags_action">Edit Tags</string>
     <string name="artist">Artist</string>
     <string name="title">Title</string>

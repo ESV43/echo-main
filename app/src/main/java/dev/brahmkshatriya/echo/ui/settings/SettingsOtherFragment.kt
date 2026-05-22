@@ -215,6 +215,8 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                 val history = unified?.db?.getRecentlyPlayed(1000) ?: listOf()
                 val plays = history.sumOf { (unified?.db?.getHistory(it.id, it.extras.extensionId)?.playCount ?: 0) }
                 val skips = history.sumOf { (unified?.db?.getHistory(it.id, it.extras.extensionId)?.skipCount ?: 0) }
+                val mostPlayed = unified?.db?.getMostPlayed(5) ?: listOf()
+                val topTracks = mostPlayed.joinToString(", ") { it.title.take(20) }
 
                 val message = getString(
                     R.string.v4_release_dashboard_message,
@@ -223,6 +225,7 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                     health["duplicates"] ?: 0,
                     plays,
                     skips,
+                    topTracks.ifEmpty { "—" },
                     prefs.getString(Keys.SMART_QUEUE_MODE, "vibe"),
                     prefs.getString(Keys.VISUAL_PLAYER, "immersive")
                 )

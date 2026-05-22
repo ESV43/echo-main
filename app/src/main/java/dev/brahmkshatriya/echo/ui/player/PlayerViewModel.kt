@@ -16,6 +16,7 @@ import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.session.MediaController
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.clients.LikeClient
+import dev.brahmkshatriya.echo.common.clients.PlaylistEditClient
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Message
 import dev.brahmkshatriya.echo.common.models.Streamable
@@ -23,6 +24,7 @@ import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.download.Downloader
 import dev.brahmkshatriya.echo.extensions.ExtensionLoader
+import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getExtension
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.isClient
 import dev.brahmkshatriya.echo.extensions.MediaState
@@ -67,8 +69,12 @@ class PlayerViewModel(
     val browser = MutableStateFlow<MediaController?>(null)
     private fun withBrowser(block: suspend (MediaController) -> Unit) {
         viewModelScope.launch {
-            val browser = browser.first { it != null }!!
-            block(browser)
+            val b = browser.value
+            if (b != null) {
+                block(b)
+                return@launch
+            }
+            browser.first { it != null }?.let { block(it) }
         }
     }
 
@@ -92,6 +98,7 @@ class PlayerViewModel(
     override fun onCleared() {
         super.onCleared()
         playerUiListener?.let {
+            it.stop()
             browser.value?.removeListener(it)
         }
         controllerFutureRelease()
@@ -389,6 +396,27 @@ class PlayerViewModel(
             val index = current?.mediaItem?.sourceIndex
             Triple(tracks, server, index)
         }.stateIn(viewModelScope, SharingStarted.Lazily, Triple(null, null, null))
+
+    fun saveQueueAsPlaylist(name: String) = viewModelScope.launch(Dispatchers.IO) {
+        val tracks = queue.mapNotNull { it.track }.toList()
+        if (tracks.isEmpty()) return@launch
+        runCatching {
+            val unified = extensions.music.first().firstOrNull { ext ->
+                ext.id == UnifiedExtension.UNIFIED_ID
+            } ?: return@launch
+            val client = unified.instance.value()?.getOrNull() as? PlaylistEditClient
+                ?: return@launch
+            val playlist = client.createPlaylist(name, "Saved from queue")
+            client.addTracksToPlaylist(playlist, emptyList(), 0, tracks)
+            withContext(Dispatchers.Main) {
+                app.messageFlow.emit(
+                    Message(app.context.getString(R.string.saved_to_x, name))
+                )
+            }
+        }.onFailure {
+            app.throwFlow.emit(it)
+        }
+    }
 
     companion object {
         const val KEEP_QUEUE = "keep_queue"
