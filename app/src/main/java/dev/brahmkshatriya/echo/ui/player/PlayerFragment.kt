@@ -710,14 +710,15 @@ class PlayerFragment : Fragment() {
         adapter.currentDrawableListener = { drawable ->
             if (last != drawable) {
                 last = drawable
-                if (!isAdded) return@let
-                val context = requireContext()
-                uiViewModel.playerDrawable.value = drawable
-                val colors =
-                    if (context.isDynamic()) context.getColorsFrom(drawable?.toBitmap()) else null
-                uiViewModel.playerColors.value = colors
-                if (context.showBackground()) binding?.bgImage?.loadBlurred(drawable, 12f)
-                else binding?.bgImage?.setImageDrawable(null)
+                if (isAdded) {
+                    val context = requireContext()
+                    uiViewModel.playerDrawable.value = drawable
+                    val colors =
+                        if (context.isDynamic()) context.getColorsFrom(drawable?.toBitmap()) else null
+                    uiViewModel.playerColors.value = colors
+                    if (context.showBackground()) binding?.bgImage?.loadBlurred(drawable, 12f)
+                    else binding?.bgImage?.setImageDrawable(null)
+                }
             }
         }
         val bufferView =
