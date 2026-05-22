@@ -13,12 +13,15 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE_DURATION
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.BPM_CROSSFADE
 
 class CrossfadePlayer(
     private val mainPlayer: Player,
     private val secondaryPlayer: Player,
     private val settings: SharedPreferences,
 ) : ForwardingPlayer(mainPlayer) {
+
+    var currentBpm = 0f
 
     private var fadeAnimatorMain: ValueAnimator? = null
     private var fadeAnimatorSecondary: ValueAnimator? = null
@@ -189,8 +192,13 @@ class CrossfadePlayer(
         animator.start()
     }
 
-    private fun crossfadeDuration() =
-        settings.getInt(CROSSFADE_DURATION, 5).coerceIn(1, 15) * 1000L
+    private fun crossfadeDuration(): Long {
+        if (settings.getBoolean(BPM_CROSSFADE, false) && currentBpm > 30f) {
+            val dynamicDuration = (60000f / currentBpm * 8f).toLong()
+            return dynamicDuration.coerceIn(2000L, 8000L)
+        }
+        return settings.getInt(CROSSFADE_DURATION, 5).coerceIn(1, 15) * 1000L
+    }
 
     override fun release() {
         if (isReleased) return

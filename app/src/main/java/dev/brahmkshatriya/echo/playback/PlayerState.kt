@@ -16,7 +16,8 @@ data class PlayerState(
     val radio: MutableStateFlow<Radio> = MutableStateFlow(Radio.Empty),
     val session: MutableStateFlow<Int> = MutableStateFlow(0),
     val sleepTimerMillis: MutableStateFlow<Long?> = MutableStateFlow(null),
-    val amplitude: MutableStateFlow<Float> = MutableStateFlow(0f)
+    val amplitude: MutableStateFlow<Float> = MutableStateFlow(0f),
+    val bpm: MutableStateFlow<Float> = MutableStateFlow(0f)
 ) {
 
     val servers = ConcurrentHashMap<String, Result<Streamable.Media.Server>>()

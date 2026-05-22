@@ -44,6 +44,7 @@ import dev.brahmkshatriya.echo.playback.renderer.EqAudioProcessor
 import dev.brahmkshatriya.echo.playback.renderer.PlayerBitmapLoader
 import dev.brahmkshatriya.echo.playback.renderer.RenderersFactory
 import dev.brahmkshatriya.echo.playback.source.StreamableMediaSource
+import dev.brahmkshatriya.echo.playback.source.StreamableLoader
 import dev.brahmkshatriya.echo.utils.ContextUtils.listenFuture
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -67,6 +68,9 @@ class PlayerService : MediaLibraryService() {
     private var mediaSession: MediaLibrarySession? = null
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
 
+    private var smartSkipPredictor: SmartSkipPredictor? = null
+    private var predictiveCacheManager: PredictiveCacheManager? = null
+
     private val app by inject<App>()
     private val state by inject<PlayerState>()
     private val scope = CoroutineScope(Dispatchers.IO) + CoroutineName("PlayerService")
@@ -81,6 +85,12 @@ class PlayerService : MediaLibraryService() {
                     .setAudioOffloadPreferences(offloadPreferences(prefs.getBoolean(key, false)))
                     .build()
             EQ_GAINS -> updateEqGains(prefs)
+            AUTO_GAIN -> eqAudioProcessor.autoGainEnabled = prefs.getBoolean(key, false)
+            PREDICTIVE_CACHE -> {
+                if (!prefs.getBoolean(key, false)) {
+                    predictiveCacheManager?.cancel()
+                }
+            }
         }
     }
 
@@ -109,6 +119,7 @@ class PlayerService : MediaLibraryService() {
         adaptiveAudioProfileManager.updateProfile()
         
         val aiAutoEqManager by lazy { AiAutoEqManager(this, eqAudioProcessor) }
+        eqAudioProcessor.autoGainEnabled = app.settings.getBoolean(AUTO_GAIN, false)
         eqAudioProcessor.pcmCallback = { pcm ->
             if (app.settings.getBoolean(KEY_AI_AUTO_EQ, false)) {
                 aiAutoEqManager.classifyAndApplyEq(pcm)
@@ -158,6 +169,63 @@ class PlayerService : MediaLibraryService() {
             trackingListener = it
         }
         player.addListener(effects)
+
+        smartSkipPredictor = SmartSkipPredictor(this)
+        val loader = StreamableLoader(app, extensions.music, downloadFlow)
+        predictiveCacheManager = PredictiveCacheManager(cache, loader, scope, state.servers)
+
+        player.addListener(object : Player.Listener {
+            private var lastAutoSkippedTrackId: String? = null
+
+            override fun onPositionDiscontinuity(
+                oldPosition: Player.PositionInfo,
+                newPosition: Player.PositionInfo,
+                reason: Int
+            ) {
+                val oldItem = oldPosition.mediaItem ?: return
+                val newItem = newPosition.mediaItem
+                if (newItem == null || oldItem.mediaId != newItem.mediaId) {
+                    if (oldItem.mediaId == lastAutoSkippedTrackId) {
+                        lastAutoSkippedTrackId = null
+                        return
+                    }
+                    if (app.settings.getBoolean(AUTO_SKIP, false)) {
+                        val playedDuration = oldPosition.positionMs
+                        if (playedDuration < 10000L) {
+                            smartSkipPredictor?.recordSkip(oldItem.mediaId)
+                        } else {
+                            smartSkipPredictor?.recordPlay(oldItem.mediaId)
+                        }
+                    }
+                }
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                if (mediaItem != null && app.settings.getBoolean(AUTO_SKIP, false)) {
+                    if (smartSkipPredictor?.shouldAutoSkip(mediaItem.mediaId) == true) {
+                        lastAutoSkippedTrackId = mediaItem.mediaId
+                        player.seekToNextMediaItem()
+                    }
+                }
+            }
+        })
+
+        eqAudioProcessor.beatDetector.onBpmEstimated = { bpm ->
+            scope.launch(Dispatchers.Main) {
+                player.currentBpm = bpm
+            }
+            state.bpm.value = bpm
+        }
+
+        scope.launch(Dispatchers.Main) {
+            while (true) {
+                kotlinx.coroutines.delay(1000L)
+                if (app.settings.getBoolean(PREDICTIVE_CACHE, false)) {
+                    predictiveCacheManager?.checkAndPreFetch(player)
+                }
+            }
+        }
+
         app.settings.registerOnSharedPreferenceChangeListener(listener)
 
         val notificationProvider = DefaultMediaNotificationProvider.Builder(this)
@@ -170,6 +238,7 @@ class PlayerService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        predictiveCacheManager?.cancel()
         adaptiveAudioProfileManager.release()
         app.settings.unregisterOnSharedPreferenceChangeListener(listener)
         mediaSession?.player?.let { p ->
@@ -249,6 +318,10 @@ class PlayerService : MediaLibraryService() {
         const val CROSSFADE_DURATION = "crossfade_duration"
         const val EQ_GAINS = "eq_gains"
         const val KEY_AI_AUTO_EQ = "ai_auto_eq"
+        const val AUTO_GAIN = "v4_auto_gain"
+        const val BPM_CROSSFADE = "v4_bpm_crossfade"
+        const val AUTO_SKIP = "v4_auto_skip"
+        const val PREDICTIVE_CACHE = "v4_predictive_cache"
 
         const val PREFERRED_LYRICS_SOURCE = "preferred_lyrics_source"
         const val FLUID_LYRICS = "fluid_lyrics"

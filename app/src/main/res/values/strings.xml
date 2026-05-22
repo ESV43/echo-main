@@ -642,4 +642,13 @@
     <string name="view_playlist">View Playlist</string>
     <string name="failed_to_load_tracks">Failed to load tracks from source playlist.</string>
     <string name="no_target_extensions">No extensions found that support playlist creation and search.</string>
+
+    <string name="v4_auto_gain">Auto-Gain Control</string>
+    <string name="v4_auto_gain_summary">Smoothly normalize volume across tracks to prevent sudden loudness jumps</string>
+    <string name="v4_bpm_crossfade">BPM-Matched Crossfading</string>
+    <string name="v4_bpm_crossfade_summary">Align crossfade durations dynamically to match 8 beats of the current song\'s tempo</string>
+    <string name="v4_auto_skip">Smart Auto-Skip</string>
+    <string name="v4_auto_skip_summary">Automatically skip tracks that you skip frequently (skip rate >= 80%)</string>
+    <string name="v4_predictive_cache">Predictive Caching</string>
+    <string name="v4_predictive_cache_summary">Pre-buffer the next track in the background when the current track is near completion</string>
 </resources>

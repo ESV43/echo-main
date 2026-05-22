@@ -24,6 +24,17 @@ class EqAudioProcessor : BaseAudioProcessor() {
     private val sampleInterval = 44100 * 2 // Sample every 2 seconds
     private val pcmBuffer = ShortArray(16000)
 
+    @Volatile
+    var autoGainEnabled: Boolean = false
+
+    val beatDetector = BeatDetector()
+
+    private var currentGain = 1.0f
+    private var targetGain = 1.0f
+
+    private var beatSampleCount = 0
+    private var beatEnergySum = 0.0f
+
     fun setGains(newGains: FloatArray) {
         if (newGains.size != gains.size) return
         newGains.copyInto(gains)
@@ -39,6 +50,11 @@ class EqAudioProcessor : BaseAudioProcessor() {
 
     override fun onFlush() {
         updateFilters()
+        beatDetector.reset()
+        beatSampleCount = 0
+        beatEnergySum = 0.0f
+        currentGain = 1.0f
+        targetGain = 1.0f
     }
 
     private fun updateFilters() {
@@ -66,15 +82,45 @@ class EqAudioProcessor : BaseAudioProcessor() {
         val buffer = replaceOutputBuffer(remaining)
         val channelCount = inputAudioFormat.channelCount
 
+        if (autoGainEnabled) {
+            val rms = calculateRms(inputBuffer)
+            targetGain = if (rms > 0.005f) {
+                (0.22f / rms).coerceIn(0.1f, 3.0f)
+            } else {
+                1.0f
+            }
+        } else {
+            targetGain = 1.0f
+        }
+
         while (inputBuffer.hasRemaining()) {
             for (c in 0 until channelCount) {
                 if (!inputBuffer.hasRemaining()) break
                 val rawSample = inputBuffer.short
                 var sample = rawSample.toDouble()
                 
-                if (c == 0 && sampleCount < pcmBuffer.size) {
-                    pcmBuffer[sampleCount] = rawSample
+                if (c == 0) {
+                    if (sampleCount < pcmBuffer.size) {
+                        pcmBuffer[sampleCount] = rawSample
+                    }
+
+                    // Feed beat detector
+                    val normSample = rawSample.toFloat() / 32768f
+                    beatEnergySum += normSample * normSample
+                    beatSampleCount++
+                    if (beatSampleCount >= 1024) {
+                        val blockEnergy = beatEnergySum / 1024f
+                        val sampleRate = inputAudioFormat.sampleRate
+                        if (sampleRate > 0) {
+                            beatDetector.processBlock(blockEnergy, sampleRate)
+                        }
+                        beatSampleCount = 0
+                        beatEnergySum = 0.0f
+                    }
                 }
+
+                // Apply active gain factor before filtering (or after, linear DSP)
+                sample *= currentGain
 
                 for (b in bands.indices) {
                     sample = filters[c][b].process(sample)
@@ -83,6 +129,10 @@ class EqAudioProcessor : BaseAudioProcessor() {
                 val outSample = sample.coerceIn(Short.MIN_VALUE.toDouble(), Short.MAX_VALUE.toDouble()).toInt().toShort()
                 buffer.putShort(outSample)
             }
+
+            // Smoothly adapt gain
+            currentGain += (targetGain - currentGain) * 0.0001f
+
             sampleCount++
             if (sampleCount >= sampleInterval) {
                 pcmCallback?.invoke(pcmBuffer.copyOf())
@@ -90,6 +140,21 @@ class EqAudioProcessor : BaseAudioProcessor() {
             }
         }
         buffer.flip()
+    }
+
+    private fun calculateRms(buffer: ByteBuffer): Float {
+        val dup = buffer.duplicate()
+        dup.order(buffer.order())
+        var sumSq = 0.0
+        var count = 0
+        while (dup.hasRemaining()) {
+            if (dup.remaining() < 2) break
+            val sample = dup.short.toFloat() / 32768f
+            sumSq += (sample * sample).toDouble()
+            count++
+        }
+        if (count == 0) return 0f
+        return kotlin.math.sqrt(sumSq / count).toFloat()
     }
 
     private class BiquadFilter {

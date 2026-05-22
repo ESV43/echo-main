@@ -1,6 +1,7 @@
 package dev.brahmkshatriya.echo.ui.player.more.lyrics
 
 import android.annotation.SuppressLint
+import android.view.Choreographer
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -63,6 +64,18 @@ class LyricsFragment : Fragment() {
     private val viewModel by activityViewModel<LyricsViewModel>()
     private val playerVM by activityViewModel<PlayerViewModel>()
     private val uiViewModel by activityViewModel<UiViewModel>()
+
+    private var lastUpdateSystemTime = System.currentTimeMillis()
+    private val frameCallback = object : Choreographer.FrameCallback {
+        override fun doFrame(frameTimeNanos: Long) {
+            if (view == null || !isAdded) return
+            if (playerVM.isPlaying.value) {
+                val currentPos = playerVM.progress.value.first + (System.currentTimeMillis() - lastUpdateSystemTime)
+                updateLyrics(currentPos + lyricsOffset)
+            }
+            Choreographer.getInstance().postFrameCallback(this)
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
@@ -262,7 +275,10 @@ class LyricsFragment : Fragment() {
             lyricAdapter.submitList(list)
         }
 
-        observe(playerVM.progress) { updateLyrics(it.first + lyricsOffset) }
+        observe(playerVM.progress) {
+            lastUpdateSystemTime = System.currentTimeMillis()
+            updateLyrics(it.first + lyricsOffset)
+        }
         configureMiniPlayer()
     }
 
@@ -344,6 +360,16 @@ class LyricsFragment : Fragment() {
         setTitle(lyrics.title)
         setSubtitle(lyrics.subtitle)
         setBackgroundResource(R.color.amoled_bg)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Choreographer.getInstance().postFrameCallback(frameCallback)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Choreographer.getInstance().removeFrameCallback(frameCallback)
     }
 
     class CenterSmoothScroller(context: Context) : LinearSmoothScroller(context) {

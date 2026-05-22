@@ -24,6 +24,10 @@ import dev.brahmkshatriya.echo.playback.PlayerService.Companion.SKIP_SILENCE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.STREAM_QUALITY
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.UNMETERED_STREAM_QUALITY
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.streamQualities
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.AUTO_GAIN
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.BPM_CROSSFADE
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.AUTO_SKIP
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.PREDICTIVE_CACHE
 import dev.brahmkshatriya.echo.playback.listener.PlayerRadio.Companion.AUTO_START_RADIO
 import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
 import dev.brahmkshatriya.echo.ui.player.PlayerViewModel.Companion.KEEP_QUEUE
@@ -102,6 +106,16 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     setDefaultValue(false)
                     addPreference(this)
                 }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = AUTO_GAIN
+                    title = getString(R.string.v4_auto_gain)
+                    summary = getString(R.string.v4_auto_gain_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
             }
 
             PreferenceCategory(context).apply {
@@ -171,12 +185,22 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                MaterialSliderPreference(context, 1, 12, allowOverride = true).apply {
+                 MaterialSliderPreference(context, 1, 12, allowOverride = true).apply {
                     key = CROSSFADE_DURATION
                     title = getString(R.string.crossfade_duration)
                     summary = getString(R.string.crossfade_duration_summary)
                     isIconSpaceReserved = false
                     setDefaultValue(5)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = BPM_CROSSFADE
+                    title = getString(R.string.v4_bpm_crossfade)
+                    summary = getString(R.string.v4_bpm_crossfade_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
                     addPreference(this)
                 }
 
@@ -200,12 +224,32 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
+                SwitchPreferenceCompat(context).apply {
+                    key = AUTO_SKIP
+                    title = getString(R.string.v4_auto_skip)
+                    summary = getString(R.string.v4_auto_skip_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
                 MaterialSliderPreference(context, 200, 1000, allowOverride = true).apply {
                     key = CACHE_SIZE
                     title = getString(R.string.cache_size)
                     summary = getString(R.string.cache_size_summary)
                     isIconSpaceReserved = false
                     setDefaultValue(250)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = PREDICTIVE_CACHE
+                    title = getString(R.string.v4_predictive_cache)
+                    summary = getString(R.string.v4_predictive_cache_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
                     addPreference(this)
                 }
             }

@@ -52,8 +52,32 @@ class LyricAdapter(
     private fun ViewHolder.updateColors() {
         binding.root.run {
             val colors = uiViewModel.playerColors.value ?: context.defaultPlayerColors()
-            val alphaStrippedColor = colors.onBackground or -0x1000000
-            setTextColor(alphaStrippedColor)
+            val activeColor = colors.onBackground or -0x1000000
+            val inactiveColor = Color.argb(100, Color.red(activeColor), Color.green(activeColor), Color.blue(activeColor))
+            
+            val pos = bindingAdapterPosition
+            val line = getItemOrNull(pos) ?: return
+            if (line.words != null && line.text != null) {
+                val spannable = SpannableString(line.text)
+                var startIndex = 0
+                line.words.forEach { word ->
+                    val wordIndex = line.text.indexOf(word.text, startIndex)
+                    if (wordIndex != -1) {
+                        val span = WordHighlightSpan(word.startTime, word.endTime, activeColor, inactiveColor)
+                        spannable.setSpan(
+                            span,
+                            wordIndex,
+                            wordIndex + word.text.length,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                        startIndex = wordIndex + word.text.length
+                    }
+                }
+                text = spannable
+            } else {
+                text = line.text?.trim()?.trim('\n')?.ifEmpty { "♪" } ?: "♪"
+                setTextColor(activeColor)
+            }
         }
     }
 
@@ -77,42 +101,30 @@ class LyricAdapter(
 
         if (pos == currentPos) {
             binding.root.alpha = 1f
-            binding.root.animate().scaleX(1.05f).scaleY(1.05f).setDuration(300).start()
-            if (line.words != null && line.text != null) {
-                val spannable = SpannableString(line.text)
-                var startIndex = 0
-                line.words.forEach { word ->
-                    val wordIndex = line.text.indexOf(word.text, startIndex)
-                    if (wordIndex != -1) {
-                        val isActive = currentProgress in word.startTime..word.endTime
-                        val color = if (currentProgress >= word.startTime) activeColor else inactiveColor
-                        spannable.setSpan(
-                            ForegroundColorSpan(color),
-                            wordIndex,
-                            wordIndex + word.text.length,
-                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                        )
-                        if (isActive) {
-                            spannable.setSpan(
-                                android.text.style.StyleSpan(android.graphics.Typeface.BOLD),
-                                wordIndex,
-                                wordIndex + word.text.length,
-                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                            )
-                        }
-                        startIndex = wordIndex + word.text.length
-                    }
+            binding.root.animate().scaleX(1.12f).scaleY(1.12f).setDuration(200).start()
+            val text = binding.root.text
+            if (text is Spannable) {
+                val spans = text.getSpans(0, text.length, WordHighlightSpan::class.java)
+                spans.forEach { span ->
+                    span.currentProgress = currentProgress
                 }
-                binding.root.text = spannable
+                binding.root.invalidate()
             } else {
                 binding.root.setTextColor(activeColor)
-                binding.root.text = line.text ?: "♪"
             }
         } else {
-            binding.root.animate().scaleX(1f).scaleY(1f).setDuration(300).start()
-            binding.root.setTextColor(inactiveColor)
-            binding.root.alpha = if (pos < currentPos) 0.8f else 0.4f
-            binding.root.text = line.text ?: "♪"
+            binding.root.animate().scaleX(0.9f).scaleY(0.9f).setDuration(200).start()
+            binding.root.alpha = if (pos < currentPos) 0.7f else 0.3f
+            val text = binding.root.text
+            if (text is Spannable) {
+                val spans = text.getSpans(0, text.length, WordHighlightSpan::class.java)
+                spans.forEach { span ->
+                    span.currentProgress = 0L
+                }
+                binding.root.invalidate()
+            } else {
+                binding.root.setTextColor(inactiveColor)
+            }
         }
     }
 
@@ -123,8 +135,7 @@ class LyricAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val line = getItem(position) ?: return
-        holder.binding.root.text = line.text?.trim()?.trim('\n')?.ifEmpty { "♪" } ?: "♪"
+        getItem(position) ?: return
         holder.updateColors()
         holder.updateCurrent()
         holder.itemView.applyTranslationYAnimation(scrollY)
