@@ -123,12 +123,8 @@ class Downloader(
             val likedPlaylist = unified.db.getLikedPlaylist(app.context)
             val tracks = unified.loadTracks(likedPlaylist).loadAll()
 
-            val toDownload = mutableListOf<Track>()
-            tracks.forEach { track ->
-                if (dao.getDownloadEntity(track.id.toLong()) == null) {
-                    toDownload.add(track)
-                }
-            }
+            val downloadedTrackIds = downloadFlow.first().map { it.trackId }.toSet()
+            val toDownload = tracks.filter { it.id !in downloadedTrackIds }
             if (toDownload.isNotEmpty()) {
                 add(toDownload.map {
                     DownloadContext(it.extras.extensionId, it, 0, null)

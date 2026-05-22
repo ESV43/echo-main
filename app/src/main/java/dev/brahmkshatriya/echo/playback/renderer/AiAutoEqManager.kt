@@ -29,6 +29,7 @@ class AiAutoEqManager(private val context: Context, private val eqProcessor: EqA
             val buffer = ByteBuffer.allocateDirect(model.size).apply {
                 order(ByteOrder.nativeOrder())
                 put(model)
+                rewind()
             }
             interpreter = Interpreter(buffer)
         }.onFailure {
@@ -43,6 +44,7 @@ class AiAutoEqManager(private val context: Context, private val eqProcessor: EqA
             val input = ByteBuffer.allocateDirect(pcmData.size * 2).apply {
                 order(ByteOrder.nativeOrder())
                 pcmData.forEach { putShort(it) }
+                rewind()
             }
             
             val output = Array(1) { FloatArray(genres.size) }

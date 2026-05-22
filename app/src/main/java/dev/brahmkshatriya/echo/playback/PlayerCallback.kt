@@ -418,8 +418,8 @@ class PlayerCallback(
                 )
             }.build()
             session.player.with {
-                val index = currentMediaItemIndex
-                if (index != C.INDEX_UNSET) {
+                val index = (0 until mediaItemCount).find { getMediaItemAt(it).mediaId == item.mediaId }
+                if (index != null && index != C.INDEX_UNSET) {
                     replaceMediaItem(index, newItem)
                 }
             }

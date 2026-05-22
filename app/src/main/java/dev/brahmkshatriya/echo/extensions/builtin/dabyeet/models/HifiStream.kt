@@ -112,12 +112,13 @@ data class HifiSearchTrack(
         val artistNames = (artists + listOfNotNull(artist)).map { it.name.normalizeForMatch() }
         val normalizedArtistQuery = artistQuery?.normalizeForMatch().orEmpty()
 
-        return normalizedTitle.contains(normalizedTitleQuery) ||
-                normalizedTitleQuery.contains(normalizedTitle) ||
-                normalizedArtistQuery.isBlank() ||
+        val titleMatches = normalizedTitle.contains(normalizedTitleQuery) ||
+                normalizedTitleQuery.contains(normalizedTitle)
+        val artistMatches = normalizedArtistQuery.isBlank() ||
                 artistNames.any {
                     it.contains(normalizedArtistQuery) || normalizedArtistQuery.contains(it)
                 }
+        return titleMatches && artistMatches
     }
 
     private fun String.normalizeForMatch() = lowercase()

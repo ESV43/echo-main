@@ -16,6 +16,7 @@ class EqAudioProcessor : BaseAudioProcessor() {
 
     private val bands = floatArrayOf(31f, 62f, 125f, 250f, 500f, 1000f, 2000f, 4000f, 8000f, 16000f)
     private val gains = FloatArray(bands.size)
+    @Volatile
     private var filters: Array<Array<BiquadFilter>>? = null
 
     var pcmCallback: ((ShortArray) -> Unit)? = null

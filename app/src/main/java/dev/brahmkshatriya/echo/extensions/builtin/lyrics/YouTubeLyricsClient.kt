@@ -14,14 +14,14 @@ class YouTubeLyricsClient : BaseLyricsClient() {
         // This usually requires the YouTube video ID.
         // In Echo, the track id might be the YouTube ID if it's from DabYeet extension.
         val videoId = track.id
-        if (videoId.length != 11) return super.searchTrackLyrics(clientId, track)
+        if (videoId.length != 11) return emptyList<Lyrics>().toFeed()
 
         val url = "https://www.youtube.com/api/timedtext?v=$videoId&lang=en"
         val request = Request.Builder().url(url).build()
         val response = CallWait(request)
         if (response.isSuccessful) {
-            val body = response.body?.string() ?: return super.searchTrackLyrics(clientId, track)
-            if (body.isBlank()) return super.searchTrackLyrics(clientId, track)
+            val body = response.body?.string() ?: return emptyList<Lyrics>().toFeed()
+            if (body.isBlank()) return emptyList<Lyrics>().toFeed()
             
             val lyrics = Lyrics(
                 id = "yt_$videoId",
@@ -31,7 +31,7 @@ class YouTubeLyricsClient : BaseLyricsClient() {
             )
             return listOf(lyrics).toFeed()
         }
-        return super.searchTrackLyrics(clientId, track)
+        return emptyList<Lyrics>().toFeed()
     }
 
     private fun parseTranscript(xml: String): Lyrics.Lyric {
@@ -44,8 +44,10 @@ class YouTubeLyricsClient : BaseLyricsClient() {
             var eventType = xpp.eventType
             while (eventType != XmlPullParser.END_DOCUMENT) {
                 if (eventType == XmlPullParser.START_TAG && xpp.name == "text") {
-                    val start = (xpp.getAttributeValue(null, "start").toDouble() * 1000).toLong()
-                    val dur = (xpp.getAttributeValue(null, "dur").toDouble() * 1000).toLong()
+                    val startStr = xpp.getAttributeValue(null, "start")
+                    val durStr = xpp.getAttributeValue(null, "dur")
+                    val start = ((startStr?.toDoubleOrNull() ?: 0.0) * 1000).toLong()
+                    val dur = ((durStr?.toDoubleOrNull() ?: 0.0) * 1000).toLong()
                     val text = xpp.nextText().trim()
                     items.add(Lyrics.Item(text, start, start + dur))
                 }
