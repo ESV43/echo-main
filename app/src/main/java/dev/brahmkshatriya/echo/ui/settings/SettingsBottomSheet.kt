@@ -81,11 +81,6 @@ class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) 
             requireActivity().openFragment<SettingsOtherFragment>()
         }
 
-        binding.v4Lab.setOnClickListener {
-            dismiss()
-            requireActivity().openFragment<V4LabFragment>()
-        }
-
         binding.downloads.setOnClickListener {
             dismiss()
             requireActivity().openFragment<DownloadFragment>()

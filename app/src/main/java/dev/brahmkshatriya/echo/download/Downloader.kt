@@ -114,7 +114,7 @@ class Downloader(
             android.content.Context.MODE_PRIVATE
         )
         val rules = prefs.getStringSet(
-            dev.brahmkshatriya.echo.ui.settings.V4LabFragment.Keys.SMART_DOWNLOADS,
+            dev.brahmkshatriya.echo.ui.settings.Keys.SMART_DOWNLOADS,
             setOf("liked", "wifi", "storage")
         ) ?: return@launch
 

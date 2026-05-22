@@ -142,7 +142,7 @@ class PlayerFragment : Fragment() {
 
     private fun updatePlayerMode() {
         val binding = binding ?: return
-        val mode = viewModel.settings.getString(dev.brahmkshatriya.echo.ui.settings.V4LabFragment.Keys.VISUAL_PLAYER, "immersive")
+        val mode = viewModel.settings.getString(dev.brahmkshatriya.echo.ui.settings.Keys.VISUAL_PLAYER, "immersive")
         
         binding.bgContainer.isVisible = mode != "amoled"
         binding.visualizer.isVisible = mode == "hifi" || mode == "immersive"

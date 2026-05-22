@@ -67,19 +67,13 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
                     )
                 ).data.data.attributes.uri
             }.getOrNull()
-            if (!manifestUrl.isNullOrBlank()) return manifestUrl.toServerMedia(type = Streamable.SourceType.DASH)
+            if (manifestUrl.isFullTrack()) return manifestUrl!!.toServerMedia(type = Streamable.SourceType.DASH)
 
             // Legacy Fallback
             runCatching { getLegacyTrackStream(baseUrl, trackId) }.getOrNull()?.let { return it }
         }
 
         throw Exception("Failed to resolve stream for $baseUrl")
-    }
-
-    private fun String?.isFullTrack(): Boolean {
-        if (this.isNullOrBlank()) return false
-        val low = this.lowercase()
-        return !low.contains("preview") && !low.contains("30s") && !low.contains("/sample/")
     }
 
     private suspend fun getQobuzStream(baseUrl: String, isrc: String): Streamable.Media? {
@@ -198,6 +192,7 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
                     .urls
                     .firstOrNull()
                     ?: throw IllegalStateException("hifi-api returned an empty BTS manifest")
+                if (!streamUrl.isFullTrack()) throw IllegalStateException("hifi-api returned a preview/30s URL")
                 streamUrl.toServerMedia()
             }
             "application/dash+xml" -> {
@@ -207,4 +202,10 @@ class HifiApiService(client: OkHttpClient, json: Json) : BaseHttpClient(client, 
             else -> throw IllegalStateException("Unsupported hifi-api manifest type: ${response.data.manifestMimeType}")
         }
     }
+}
+
+internal fun String?.isFullTrack(): Boolean {
+    if (this.isNullOrBlank()) return false
+    val low = this.lowercase()
+    return !low.contains("preview") && !low.contains("30s") && !low.contains("/sample/")
 }

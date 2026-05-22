@@ -248,6 +248,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
         }
         val downloadable =
             state != null && client is TrackClient && state.item.extras[EXTENSION_ID] != OfflineExtension.metadata.id
+        val isOfflineTrack = item is Track && item.extras[EXTENSION_ID] == OfflineExtension.metadata.id
 
         listOfNotNull(
             if (downloadable) button(
@@ -261,6 +262,12 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
             ) {
                 val downloadViewModel by activityViewModel<DownloadViewModel>()
                 downloadViewModel.deleteDownload(item)
+            } else null,
+            if (isOfflineTrack) {
+                button("edit_tags", R.string.v4_edit_tags_action, R.drawable.ic_edit_note) {
+                    val dialog = TrackMetadataBottomSheet.newInstance(item)
+                    dialog.show(parentFragmentManager, "edit_tags")
+                }
             } else null
         )
 

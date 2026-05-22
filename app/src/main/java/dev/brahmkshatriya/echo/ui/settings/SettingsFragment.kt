@@ -22,9 +22,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         binding.other.setOnClickListener {
             requireActivity().openFragment<SettingsOtherFragment>()
         }
-        binding.v4Lab.setOnClickListener {
-            requireActivity().openFragment<V4LabFragment>()
-        }
         binding.downloads.setOnClickListener {
             requireActivity().openFragment<DownloadFragment>()
         }

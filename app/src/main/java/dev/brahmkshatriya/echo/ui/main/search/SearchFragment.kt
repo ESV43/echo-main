@@ -32,7 +32,6 @@ import dev.brahmkshatriya.echo.ui.main.HeaderAdapter
 import dev.brahmkshatriya.echo.ui.main.MainFragment.Companion.applyInsets
 import dev.brahmkshatriya.echo.ui.main.search.SearchViewModel.Companion.saveInHistory
 import dev.brahmkshatriya.echo.ui.player.PlayerViewModel
-import dev.brahmkshatriya.echo.ui.settings.V4LabFragment
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.setupTransition
 import kotlinx.coroutines.flow.combine
@@ -89,13 +88,11 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             playerViewModel.setPlaying(!playerViewModel.isPlaying.value)
         }
         binding.commandSmartQueue.setOnClickListener { playerViewModel.applySmartQueue() }
+        binding.commandDedupe.setOnClickListener { playerViewModel.dedupeQueue() }
+        binding.commandFuseSources.setOnClickListener { playerViewModel.fuseQueueSources() }
         binding.commandDownloads.setOnClickListener {
             binding.quickSearchView.hide()
             requireActivity().openFragment<DownloadFragment>()
-        }
-        binding.commandV4Lab.setOnClickListener {
-            binding.quickSearchView.hide()
-            requireActivity().openFragment<V4LabFragment>()
         }
         applyInsets(binding.recyclerView, binding.appBarOutline) {
             binding.swipeRefresh.configure(it)

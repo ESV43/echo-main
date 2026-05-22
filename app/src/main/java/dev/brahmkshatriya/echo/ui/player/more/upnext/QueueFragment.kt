@@ -32,21 +32,7 @@ class QueueFragment : Fragment() {
         return binding!!.root
     }
 
-    private val queueAdapter by lazy {
-        QueueAdapter(object : QueueAdapter.Listener() {
-            override fun onDragHandleTouched(viewHolder: RecyclerView.ViewHolder) {
-                touchHelper.startDrag(viewHolder)
-            }
-
-            override fun onItemClicked(position: Int) {
-                viewModel.play(position)
-            }
-
-            override fun onItemClosedClicked(position: Int) {
-                viewModel.removeQueueItem(position)
-            }
-        })
-    }
+    private var queueAdapter: QueueAdapter? = null
 
     private val touchHelper by lazy {
         ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
@@ -85,29 +71,41 @@ class QueueFragment : Fragment() {
         setupTransition(view, false, axis = MaterialSharedAxis.Y)
 
         val binding = binding!!
+        val adapter = QueueAdapter(object : QueueAdapter.Listener() {
+            override fun onDragHandleTouched(viewHolder: RecyclerView.ViewHolder) {
+                touchHelper.startDrag(viewHolder)
+            }
+
+            override fun onItemClicked(position: Int) {
+                val a = queueAdapter ?: return
+                if (a.selectionMode) {
+                    a.toggleSelection(position)
+                } else {
+                    viewModel.play(position)
+                }
+            }
+
+            override fun onItemClosedClicked(position: Int) {
+                viewModel.removeQueueItem(position)
+            }
+
+            override fun onItemLongClicked(position: Int) {
+                val a = queueAdapter ?: return
+                if (!a.selectionMode) {
+                    a.selectionMode = true
+                    a.toggleSelection(position)
+                }
+            }
+        })
+        queueAdapter = adapter
         val recyclerView = binding.queueList
-        recyclerView.adapter = queueAdapter
+        recyclerView.adapter = adapter
         touchHelper.attachToRecyclerView(recyclerView)
         val manager = recyclerView.layoutManager as LinearLayoutManager
         val screenHeight = view.resources.displayMetrics.heightPixels / 3
 
-        binding.queueActions.setOnClickListener { btn ->
-            val popup = android.widget.PopupMenu(requireContext(), btn)
-            popup.menu.add(0, 1, 0, R.string.v4_smart_queue_short)
-            popup.menu.add(0, 2, 0, R.string.v4_dedupe_short)
-            popup.menu.add(0, 3, 0, R.string.v4_fuse_sources_short)
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    1 -> viewModel.applySmartQueue()
-                    2 -> viewModel.dedupeQueue()
-                    3 -> viewModel.fuseQueueSources()
-                }
-                true
-            }
-            popup.show()
-        }
-
         fun submit() {
+            val a = queueAdapter ?: return
             val current = viewModel.playerState.current.value
             val currentIndex = current?.index
             val items = viewModel.queue.mapIndexed { index, mediaItem ->
@@ -116,10 +114,49 @@ class QueueFragment : Fragment() {
             }
             binding.emptyView.isVisible = items.isEmpty()
             binding.queueActions.isVisible = items.isNotEmpty()
-            queueAdapter.submitList(items) {
+            a.submitList(items) {
                 currentIndex ?: return@submitList
                 binding.queueList.scrollToPosition(currentIndex)
             }
+        }
+
+        binding.queueActions.setOnClickListener { btn ->
+            val a = queueAdapter ?: return@setOnClickListener
+            val popup = android.widget.PopupMenu(requireContext(), btn)
+            popup.menu.add(0, 1, 0, R.string.v4_smart_queue_short)
+            popup.menu.add(0, 2, 0, R.string.v4_dedupe_short)
+            popup.menu.add(0, 3, 0, R.string.v4_fuse_sources_short)
+            if (a.selectionMode) {
+                popup.menu.add(0, 5, 0, R.string.v4_select_none)
+                val selectedCount = a.selectedItems.size
+                if (selectedCount > 0) {
+                    popup.menu.add(0, 4, 0,
+                        getString(R.string.v4_remove_selected_x, selectedCount))
+                }
+            } else {
+                popup.menu.add(0, 5, 0, R.string.v4_select)
+            }
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    1 -> viewModel.applySmartQueue()
+                    2 -> viewModel.dedupeQueue()
+                    3 -> viewModel.fuseQueueSources()
+                    4 -> {
+                        val indices = a.selectedItems.sortedDescending()
+                        indices.forEach { viewModel.removeQueueItem(it) }
+                        a.clearSelection()
+                        a.selectionMode = false
+                        submit()
+                    }
+                    5 -> {
+                        a.selectionMode = !a.selectionMode
+                        if (!a.selectionMode) a.clearSelection()
+                        submit()
+                    }
+                }
+                true
+            }
+            popup.show()
         }
 
         observe(viewModel.playerState.current) { submit() }

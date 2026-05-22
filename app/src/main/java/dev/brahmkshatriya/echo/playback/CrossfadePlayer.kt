@@ -11,10 +11,12 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import androidx.media3.common.util.UnstableApi
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE_DURATION
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.BPM_CROSSFADE
 
+@OptIn(UnstableApi::class)
 class CrossfadePlayer(
     private val mainPlayer: Player,
     private val secondaryPlayer: Player,

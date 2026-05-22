@@ -36,11 +36,6 @@
                 style="@style/SideBarButton"
                 android:text="@string/other"
                 app:icon="@drawable/ic_more_horiz" />
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/v4Lab"
-                style="@style/SideBarButton"
-                android:text="@string/v4_lab"
-                app:icon="@drawable/ic_autorenew" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <com.google.android.material.button.MaterialButton

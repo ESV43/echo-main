@@ -5,9 +5,11 @@ import android.content.SharedPreferences
 import android.view.animation.LinearInterpolator
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FADE_CONTROLS
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FADE_DURATION
 
+@OptIn(UnstableApi::class)
 class FadePlayer(
     private val player: Player,
     private val settings: SharedPreferences,

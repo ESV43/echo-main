@@ -206,6 +206,15 @@
     <string name="v4_smart_queue_applied">Smart Queue applied</string>
     <string name="v4_queue_deduped">Removed %1$d duplicate queue items</string>
     <string name="v4_queue_sources_fused">Fused %1$d duplicate source items</string>
+    <string name="v4_edit_tags">Edit Tags</string>
+    <string name="v4_edit_tags_action">Edit Tags</string>
+    <string name="artist">Artist</string>
+    <string name="title">Title</string>
+    <string name="genre">Genre</string>
+    <string name="track_number">Track #</string>
+    <string name="v4_select">Select</string>
+    <string name="v4_select_none">Exit selection</string>
+    <string name="v4_remove_selected_x">Remove %1$d selected</string>
     <string-array name="v4_smart_queue_modes">
         <item>No repeats</item>
         <item>Same vibe</item>

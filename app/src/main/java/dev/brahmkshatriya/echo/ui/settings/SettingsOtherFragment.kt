@@ -4,16 +4,26 @@ import android.content.Context
 import android.os.Bundle
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.lifecycleScope
+import androidx.preference.Preference
+import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceImageHolder
+import dev.brahmkshatriya.echo.extensions.ExtensionLoader
+import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension
+import dev.brahmkshatriya.echo.extensions.builtin.unified.extensionId
 import dev.brahmkshatriya.echo.ui.extensions.ExtensionsViewModel
 import dev.brahmkshatriya.echo.utils.ContextUtils.SETTINGS_NAME
 import dev.brahmkshatriya.echo.utils.PermsUtils.registerActivityResultLauncher
 import dev.brahmkshatriya.echo.utils.exportSettings
 import dev.brahmkshatriya.echo.utils.importSettings
+import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialMultipleChoicePreference
 import dev.brahmkshatriya.echo.utils.ui.prefs.TransitionPreference
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 class SettingsOtherFragment : BaseSettingsFragment() {
@@ -28,12 +38,107 @@ class SettingsOtherFragment : BaseSettingsFragment() {
             configure()
         }
 
+        private val extensionLoader: ExtensionLoader by inject()
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             val context = preferenceManager.context
             preferenceManager.sharedPreferencesName = SETTINGS_NAME
             preferenceManager.sharedPreferencesMode = Context.MODE_PRIVATE
             val screen = preferenceManager.createPreferenceScreen(context)
             preferenceScreen = screen
+
+            PreferenceCategory(context).apply {
+                title = getString(R.string.v4_sources_and_library)
+                key = "v4_sources_and_library"
+                isIconSpaceReserved = false
+                layoutResource = R.layout.preference_category
+                screen.addPreference(this)
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.SOURCE_FUSION
+                    title = getString(R.string.v4_source_fusion)
+                    summary = getString(R.string.v4_source_fusion_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.AUDIO_FINGERPRINT
+                    title = getString(R.string.v4_audio_fingerprint)
+                    summary = getString(R.string.v4_audio_fingerprint_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                MaterialMultipleChoicePreference(context).apply {
+                    key = Keys.PLAYLIST_ALCHEMIST
+                    title = getString(R.string.v4_playlist_alchemist)
+                    summary = getString(R.string.v4_playlist_alchemist_summary)
+                    entries = context.resources.getStringArray(R.array.v4_playlist_tools)
+                    entryValues = context.resources.getStringArray(R.array.v4_playlist_tool_values)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    setDefaultValue(setOf("dedupe", "repair", "sort"))
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.LIBRARY_HEALTH
+                    title = getString(R.string.v4_library_health)
+                    summary = getString(R.string.v4_library_health_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+            }
+
+            PreferenceCategory(context).apply {
+                title = getString(R.string.v4_offline_and_downloads)
+                key = "v4_offline_and_downloads"
+                isIconSpaceReserved = false
+                layoutResource = R.layout.preference_category
+                screen.addPreference(this)
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.OFFLINE_DISCOVERY
+                    title = getString(R.string.v4_offline_discovery)
+                    summary = getString(R.string.v4_offline_discovery_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                MaterialMultipleChoicePreference(context).apply {
+                    key = Keys.SMART_DOWNLOADS
+                    title = getString(R.string.v4_smart_downloads)
+                    summary = getString(R.string.v4_smart_downloads_summary)
+                    entries = context.resources.getStringArray(R.array.v4_smart_download_rules)
+                    entryValues = context.resources.getStringArray(R.array.v4_smart_download_values)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    setDefaultValue(setOf("liked", "wifi", "storage"))
+                    addPreference(this)
+                }
+            }
+
+            TransitionPreference(context).apply {
+                key = Keys.STATUS
+                title = getString(R.string.v4_release_dashboard)
+                summary = getString(R.string.v4_release_dashboard_summary)
+                layoutResource = R.layout.preference
+                isIconSpaceReserved = false
+                screen.addPreference(this)
+                setOnPreferenceClickListener {
+                    showStatusDialog()
+                    true
+                }
+            }
 
             SwitchPreferenceCompat(context).apply {
                 title = getString(R.string.check_for_updates)
@@ -92,6 +197,41 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                     }.launch(arrayOf("application/json"))
                     true
                 }
+            }
+        }
+
+        private fun showStatusDialog() {
+            val prefs = preferenceManager.sharedPreferences ?: return
+            val enabled = Keys.switchDefaults.count { (key, default) ->
+                prefs.getBoolean(key, default)
+            }
+
+            val unified = extensionLoader.music.value.find {
+                it.id == UnifiedExtension.UNIFIED_ID
+            }?.instance?.value as? UnifiedExtension
+
+            lifecycleScope.launch {
+                val health = unified?.db?.getLibraryHealth() ?: mapOf()
+                val history = unified?.db?.getRecentlyPlayed(1000) ?: listOf()
+                val plays = history.sumOf { (unified?.db?.getHistory(it.id, it.extras.extensionId)?.playCount ?: 0) }
+                val skips = history.sumOf { (unified?.db?.getHistory(it.id, it.extras.extensionId)?.skipCount ?: 0) }
+
+                val message = getString(
+                    R.string.v4_release_dashboard_message,
+                    enabled,
+                    health["broken"] ?: 0,
+                    health["duplicates"] ?: 0,
+                    plays,
+                    skips,
+                    prefs.getString(Keys.SMART_QUEUE_MODE, "vibe"),
+                    prefs.getString(Keys.VISUAL_PLAYER, "immersive")
+                )
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.v4_release_dashboard)
+                    .setMessage(message)
+                    .setPositiveButton(R.string.okay) { dialog, _ -> dialog.dismiss() }
+                    .create()
+                    .show()
             }
         }
     }

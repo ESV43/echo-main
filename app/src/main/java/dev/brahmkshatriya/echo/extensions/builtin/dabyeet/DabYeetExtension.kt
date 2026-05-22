@@ -38,6 +38,7 @@ import dev.brahmkshatriya.echo.common.models.Lyrics
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.network.ApiService
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.network.HifiApiService
 import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.network.YoutubeMusicApiService
+import dev.brahmkshatriya.echo.extensions.builtin.dabyeet.network.isFullTrack
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -259,7 +260,9 @@ class DabYeetExtension : ExtensionClient, SearchFeedClient, TrackClient, AlbumCl
                 } ?: tracks.firstOrNull() ?: throw IllegalStateException("No DAB fallback match found")
                     
                 val stream = dabApi.getStream(baseUrl, matchedTrack.id)
-                stream.url.toServerMedia()
+                val url = stream.url
+                if (!url.isFullTrack()) throw IllegalStateException("DAB API returned a preview/30s URL")
+                url.toServerMedia()
             }
             if (result.isSuccess) return result.getOrThrow()
             lastError = result.exceptionOrNull() as? Exception

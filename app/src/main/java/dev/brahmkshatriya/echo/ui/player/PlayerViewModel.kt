@@ -39,7 +39,7 @@ import dev.brahmkshatriya.echo.playback.PlayerCommands.resumeCommand
 import dev.brahmkshatriya.echo.playback.PlayerCommands.sleepTimer
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.getController
 import dev.brahmkshatriya.echo.playback.PlayerState
-import dev.brahmkshatriya.echo.ui.settings.V4LabFragment
+import dev.brahmkshatriya.echo.ui.settings.Keys
 import dev.brahmkshatriya.echo.utils.ContextUtils.listenFuture
 import dev.brahmkshatriya.echo.utils.Serializer.putSerialized
 import kotlinx.coroutines.Dispatchers
@@ -127,7 +127,7 @@ class PlayerViewModel(
             val upcoming = list.drop(currentIndex + 1)
             if (upcoming.size < 2) return@withBrowser
 
-            val mode = settings.getString(V4LabFragment.Keys.SMART_QUEUE_MODE, "vibe") ?: "vibe"
+            val mode = settings.getString(Keys.SMART_QUEUE_MODE, "vibe") ?: "vibe"
             val current = list.getOrNull(currentIndex)
             val reordered = when (mode) {
                 "no_repeats" -> upcoming.spreadByArtist()
@@ -297,6 +297,9 @@ class PlayerViewModel(
             }
             controller.setMediaItems(mediaItems, index, list[index].playedDuration ?: 0)
             controller.prepare()
+            if (settings.getBoolean(Keys.SOURCE_FUSION, true)) {
+                fuseQueueSources()
+            }
         }
     }
 

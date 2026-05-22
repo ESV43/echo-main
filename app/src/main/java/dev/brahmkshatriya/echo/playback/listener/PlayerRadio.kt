@@ -114,7 +114,7 @@ class PlayerRadio(
     }
 
     private suspend fun startRadio() {
-    if (ListenTogetherStatus.isGuest) return
+        if (ListenTogetherStatus.isGuest) return
         if (!autoStartRadio) return
         val shouldNotStart = withContext(Dispatchers.Main) {
             player.run {

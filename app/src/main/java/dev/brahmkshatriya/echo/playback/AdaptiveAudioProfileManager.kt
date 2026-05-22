@@ -4,7 +4,7 @@ import android.content.Context
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
-import dev.brahmkshatriya.echo.ui.settings.V4LabFragment
+import dev.brahmkshatriya.echo.ui.settings.Keys
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +33,7 @@ class AdaptiveAudioProfileManager(private val context: Context) {
     }
 
     fun updateProfile() {
-        if (!settings.getBoolean(V4LabFragment.Keys.ADAPTIVE_AUDIO, true)) return
+        if (!settings.getBoolean(Keys.ADAPTIVE_AUDIO, true)) return
 
         val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
         val activeDevice = devices.firstOrNull { it.isSink } ?: return

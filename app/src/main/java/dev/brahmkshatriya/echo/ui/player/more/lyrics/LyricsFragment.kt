@@ -53,7 +53,7 @@ import dev.brahmkshatriya.echo.playback.MediaItemUtils.isLoaded
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.context
 import androidx.media3.common.Player
 import dev.brahmkshatriya.echo.playback.MediaItemUtils
-import dev.brahmkshatriya.echo.ui.settings.V4LabFragment
+import dev.brahmkshatriya.echo.ui.settings.Keys
 import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadInto
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
@@ -140,18 +140,18 @@ class LyricsFragment : Fragment() {
             true
         }
         fun updateLyricsOffsetLabel() {
-            lyricsOffset = playerVM.settings.getLong(V4LabFragment.Keys.LYRICS_OFFSET, 0)
+            lyricsOffset = playerVM.settings.getLong(Keys.LYRICS_OFFSET, 0)
             binding.lyricsOffsetValue.text = getString(R.string.v4_lyrics_offset_value, lyricsOffset)
             updateLyrics(playerVM.progress.value.first + lyricsOffset)
         }
         binding.lyricsOffsetDown.setOnClickListener {
             val next = (lyricsOffset - 250).coerceAtLeast(-10_000)
-            playerVM.settings.edit().putLong(V4LabFragment.Keys.LYRICS_OFFSET, next).apply()
+            playerVM.settings.edit().putLong(Keys.LYRICS_OFFSET, next).apply()
             updateLyricsOffsetLabel()
         }
         binding.lyricsOffsetUp.setOnClickListener {
             val next = (lyricsOffset + 250).coerceAtMost(10_000)
-            playerVM.settings.edit().putLong(V4LabFragment.Keys.LYRICS_OFFSET, next).apply()
+            playerVM.settings.edit().putLong(Keys.LYRICS_OFFSET, next).apply()
             updateLyricsOffsetLabel()
         }
         updateLyricsOffsetLabel()

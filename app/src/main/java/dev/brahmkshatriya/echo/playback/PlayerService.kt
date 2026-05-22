@@ -57,6 +57,7 @@ import kotlinx.coroutines.plus
 import org.koin.android.ext.android.inject
 import java.io.File
 
+@OptIn(UnstableApi::class)
 class PlayerService : MediaLibraryService() {
 
     private val extensionLoader by inject<ExtensionLoader>()
@@ -76,7 +77,6 @@ class PlayerService : MediaLibraryService() {
     private val state by inject<PlayerState>()
     private val scope = CoroutineScope(Dispatchers.IO) + CoroutineName("PlayerService")
 
-    @OptIn(UnstableApi::class)
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
         when (key) {
             SKIP_SILENCE -> exoPlayer.skipSilenceEnabled = prefs.getBoolean(key, true)
@@ -110,7 +110,6 @@ class PlayerService : MediaLibraryService() {
     private var playerRadio: PlayerRadio? = null
     private var trackingListener: TrackingListener? = null
 
-    @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
         adaptiveAudioProfileManager.onProfileChanged = { gains ->

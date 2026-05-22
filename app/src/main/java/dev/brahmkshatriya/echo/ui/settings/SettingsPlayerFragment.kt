@@ -33,7 +33,9 @@ import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
 import dev.brahmkshatriya.echo.ui.player.PlayerViewModel.Companion.KEEP_QUEUE
 import dev.brahmkshatriya.echo.ui.settings.AudioEffectsFragment.Companion.AUDIO_FX
 import dev.brahmkshatriya.echo.utils.ContextUtils.SETTINGS_NAME
+import dev.brahmkshatriya.echo.ui.settings.Keys
 import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialListPreference
+import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialMultipleChoicePreference
 import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSliderPreference
 import dev.brahmkshatriya.echo.utils.ui.prefs.TransitionPreference
 
@@ -114,6 +116,28 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                MaterialListPreference(context).apply {
+                    key = Keys.VISUAL_PLAYER
+                    title = getString(R.string.v4_visual_player_modes)
+                    summary = getString(R.string.v4_visual_player_modes_summary)
+                    entries = context.resources.getStringArray(R.array.v4_visual_player_modes)
+                    entryValues = context.resources.getStringArray(R.array.v4_visual_player_values)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    setDefaultValue("immersive")
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.ADAPTIVE_AUDIO
+                    title = getString(R.string.v4_adaptive_audio_profiles)
+                    summary = getString(R.string.v4_adaptive_audio_profiles_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
                     addPreference(this)
                 }
             }
@@ -255,6 +279,95 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
             }
 
             PreferenceCategory(context).apply {
+                title = getString(R.string.v4_local_intelligence)
+                key = "v4_local_intelligence"
+                isIconSpaceReserved = false
+                layoutResource = R.layout.preference_category
+                screen.addPreference(this)
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.LOCAL_INTELLIGENCE
+                    title = getString(R.string.v4_local_music_intelligence)
+                    summary = getString(R.string.v4_local_music_intelligence_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                MaterialListPreference(context).apply {
+                    key = Keys.SOUND_PROFILE
+                    title = getString(R.string.v4_sound_profile)
+                    summary = getString(R.string.v4_sound_profile_summary)
+                    entries = context.resources.getStringArray(R.array.v4_sound_profiles)
+                    entryValues = context.resources.getStringArray(R.array.v4_sound_profile_values)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    setDefaultValue("balanced")
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.CONTEXTUAL_HOME
+                    title = getString(R.string.v4_contextual_home)
+                    summary = getString(R.string.v4_contextual_home_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+            }
+
+            PreferenceCategory(context).apply {
+                title = getString(R.string.v4_queue_and_search)
+                key = "v4_queue_and_search"
+                isIconSpaceReserved = false
+                layoutResource = R.layout.preference_category
+                screen.addPreference(this)
+
+                MaterialListPreference(context).apply {
+                    key = Keys.SMART_QUEUE_MODE
+                    title = getString(R.string.v4_smart_queue_lab)
+                    summary = getString(R.string.v4_smart_queue_lab_summary)
+                    entries = context.resources.getStringArray(R.array.v4_smart_queue_modes)
+                    entryValues = context.resources.getStringArray(R.array.v4_smart_queue_values)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    setDefaultValue("vibe")
+                    addPreference(this)
+                }
+
+                MaterialSliderPreference(context, 0, 100, steps = 5).apply {
+                    key = Keys.QUEUE_VARIETY
+                    title = getString(R.string.v4_queue_variety)
+                    summary = getString(R.string.v4_queue_variety_summary)
+                    isIconSpaceReserved = false
+                    setDefaultValue(70)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.COMMAND_PALETTE
+                    title = getString(R.string.v4_command_palette)
+                    summary = getString(R.string.v4_command_palette_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.MULTI_SOURCE_SEARCH
+                    title = getString(R.string.v4_multi_source_search)
+                    summary = getString(R.string.v4_multi_source_search_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+            }
+
+            PreferenceCategory(context).apply {
                 title = getString(R.string.lyrics)
                 key = "lyrics_category"
                 isIconSpaceReserved = false
@@ -280,6 +393,26 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     entries = arrayOf("Auto")
                     entryValues = arrayOf("auto")
                     setDefaultValue("auto")
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.LYRICS_STUDIO
+                    title = getString(R.string.v4_lyrics_studio)
+                    summary = getString(R.string.v4_lyrics_studio_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.EXTENSION_INSPECTOR
+                    title = getString(R.string.v4_extension_inspector)
+                    summary = getString(R.string.v4_extension_inspector_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
                     addPreference(this)
                 }
             }

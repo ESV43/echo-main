@@ -6,6 +6,7 @@ import android.text.TextUtils
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -50,10 +51,28 @@ class QueueAdapter(
         ) = oldItem == newItem
     }
 
+    var selectionMode = false
+    private val selectedPositions = mutableSetOf<Int>()
+
+    fun toggleSelection(position: Int) {
+        if (selectedPositions.contains(position)) selectedPositions.remove(position)
+        else selectedPositions.add(position)
+        notifyItemChanged(position)
+    }
+
+    fun clearSelection() {
+        val copy = selectedPositions.toList()
+        selectedPositions.clear()
+        copy.forEach { notifyItemChanged(it) }
+    }
+
+    val selectedItems: List<Int> get() = selectedPositions.toList()
+
     open class Listener {
         open fun onItemClicked(position: Int) {}
         open fun onItemClosedClicked(position: Int) {}
         open fun onDragHandleTouched(viewHolder: RecyclerView.ViewHolder) {}
+        open fun onItemLongClicked(position: Int) {}
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -74,12 +93,19 @@ class QueueAdapter(
                 listener.onItemClicked(pos)
             }
 
+            binding.root.setOnLongClickListener {
+                val pos = bindingAdapterPosition
+                if (pos == RecyclerView.NO_POSITION) return@setOnLongClickListener false
+                listener.onItemLongClicked(pos)
+                true
+            }
+
             binding.playlistItemDrag.setOnTouchListener { _, event ->
                 val pos = bindingAdapterPosition
                 if (pos == RecyclerView.NO_POSITION) return@setOnTouchListener false
                 if (event.actionMasked != MotionEvent.ACTION_DOWN) return@setOnTouchListener false
                 listener.onDragHandleTouched(this)
-                true                                                                                                                                                       
+                true                                                                                       
             }
         }
     }
@@ -104,13 +130,21 @@ class QueueAdapter(
         
         binding.bind(track, addedBy, avatarUrl)
         binding.isPlaying(isPlaying)
-        binding.playlistItemClose.isVisible = !inactive
-        binding.playlistItemDrag.isVisible = !inactive
-        binding.playlistCurrentItem.isVisible = isCurrent
+        binding.playlistItemClose.isVisible = !inactive && !selectionMode
+        binding.playlistItemDrag.isVisible = !inactive && !selectionMode
+        binding.playlistCurrentItem.isVisible = isCurrent && !selectionMode
         binding.playlistCurrentIndicator.isVisible = isCurrent
         binding.playlistItemTitle.alpha = if (isCurrent) 1f else 0.87f
         binding.playlistProgressBar.isVisible = isCurrent && !item.isLoaded
         binding.playlistItem.alpha = if (inactive) 0.5f else 1f
+        with(binding.playlistSelectOverlay) {
+            if (selectionMode) {
+                visibility = View.VISIBLE
+                alpha = if (selectedPositions.contains(position)) 0.3f else 0.0f
+            } else {
+                visibility = View.GONE
+            }
+        }
     }
 
     private var scrollAmount: Int = 0
