@@ -13,6 +13,7 @@ import com.google.android.material.transition.MaterialSharedAxis
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.databinding.FragmentPlayerQueueBinding
 import dev.brahmkshatriya.echo.ui.player.PlayerViewModel
+import dev.brahmkshatriya.echo.ui.settings.Keys
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.setupTransition
 import dev.brahmkshatriya.echo.utils.ui.AutoClearedValue.Companion.autoClearedNullable
@@ -123,9 +124,16 @@ class QueueFragment : Fragment() {
         binding.queueActions.setOnClickListener { btn ->
             val a = queueAdapter ?: return@setOnClickListener
             val popup = android.widget.PopupMenu(requireContext(), btn)
-            popup.menu.add(0, 1, 0, R.string.v4_smart_queue_short)
-            popup.menu.add(0, 2, 0, R.string.v4_dedupe_short)
-            popup.menu.add(0, 3, 0, R.string.v4_fuse_sources_short)
+            val commandPalette = viewModel.settings.getBoolean(Keys.COMMAND_PALETTE, true)
+            if (commandPalette) {
+                val tools = viewModel.settings.getStringSet(
+                    Keys.PLAYLIST_ALCHEMIST,
+                    setOf("dedupe", "smart_queue", "source_fusion")
+                ).orEmpty()
+                if ("smart_queue" in tools) popup.menu.add(0, 1, 0, R.string.v4_smart_queue_short)
+                if ("dedupe" in tools) popup.menu.add(0, 2, 0, R.string.v4_dedupe_short)
+                if ("source_fusion" in tools) popup.menu.add(0, 3, 0, R.string.v4_fuse_sources_short)
+            }
             popup.menu.add(0, 6, 0, R.string.v4_save_queue)
             if (a.selectionMode) {
                 popup.menu.add(0, 5, 0, R.string.v4_select_none)

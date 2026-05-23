@@ -194,6 +194,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                         key = FADE_DURATION
                         title = getString(R.string.fade_duration)
                         summary = getString(R.string.fade_duration_summary)
+                        dependency = FADE_CONTROLS
                         isIconSpaceReserved = false
                         setDefaultValue(300)
                         addPreference(this)
@@ -213,6 +214,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     key = CROSSFADE_DURATION
                     title = getString(R.string.crossfade_duration)
                     summary = getString(R.string.crossfade_duration_summary)
+                    dependency = CROSSFADE
                     isIconSpaceReserved = false
                     setDefaultValue(5)
                     addPreference(this)
@@ -222,6 +224,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     key = BPM_CROSSFADE
                     title = getString(R.string.v4_bpm_crossfade)
                     summary = getString(R.string.v4_bpm_crossfade_summary)
+                    dependency = CROSSFADE
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(false)
@@ -301,6 +304,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     summary = getString(R.string.v4_sound_profile_summary)
                     entries = context.resources.getStringArray(R.array.v4_sound_profiles)
                     entryValues = context.resources.getStringArray(R.array.v4_sound_profile_values)
+                    dependency = Keys.LOCAL_INTELLIGENCE
                     layoutResource = R.layout.preference
                     isIconSpaceReserved = false
                     setDefaultValue("balanced")
@@ -311,6 +315,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     key = Keys.CONTEXTUAL_HOME
                     title = getString(R.string.v4_contextual_home)
                     summary = getString(R.string.v4_contextual_home_summary)
+                    dependency = Keys.LOCAL_INTELLIGENCE
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(true)

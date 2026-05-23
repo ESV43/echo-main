@@ -46,10 +46,15 @@ class AdaptiveAudioProfileManager(private val context: Context) {
         }
 
         val profileKey = "v4_audio_profile_$deviceType"
-        val gains = settings.getString(profileKey, null)
-        if (gains != null) {
-            onProfileChanged?.invoke(gains)
-        }
+        val gains = settings.getString(profileKey, null) ?: defaultGains(deviceType)
+        onProfileChanged?.invoke(gains)
+    }
+
+    private fun defaultGains(deviceType: String) = when (deviceType) {
+        "speaker" -> "2.5,2,1.5,0.8,0,0.4,1.2,1.8,2.2,2"
+        "headphones" -> "1.2,0.8,0.3,0,0,0.4,0.8,1,0.7,0.4"
+        "bluetooth" -> "1.8,1.4,0.8,0.2,0,0.3,0.9,1.4,1.6,1.2"
+        else -> "0,0,0,0,0,0,0,0,0,0"
     }
 
     fun release() {

@@ -8,7 +8,7 @@ object PlaylistAlchemist {
     fun List<Track>.deduplicate(): List<Track> {
         val seen = mutableSetOf<String>()
         return filter { track ->
-            val key = "${track.title.lowercase().trim()}|${track.artists.joinToString(",") { it.name.lowercase().trim() }}"
+            val key = track.fusionKey()
             seen.add(key)
         }
     }

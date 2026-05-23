@@ -30,6 +30,8 @@ import dev.brahmkshatriya.echo.extensions.ExtensionUtils.isClient
 import dev.brahmkshatriya.echo.extensions.MediaState
 import dev.brahmkshatriya.echo.playback.MediaItemUtils
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.extensionId
+import dev.brahmkshatriya.echo.playback.MediaItemUtils.fusionKey
+import dev.brahmkshatriya.echo.playback.MediaItemUtils.normalizedForMatch
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.serverWithDownloads
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.sourceIndex
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.track
@@ -124,7 +126,18 @@ class PlayerViewModel(
     }
 
     fun clearQueue() {
-        withBrowser { it.clearMediaItems() }
+        queue = emptyList()
+        progress.value = 0L to 0L
+        totalDuration.value = 0L
+        buffering.value = false
+        isPlaying.value = false
+        nextEnabled.value = false
+        previousEnabled.value = false
+        tracksFlow.value = null
+        playerState.current.value = null
+        withBrowser {
+            if (it.mediaItemCount > 0) it.clearMediaItems()
+        }
     }
 
     fun applySmartQueue() {
@@ -135,9 +148,10 @@ class PlayerViewModel(
             if (upcoming.size < 2) return@withBrowser
 
             val mode = settings.getString(Keys.SMART_QUEUE_MODE, "vibe") ?: "vibe"
+            val variety = settings.getInt(Keys.QUEUE_VARIETY, 70).coerceIn(0, 100)
             val current = list.getOrNull(currentIndex)
             val reordered = when (mode) {
-                "no_repeats" -> upcoming.spreadByArtist()
+                "no_repeats" -> upcoming.spreadByArtist(variety)
                 "energy_ramp" -> upcoming.sortedBy { it.track.duration ?: Long.MAX_VALUE }
                 "chill_down" -> upcoming.sortedByDescending { it.track.duration ?: 0L }
                 "deep_cuts" -> upcoming.sortedWith(
@@ -155,10 +169,11 @@ class PlayerViewModel(
         withBrowser { controller ->
             val currentIndex = controller.currentMediaItemIndex.takeIf { it >= 0 } ?: return@withBrowser
             val list = controller.mediaItems()
+            val fingerprint = settings.getBoolean(Keys.AUDIO_FINGERPRINT, false)
             val deduped = buildList {
                 val seen = mutableSetOf<String>()
                 list.forEachIndexed { index, item ->
-                    val key = item.fusionKey()
+                    val key = item.fusionKey(fingerprint)
                     if (index == currentIndex || seen.add(key)) add(item)
                 }
             }
@@ -174,21 +189,65 @@ class PlayerViewModel(
 
     fun fuseQueueSources() {
         withBrowser { controller ->
-            val currentIndex = controller.currentMediaItemIndex.takeIf { it >= 0 } ?: return@withBrowser
+            val currentIndex = controller.currentMediaItemIndex
+            if (currentIndex < 0) return@withBrowser
             val list = controller.mediaItems()
-            val fused = list
-                .groupBy { it.fusionKey() }
-                .values
-                .map { group ->
-                    group.maxWithOrNull(
-                        compareBy<MediaItem> { it.track.servers.size }
-                            .thenBy { it.track.streamables.size }
-                            .thenBy { if (it.extensionId == list[currentIndex].extensionId) 1 else 0 }
-                    ) ?: group.first()
+            if (list.size < 2) return@withBrowser
+
+            val fingerprint = settings.getBoolean(Keys.AUDIO_FINGERPRINT, false)
+
+            // Compute keys once, reuse across all passes
+            val keys = list.map { it.fusionKey(fingerprint) }
+            val currentKey = keys[currentIndex]
+
+            // Group indices by key — avoids grouping items themselves
+            val groups = LinkedHashMap<String, MutableList<Int>>()
+            keys.forEachIndexed { i, k ->
+                groups.getOrPut(k) { mutableListOf() }.add(i)
+            }
+            if (groups.size == list.size) return@withBrowser
+
+            val currentExtId = list[currentIndex].extensionId
+            var newIndex = currentIndex.coerceAtMost(list.lastIndex)
+
+            val fused = buildList {
+                var outIdx = 0
+                for ((key, indices) in groups) {
+                    val outItem = if (indices.size == 1) {
+                        list[indices[0]]
+                    } else {
+                        val group = indices.map { list[it] }
+                        val base = group.maxWithOrNull(
+                            compareBy<MediaItem> { it.track.servers.size }
+                                .thenBy { it.track.streamables.size }
+                                .thenBy { if (it.extensionId == currentExtId) 1 else 0 }
+                        ) ?: group.first()
+
+                        // Deduplicate streamables without allocation overhead of distinctBy
+                        val seen = HashSet<String>(group.sumOf { it.track.streamables.size })
+                        val merged = ArrayList<Streamable>(seen.size)
+                        for (item in group) {
+                            for (s in item.track.streamables) {
+                                val sk = "${s.id}\u0000${s.type.ordinal}"
+                                if (seen.add(sk)) merged.add(s)
+                            }
+                        }
+
+                        val mergedTrack = base.track.copy(streamables = merged)
+                        val extras = Bundle().apply {
+                            base.mediaMetadata.extras?.let(this::putAll)
+                            putSerialized("state", MediaState.Unloaded(base.extensionId, mergedTrack))
+                        }
+                        base.buildUpon()
+                            .setMediaMetadata(base.mediaMetadata.buildUpon().setExtras(extras).build())
+                            .build()
+                    }
+                    add(outItem)
+                    if (key == currentKey) newIndex = outIdx
+                    outIdx++
                 }
-            if (fused.size == list.size) return@withBrowser
-            val newIndex = fused.indexOfFirst { it.mediaId == list[currentIndex].mediaId }
-                .takeIf { it >= 0 } ?: currentIndex.coerceAtMost(fused.lastIndex)
+            }
+
             controller.replaceQueue(fused, newIndex)
             app.messageFlow.emit(
                 Message(context.getString(R.string.v4_queue_sources_fused, list.size - fused.size))
@@ -294,20 +353,58 @@ class PlayerViewModel(
 
     fun setQueue(id: String, list: List<Track>, index: Int, context: EchoMediaItem?) {
         withBrowser { controller ->
-            val mediaItems = list.map {
-                MediaItemUtils.build(
-                    app,
-                    downloadFlow.value,
-                    MediaState.Unloaded(id, it),
-                    context
-                )
+            val (tracks, playIndex) = if (
+                settings.getBoolean(Keys.SOURCE_FUSION, true) && list.size > 1
+            ) {
+                val fingerprint = settings.getBoolean(Keys.AUDIO_FINGERPRINT, false)
+                fuseTracks(list, index, fingerprint)
+            } else list to index
+
+            val mediaItems = tracks.map {
+                MediaItemUtils.build(app, downloadFlow.value, MediaState.Unloaded(id, it), context)
             }
-            controller.setMediaItems(mediaItems, index, list[index].playedDuration ?: 0)
+            controller.setMediaItems(mediaItems, playIndex, tracks.getOrNull(playIndex)?.playedDuration ?: 0)
             controller.prepare()
-            if (settings.getBoolean(Keys.SOURCE_FUSION, true)) {
-                fuseQueueSources()
+        }
+    }
+
+    private fun fuseTracks(
+        list: List<Track>, index: Int, fingerprint: Boolean
+    ): Pair<List<Track>, Int> {
+        val keys = list.map { it.fusionKey(fingerprint) }
+        val groups = LinkedHashMap<String, MutableList<Int>>()
+        keys.forEachIndexed { i, k -> groups.getOrPut(k) { mutableListOf() }.add(i) }
+        if (groups.size == list.size) return list to index
+
+        val currentKey = keys[index]
+        var newIndex = index.coerceAtMost(list.lastIndex)
+
+        val fused = buildList {
+            var outIdx = 0
+            for ((key, indices) in groups) {
+                val out = if (indices.size == 1) {
+                    list[indices[0]]
+                } else {
+                    val group = indices.map { list[it] }
+                    val base = group.maxWithOrNull(
+                        compareBy<Track> { it.servers.size }.thenBy { it.streamables.size }
+                    ) ?: group.first()
+                    val seen = HashSet<String>(group.sumOf { it.streamables.size })
+                    val merged = ArrayList<Streamable>(seen.size)
+                    for (item in group) {
+                        for (s in item.streamables) {
+                            val sk = "${s.id}\u0000${s.type.ordinal}"
+                            if (seen.add(sk)) merged.add(s)
+                        }
+                    }
+                    base.copy(streamables = merged)
+                }
+                add(out)
+                if (key == currentKey) newIndex = outIdx
+                outIdx++
             }
         }
+        return fused to newIndex
     }
 
     fun radio(id: String, item: EchoMediaItem, loaded: Boolean) = viewModelScope.launch {
@@ -431,25 +528,11 @@ private fun MediaController.replaceQueue(items: List<MediaItem>, currentIndex: I
     prepare()
 }
 
-private fun MediaItem.fusionKey(): String {
-    val track = track
-    track.isrc?.takeIf { it.isNotBlank() }?.let { return "isrc:${it.lowercase()}" }
-    return listOf(
-        track.title.normalizedForMatch(),
-        track.artists.joinToString(",") { it.name.normalizedForMatch() },
-        track.duration?.div(5000)
-    ).joinToString("|")
-}
-
-private fun String.normalizedForMatch() = lowercase()
-    .replace(Regex("\\([^)]*\\)|\\[[^]]*]"), "")
-    .replace(Regex("[^a-z0-9]+"), " ")
-    .trim()
-
 private fun MediaItem.primaryArtist() =
     track.artists.firstOrNull()?.name?.normalizedForMatch().orEmpty()
 
-private fun List<MediaItem>.spreadByArtist(): List<MediaItem> {
+private fun List<MediaItem>.spreadByArtist(variety: Int): List<MediaItem> {
+    if (variety <= 0) return this
     val buckets = groupBy { it.primaryArtist() }
         .values
         .map { it.toMutableList() }

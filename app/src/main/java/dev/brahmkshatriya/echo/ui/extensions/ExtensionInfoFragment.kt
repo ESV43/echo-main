@@ -30,9 +30,12 @@ import dev.brahmkshatriya.echo.common.settings.SettingSwitch
 import dev.brahmkshatriya.echo.common.settings.SettingTextInput
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.extensionPrefId
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.toSettings
+import dev.brahmkshatriya.echo.extensions.ExtensionSandboxInspector
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.STREAM_QUALITY
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.streamQualities
 import dev.brahmkshatriya.echo.ui.settings.BaseSettingsFragment
+import dev.brahmkshatriya.echo.ui.settings.Keys
+import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.PermsUtils.registerActivityResultLauncher
 import dev.brahmkshatriya.echo.utils.Serializer.getSerialized
@@ -180,6 +183,15 @@ class ExtensionInfoFragment : BaseSettingsFragment() {
                 this@ExtensionPreference, extension, state.isLoginClient
             )
             screen.addPreference(infoPreference)
+            if (context.getSettings().getBoolean(Keys.EXTENSION_INSPECTOR, true)) {
+                Preference(context).apply {
+                    title = getString(R.string.v4_extension_inspector)
+                    summary = ExtensionSandboxInspector.inspect(extension)
+                    isIconSpaceReserved = false
+                    layoutResource = R.layout.preference
+                    screen.addPreference(this)
+                }
+            }
             if (extension.type == ExtensionType.MUSIC) MaterialListPreference(context).apply {
                 key = STREAM_QUALITY
                 title = getString(R.string.stream_quality)

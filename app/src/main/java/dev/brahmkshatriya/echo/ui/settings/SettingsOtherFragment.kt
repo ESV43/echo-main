@@ -68,6 +68,7 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                     key = Keys.AUDIO_FINGERPRINT
                     title = getString(R.string.v4_audio_fingerprint)
                     summary = getString(R.string.v4_audio_fingerprint_summary)
+                    dependency = Keys.SOURCE_FUSION
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(false)
@@ -82,7 +83,7 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                     entryValues = context.resources.getStringArray(R.array.v4_playlist_tool_values)
                     layoutResource = R.layout.preference
                     isIconSpaceReserved = false
-                    setDefaultValue(setOf("dedupe", "repair", "sort"))
+                    setDefaultValue(setOf("dedupe", "smart_queue", "source_fusion"))
                     addPreference(this)
                 }
 
@@ -122,7 +123,7 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                     entryValues = context.resources.getStringArray(R.array.v4_smart_download_values)
                     layoutResource = R.layout.preference
                     isIconSpaceReserved = false
-                    setDefaultValue(setOf("liked", "wifi", "storage"))
+                    setDefaultValue(setOf("liked", "frequent", "wifi", "storage"))
                     addPreference(this)
                 }
             }
@@ -211,7 +212,9 @@ class SettingsOtherFragment : BaseSettingsFragment() {
             }?.instance?.value as? UnifiedExtension
 
             lifecycleScope.launch {
-                val health = unified?.db?.getLibraryHealth() ?: mapOf()
+                val health = if (prefs.getBoolean(Keys.LIBRARY_HEALTH, true)) {
+                    unified?.db?.getLibraryHealth() ?: mapOf()
+                } else mapOf()
                 val history = unified?.db?.getRecentlyPlayed(1000) ?: listOf()
                 val plays = history.sumOf { (unified?.db?.getHistory(it.id, it.extras.extensionId)?.playCount ?: 0) }
                 val skips = history.sumOf { (unified?.db?.getHistory(it.id, it.extras.extensionId)?.skipCount ?: 0) }

@@ -15,6 +15,7 @@ import android.text.Spanned
 import android.text.method.LinkMovementMethod
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,6 +28,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.core.net.toUri
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
@@ -134,26 +136,60 @@ class PlayerFragment : Fragment() {
             }
         }
 
+        updatePlayerMode()
         observe(viewModel.settings) {
             if (!isAdded) return@observe
-            updatePlayerMode()
+            updatePlayerMode(openLyrics = true)
         }
     }
 
-    private fun updatePlayerMode() {
+    private fun currentPlayerMode() =
+        viewModel.settings.getString(
+            dev.brahmkshatriya.echo.ui.settings.Keys.VISUAL_PLAYER,
+            "immersive"
+        ) ?: "immersive"
+
+    private fun updatePlayerMode(openLyrics: Boolean = false) {
         val binding = binding ?: return
-        val mode = viewModel.settings.getString(dev.brahmkshatriya.echo.ui.settings.Keys.VISUAL_PLAYER, "immersive")
-        
-        binding.bgContainer.isVisible = mode != "amoled"
-        binding.visualizer.isVisible = mode == "hifi" || mode == "immersive"
-        binding.expandedToolbar.isVisible = mode != "driving"
-        
-        if (mode == "lyrics") {
-            uiViewModel.changeMoreState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED)
+        val mode = currentPlayerMode()
+        val isAmoled = mode == "amoled"
+        val isDriving = mode == "driving"
+        val isHifi = mode == "hifi"
+        val artMode = mode == "immersive" || mode == "lyrics"
+        val controlPadding = if (isDriving) 32.dpToPx(requireContext()) else 0
+
+        binding.bgContainer.isVisible = !isAmoled
+        binding.visualizer.isVisible = isHifi
+        binding.bgImage.isVisible = artMode
+        binding.bgGradient.isVisible = !isAmoled && !isHifi
+        binding.viewPager.isVisible = !isDriving && !isHifi
+        binding.expandedToolbar.isVisible = !isDriving
+        binding.root.setBackgroundColor(
+            if (isAmoled) Color.BLACK
+            else uiViewModel.playerColors.value?.accent ?: requireContext().defaultPlayerColors().accent
+        )
+
+        binding.playerControls.run {
+            root.updatePadding(
+                left = controlPadding,
+                top = controlPadding,
+                right = controlPadding,
+                bottom = controlPadding
+            )
+            root.alpha = if (isHifi) 0.92f else 1f
+            trackTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, if (isDriving) 24f else 20f)
+            trackArtist.maxLines = if (isDriving) 1 else 2
+            playerShortcutRow.isVisible = !isDriving && !isHifi
+            trackSubtitle.isVisible = !isDriving && !isHifi
         }
-        
-        if (mode == "driving") {
-            binding.playerControls.root.setPadding(32, 32, 32, 32)
+
+        applyPlayer()
+
+        if (mode == "lyrics" && openLyrics) {
+            uiViewModel.lastMoreTab = R.id.lyrics
+            uiViewModel.changeMoreState(
+                com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+            )
         }
     }
 
@@ -413,12 +449,14 @@ class PlayerFragment : Fragment() {
                 requireActivity().hideSystemUi(true)
         }
 
+        var lastPlayerSheetState = uiViewModel.playerSheetState.value
         observe(uiViewModel.playerSheetState) {
             if (!isAdded) return@observe
             updateCollapsed()
             if (isFinalState(it)) adapter.playerSheetStateUpdated()
-            if (it == STATE_HIDDEN) viewModel.clearQueue()
+            if (it == STATE_HIDDEN && lastPlayerSheetState != STATE_HIDDEN) viewModel.clearQueue()
             else if (it == STATE_COLLAPSED) emit(uiViewModel.playerBgVisible, false)
+            lastPlayerSheetState = it
         }
 
         binding.playerControls.root.doOnLayout {
@@ -739,7 +777,8 @@ class PlayerFragment : Fragment() {
             adapter.onColorsUpdated()
 
             binding.run {
-                val color = if (requireContext().isDynamic()) colors.accent
+                val color = if (currentPlayerMode() == "amoled") Color.BLACK
+                else if (requireContext().isDynamic()) colors.accent
                 else colors.background
                 root.setBackgroundColor(color)
                 val backgroundState = ColorStateList.valueOf(colors.background)
@@ -770,6 +809,7 @@ class PlayerFragment : Fragment() {
                 trackTitle.setTextColor(colors.onBackground)
                 trackArtist.setTextColor(colors.onBackground)
             }
+            updatePlayerMode()
         }
     }
 
@@ -834,11 +874,14 @@ class PlayerFragment : Fragment() {
         this?.currentTracks?.groups.orEmpty().any { it.type == C.TRACK_TYPE_VIDEO }
 
     private fun applyVideoVisibility(visible: Boolean) {
-        binding?.playerView?.isVisible = visible
-        binding?.bgImage?.isVisible = !visible
+        val mode = currentPlayerMode()
+        val canShowMediaBackground = mode == "immersive" || mode == "lyrics"
+        val showVideo = visible && canShowMediaBackground
+        binding?.playerView?.isVisible = showVideo
+        binding?.bgImage?.isVisible = !showVideo && canShowMediaBackground
         if (requireContext().isLandscape()) return
-        binding?.playerControls?.trackCoverPlaceHolder?.isVisible = visible
-        adapter.updatePlayerVisibility(visible)
+        binding?.playerControls?.trackCoverPlaceHolder?.isVisible = showVideo
+        adapter.updatePlayerVisibility(showVideo)
     }
 
     private var oldBg: Streamable.Media.Background? = null

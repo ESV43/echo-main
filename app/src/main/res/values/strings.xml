@@ -243,20 +243,16 @@
     <string name="v4_audio_fingerprint">Local Audio Fingerprint Matching</string>
     <string name="v4_audio_fingerprint_summary">Allow duration and metadata fingerprints to improve duplicate detection locally.</string>
     <string name="v4_playlist_alchemist">Playlist Alchemist</string>
-    <string name="v4_playlist_alchemist_summary">Pick local playlist repair and transformation tools to expose.</string>
+    <string name="v4_playlist_alchemist_summary">Choose which local queue cleanup tools appear in the player.</string>
     <string-array name="v4_playlist_tools">
         <item>Dedupe tracks</item>
-        <item>Repair broken items</item>
-        <item>Sort by vibe or quality</item>
-        <item>Split into moods</item>
-        <item>Side A / Side B</item>
+        <item>Smart queue reorder</item>
+        <item>Fuse duplicate sources</item>
     </string-array>
     <string-array name="v4_playlist_tool_values">
         <item>dedupe</item>
-        <item>repair</item>
-        <item>sort</item>
-        <item>moods</item>
-        <item>sides</item>
+        <item>smart_queue</item>
+        <item>source_fusion</item>
     </string-array>
     <string name="v4_library_health">Personal Library Health</string>
     <string name="v4_library_health_summary">Track local diagnostics for duplicates, missing art, unavailable items, and low-quality sources.</string>
@@ -264,18 +260,16 @@
     <string name="v4_offline_discovery">Offline Discovery Mode</string>
     <string name="v4_offline_discovery_summary">Use cached and downloaded songs for local recommendations while offline.</string>
     <string name="v4_smart_downloads">Smart Downloads</string>
-    <string name="v4_smart_downloads_summary">Choose client-side rules for liked songs, recent albums, source upgrades, Wi-Fi, and storage.</string>
+    <string name="v4_smart_downloads_summary">Choose which local signals can automatically add downloads.</string>
     <string-array name="v4_smart_download_rules">
         <item>Liked songs</item>
-        <item>Recent albums</item>
-        <item>Upgrade low quality</item>
+        <item>Most played songs</item>
         <item>Wi-Fi only</item>
         <item>Storage aware</item>
     </string-array>
     <string-array name="v4_smart_download_values">
         <item>liked</item>
-        <item>recent_albums</item>
-        <item>quality_upgrade</item>
+        <item>frequent</item>
         <item>wifi</item>
         <item>storage</item>
     </string-array>
@@ -297,7 +291,7 @@
         <item>amoled</item>
     </string-array>
     <string name="v4_adaptive_audio_profiles">Adaptive Audio Profiles</string>
-    <string name="v4_adaptive_audio_profiles_summary">Switch local audio preferences by output device, genre, and context.</string>
+    <string name="v4_adaptive_audio_profiles_summary">Apply built-in EQ curves for speaker, headphones, and Bluetooth output.</string>
     <string name="v4_lyrics_studio">Lyrics Studio</string>
     <string name="v4_lyrics_studio_summary">Enable local lyric offset, karaoke, and overlay controls where lyrics are available.</string>
     <string name="v4_lyrics_offset_down">-250 ms</string>

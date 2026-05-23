@@ -13,6 +13,7 @@ import dev.brahmkshatriya.echo.extensions.ExtensionLoader
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getExtension
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getIf
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.prefs
+import dev.brahmkshatriya.echo.ui.settings.Keys
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -26,7 +27,7 @@ class SearchViewModel(
     val quickFeed = MutableStateFlow<List<QuickSearchItem>>(emptyList())
     fun quickSearch(extensionId: String, query: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val multiSource = app.settings.getBoolean("v4_multi_source_search", false)
+            val multiSource = app.settings.getBoolean(Keys.MULTI_SOURCE_SEARCH, true)
             if (multiSource && query.isNotBlank()) {
                 val results = music.value.mapNotNull { ext ->
                     ext.getIf<QuickSearchClient, List<QuickSearchItem>>(app.throwFlow) {

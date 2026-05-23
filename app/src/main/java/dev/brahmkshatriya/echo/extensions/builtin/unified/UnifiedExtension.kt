@@ -44,6 +44,7 @@ import dev.brahmkshatriya.echo.common.models.Feed.Companion.toFeedData
 import dev.brahmkshatriya.echo.common.models.ImportType
 import dev.brahmkshatriya.echo.common.models.Lyrics
 import dev.brahmkshatriya.echo.common.models.Metadata
+import dev.brahmkshatriya.echo.common.models.NetworkConnection
 import dev.brahmkshatriya.echo.common.models.Playlist
 import dev.brahmkshatriya.echo.common.models.QuickSearchItem
 import dev.brahmkshatriya.echo.common.models.Radio
@@ -59,6 +60,7 @@ import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.extensions.cache.Cached
 import dev.brahmkshatriya.echo.extensions.exceptions.AppException.Companion.toAppException
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.toKey
+import dev.brahmkshatriya.echo.ui.settings.Keys
 import dev.brahmkshatriya.echo.utils.CacheUtils.getFromCache
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -370,11 +372,19 @@ class UnifiedExtension(
     }
 
     private suspend fun localRecommendations(): List<Track> {
+        if (!app.settings.getBoolean(Keys.LOCAL_INTELLIGENCE, true)) return emptyList()
+        if (app.networkFlow.value == NetworkConnection.NotConnected &&
+            !app.settings.getBoolean(Keys.OFFLINE_DISCOVERY, true)
+        ) return emptyList()
         val savedTracks = db.getSaved().filterIsInstance<Track>()
         val recentlyPlayed = db.getRecentlyPlayed(40)
         val mostPlayed = db.getMostPlayed(40)
         val seeds = recentlyPlayed.take(15) + mostPlayed.take(15) + savedTracks.take(30)
         if (seeds.isEmpty()) return emptyList()
+        val soundProfile = app.settings.getString(Keys.SOUND_PROFILE, "balanced") ?: "balanced"
+        val replayWeight = if (soundProfile == "replay") 2 else 1
+        val discoveryWeight = if (soundProfile == "discovery") 2 else 1
+        val moodWeight = if (soundProfile == "mood") 3 else 2
 
         val artistScores = seeds.flatMap { it.artists.map { artist -> artist.id } }
             .groupingBy { it }.eachCount()
@@ -390,7 +400,9 @@ class UnifiedExtension(
                 val artistScore = track.artists.sumOf { artist -> artistScores[artist.id] ?: 0 }
                 val genreScore = track.genres.sumOf { genre -> genreScores[genre.lowercase()] ?: 0 }
                 val albumScore = track.album?.id?.let { albumScores[it] } ?: 0
-                track to (artistScore * 3 + genreScore * 2 + albumScore)
+                val discoveryBonus =
+                    if (track.extras.extensionId to track.id in recentlyPlayedIds) 0 else discoveryWeight
+                track to (artistScore * replayWeight * 3 + genreScore * moodWeight + albumScore + discoveryBonus)
             }
             .filter { it.second > 0 }
             .sortedByDescending { it.second }
@@ -399,6 +411,11 @@ class UnifiedExtension(
     }
 
     private suspend fun contextualSections(): List<Shelf> {
+        if (!app.settings.getBoolean(Keys.LOCAL_INTELLIGENCE, true)) return emptyList()
+        if (!app.settings.getBoolean(Keys.CONTEXTUAL_HOME, true)) return emptyList()
+        if (app.networkFlow.value == NetworkConnection.NotConnected &&
+            !app.settings.getBoolean(Keys.OFFLINE_DISCOVERY, true)
+        ) return emptyList()
         val calendar = Calendar.getInstance()
         val hour = calendar.get(Calendar.HOUR_OF_DAY)
         val recentlyPlayed = db.getRecentlyPlayed(20)
@@ -800,7 +817,9 @@ class UnifiedExtension(
         val id = details.track.extras.extensionId
         val extension = extensions().get(id)
         extension.clientOrNull<TrackerMarkClient, Unit> { onMarkAsPlayed(details) }
-        db.updateHistory(details.track, false)
+        if (app.settings.getBoolean(Keys.LOCAL_INTELLIGENCE, true)) {
+            db.updateHistory(details.track, false)
+        }
     }
 
     override suspend fun onPlayingStateChanged(details: TrackDetails?, isPlaying: Boolean) {
@@ -813,7 +832,9 @@ class UnifiedExtension(
         val id = details.track.extras.extensionId
         val extension = extensions().get(id)
         extension.clientOrNull<TrackerClient, Unit> { onTrackSkipped(details) }
-        db.updateHistory(details.track, true)
+        if (app.settings.getBoolean(Keys.LOCAL_INTELLIGENCE, true)) {
+            db.updateHistory(details.track, true)
+        }
     }
 
     override suspend fun getMarkAsPlayedDuration(details: TrackDetails): Long? {

@@ -46,6 +46,7 @@ import dev.brahmkshatriya.echo.playback.renderer.PlayerBitmapLoader
 import dev.brahmkshatriya.echo.playback.renderer.RenderersFactory
 import dev.brahmkshatriya.echo.playback.source.StreamableMediaSource
 import dev.brahmkshatriya.echo.playback.source.StreamableLoader
+import dev.brahmkshatriya.echo.ui.settings.Keys
 import dev.brahmkshatriya.echo.utils.ContextUtils.listenFuture
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -89,6 +90,10 @@ class PlayerService : MediaLibraryService() {
                     .build()
             EQ_GAINS -> updateEqGains(prefs)
             AUTO_GAIN -> eqAudioProcessor.autoGainEnabled = prefs.getBoolean(key, false)
+            Keys.ADAPTIVE_AUDIO -> {
+                if (prefs.getBoolean(key, true)) adaptiveAudioProfileManager.updateProfile()
+                else updateEqGains(prefs)
+            }
             PREDICTIVE_CACHE -> {
                 if (!prefs.getBoolean(key, false)) {
                     predictiveCacheManager?.cancel()

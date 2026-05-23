@@ -144,6 +144,8 @@ class LyricsFragment : Fragment() {
             binding.lyricsOffsetValue.text = getString(R.string.v4_lyrics_offset_value, lyricsOffset)
             updateLyrics(playerVM.progress.value.first + lyricsOffset)
         }
+        binding.lyricsStudioControls.isVisible =
+            playerVM.settings.getBoolean(Keys.LYRICS_STUDIO, true)
         binding.lyricsOffsetDown.setOnClickListener {
             val next = (lyricsOffset - 250).coerceAtLeast(-10_000)
             playerVM.settings.edit().putLong(Keys.LYRICS_OFFSET, next).apply()

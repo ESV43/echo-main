@@ -74,7 +74,9 @@ class Downloader(
     val taskManager = TaskManager(this)
 
     fun add(
-        downloads: List<DownloadContext>
+        downloads: List<DownloadContext>,
+        networkType: NetworkType = NetworkType.CONNECTED,
+        requiresStorageNotLow: Boolean = true,
     ) = scope.launch {
         val concurrentDownloads = downloadExtension()
             .getAs<DownloadClient, Int> { concurrentDownloads }
@@ -96,13 +98,16 @@ class Downloader(
                 )
             )
         }
-        ensureWorker()
+        ensureWorker(networkType, requiresStorageNotLow)
     }
 
     private val workManager by lazy { WorkManager.getInstance(app.context) }
-    private fun ensureWorker() {
+    private fun ensureWorker(
+        networkType: NetworkType = NetworkType.CONNECTED,
+        requiresStorageNotLow: Boolean = true,
+    ) {
         val request = OneTimeWorkRequestBuilder<DownloadWorker>()
-            .setConstraints(Constraints(NetworkType.CONNECTED, requiresStorageNotLow = true))
+            .setConstraints(Constraints(networkType, requiresStorageNotLow = requiresStorageNotLow))
             .addTag(TAG)
             .build()
         workManager.enqueueUniqueWork(TAG, ExistingWorkPolicy.KEEP, request)
@@ -117,6 +122,8 @@ class Downloader(
             dev.brahmkshatriya.echo.ui.settings.Keys.SMART_DOWNLOADS,
             setOf("liked", "wifi", "storage")
         ) ?: return@launch
+        val networkType = if (rules.contains("wifi")) NetworkType.UNMETERED else NetworkType.CONNECTED
+        val storageAware = rules.contains("storage")
 
         if (rules.contains("liked")) {
             val unified = extensionLoader.unified.value
@@ -128,7 +135,7 @@ class Downloader(
             if (toDownload.isNotEmpty()) {
                 add(toDownload.map {
                     DownloadContext(it.extras.extensionId, it, 0, null)
-                })
+                }, networkType, storageAware)
             }
         }
 
@@ -141,7 +148,7 @@ class Downloader(
                 add(toDownload.map {
                     val extId = it.extras.extensionId
                     DownloadContext(extId, it, 0, null)
-                })
+                }, networkType, storageAware)
             }
         }
     }

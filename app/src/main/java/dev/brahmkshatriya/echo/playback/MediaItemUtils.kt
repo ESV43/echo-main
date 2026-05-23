@@ -280,10 +280,26 @@ object MediaItemUtils {
         ).takeIf { !downloaded.isNullOrEmpty() }
     )
 
-    fun MediaItem.fusionKey(): String {
-        val t = track
-        return "${t.title.lowercase().trim()}|${t.artists.joinToString(",") { it.name.lowercase().trim() }}"
+    fun Track.fusionKey(useFingerprint: Boolean = false): String {
+        isrc?.takeIf { it.isNotBlank() }?.let {
+            if (useFingerprint) return "isrc:${it.lowercase()}"
+        }
+        val parts = mutableListOf(
+            title.normalizedForMatch(),
+            artists.joinToString(",") { it.name.normalizedForMatch() }
+        )
+        if (useFingerprint) parts += duration?.div(5000)?.toString().orEmpty()
+        return parts.joinToString("|")
     }
+
+    fun MediaItem.fusionKey(useFingerprint: Boolean = false): String {
+        return track.fusionKey(useFingerprint)
+    }
+
+    fun String.normalizedForMatch() = lowercase()
+        .replace(Regex("\\([^)]*\\)|\\[[^]]*]"), "")
+        .replace(Regex("[^a-z0-9]+"), " ")
+        .trim()
 
     fun List<MediaItem>.spreadByArtist(): List<MediaItem> {
         if (isEmpty()) return this

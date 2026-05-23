@@ -1,6 +1,6 @@
 package dev.brahmkshatriya.echo.extensions
 
-import dev.brahmkshatriya.echo.common.MusicExtension
+import dev.brahmkshatriya.echo.common.Extension
 import dev.brahmkshatriya.echo.common.clients.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -15,7 +15,7 @@ object ExtensionSandboxInspector {
         recentFailures.update { (listOf(Failure(extensionId, error)) + it).take(50) }
     }
 
-    fun inspect(extension: MusicExtension): String {
+    fun inspect(extension: Extension<*>): String {
         val meta = extension.metadata
         val clients = mutableListOf<String>()
         val instance = extension.instance.value
