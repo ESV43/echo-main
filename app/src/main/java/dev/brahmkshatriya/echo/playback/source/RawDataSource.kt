@@ -21,17 +21,17 @@ class RawDataSource : BaseDataSource(true) {
     private var uri: Uri? = null
 
     override fun open(dataSpec: DataSpec): Long {
-        val streamable = dataSpec.customData as Streamable.Source.Raw
-        val (source, total) = runBlocking {
-            streamable.streamProvider!!.provide(dataSpec.position, dataSpec.length)
-        }
+        val streamable = dataSpec.customData as? Streamable.Source.Raw ?: return -1L
+        val provider = streamable.streamProvider ?: return -1L
+        val (source, total) = runBlocking { provider.provide(dataSpec.position, dataSpec.length) }
         uri = dataSpec.uri
         stream = source
         return total
     }
 
     override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
-        return stream!!.read(buffer, offset, length)
+        val s = stream ?: return -1
+        return s.read(buffer, offset, length)
     }
 
     override fun getUri() = uri

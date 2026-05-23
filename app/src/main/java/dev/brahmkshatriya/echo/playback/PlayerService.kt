@@ -48,6 +48,7 @@ import dev.brahmkshatriya.echo.playback.source.StreamableMediaSource
 import dev.brahmkshatriya.echo.playback.source.StreamableLoader
 import dev.brahmkshatriya.echo.ui.settings.Keys
 import dev.brahmkshatriya.echo.utils.ContextUtils.listenFuture
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -78,7 +79,12 @@ class PlayerService : MediaLibraryService() {
 
     private val app by inject<App>()
     private val state by inject<PlayerState>()
-    private val scope = CoroutineScope(Dispatchers.IO) + CoroutineName("PlayerService")
+    private val crashHandler = CoroutineExceptionHandler { _, e ->
+        if (e !is kotlinx.coroutines.CancellationException) {
+            try { app.throwFlow.tryEmit(e) } catch (_: Exception) { }
+        }
+    }
+    private val scope = CoroutineScope(Dispatchers.IO) + CoroutineName("PlayerService") + crashHandler
 
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
         when (key) {
@@ -232,7 +238,9 @@ class PlayerService : MediaLibraryService() {
             while (true) {
                 kotlinx.coroutines.delay(1000L)
                 if (app.settings.getBoolean(PREDICTIVE_CACHE, false)) {
-                    predictiveCacheManager?.checkAndPreFetch(player)
+                    try {
+                        predictiveCacheManager?.checkAndPreFetch(player)
+                    } catch (_: Exception) { }
                 }
             }
         }
@@ -329,6 +337,8 @@ class PlayerService : MediaLibraryService() {
         const val FADE_DURATION = "fade_duration"
         const val CROSSFADE = "crossfade"
         const val CROSSFADE_DURATION = "crossfade_duration"
+        const val TRACK_FADE = "track_fade"
+        const val TRACK_FADE_DURATION = "track_fade_duration"
         const val EQ_GAINS = "eq_gains"
         const val KEY_AI_AUTO_EQ = "ai_auto_eq"
         const val AUTO_GAIN = "v4_auto_gain"

@@ -12,9 +12,11 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.BPM_CROSSFADE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE_DURATION
-import dev.brahmkshatriya.echo.playback.PlayerService.Companion.BPM_CROSSFADE
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.TRACK_FADE
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.TRACK_FADE_DURATION
 
 @OptIn(UnstableApi::class)
 class CrossfadePlayer(
@@ -106,7 +108,8 @@ class CrossfadePlayer(
 
     private fun maybeCrossfade() {
         if (isReleased) return
-        if (!settings.getBoolean(CROSSFADE, false)) return
+        val isTrackFade = settings.getBoolean(TRACK_FADE, false)
+        if (!settings.getBoolean(CROSSFADE, false) && !isTrackFade) return
         
         val isPlaying = runCatching { mainPlayer.isPlaying && mainPlayer.playWhenReady }.getOrDefault(false)
         if (transitionInProgress || !isPlaying) return
@@ -120,12 +123,12 @@ class CrossfadePlayer(
         val duration = runCatching { mainPlayer.duration }.getOrDefault(C.TIME_UNSET)
         if (duration == C.TIME_UNSET || duration <= 0) return
 
-        val crossfadeMs = crossfadeDuration()
+        val fadeMs = if (isTrackFade) trackFadeDuration() else crossfadeDuration()
         val position = runCatching { mainPlayer.currentPosition }.getOrDefault(0L)
         val remaining = duration - position
         
-        if (remaining in 1..crossfadeMs) {
-            startOverlap(crossfadeMs)
+        if (remaining in 1..fadeMs) {
+            startOverlap(fadeMs)
         }
     }
 
@@ -207,6 +210,10 @@ class CrossfadePlayer(
             return dynamicDuration.coerceIn(2000L, 8000L)
         }
         return settings.getInt(CROSSFADE_DURATION, 5).coerceIn(1, 15) * 1000L
+    }
+
+    private fun trackFadeDuration(): Long {
+        return settings.getInt(TRACK_FADE_DURATION, 3).coerceIn(1, 12) * 1000L
     }
 
     override fun release() {

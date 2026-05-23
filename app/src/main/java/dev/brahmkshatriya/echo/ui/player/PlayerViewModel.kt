@@ -80,6 +80,7 @@ class PlayerViewModel(
         }
     }
 
+    @Volatile
     var queue: List<MediaItem> = emptyList()
     val queueFlow = MutableSharedFlow<Unit>()
     private val context = app.context

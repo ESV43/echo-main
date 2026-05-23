@@ -7,7 +7,6 @@ import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
 import androidx.media3.common.Player
-import androidx.media3.common.Player.PlaybackSuppressionReason
 
 @Suppress("DEPRECATION")
 class AudioFocusListener(
@@ -18,17 +17,25 @@ class AudioFocusListener(
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private lateinit var focusRequest: AudioFocusRequest
 
-    private val audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener {
-        if (it == AudioManager.AUDIOFOCUS_GAIN) {
-            player.apply {
-                setAudioAttributes(audioAttributes, true)
-                seekTo(currentPosition)
-                playWhenReady = true
+    private var preDuckVolume = 1f
+
+    private val audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+        when (focusChange) {
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                player.volume = preDuckVolume
             }
-            abandonRequest()
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                player.playWhenReady = false
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                player.playWhenReady = false
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                preDuckVolume = player.volume
+                player.volume = 0.2f
+            }
         }
     }
-
 
     private fun requestFocus(): Int {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
@@ -40,7 +47,7 @@ class AudioFocusListener(
         )
     }
 
-    private fun abandonRequest() {
+    private fun abandonFocus() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             audioManager.abandonAudioFocusRequest(focusRequest)
         else audioManager.abandonAudioFocus(audioFocusChangeListener)
@@ -60,32 +67,21 @@ class AudioFocusListener(
                 build()
             }
         }
-
-        onPlaybackSuppressionReasonChanged(player.playbackSuppressionReason)
     }
 
     override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
         if (playWhenReady && player.playbackSuppressionReason == Player.PLAYBACK_SUPPRESSION_REASON_NONE) {
             val result = requestFocus()
             if (result == AudioManager.AUDIOFOCUS_REQUEST_DELAYED || result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
-                player.apply {
-                    setAudioAttributes(audioAttributes, false)
-                    this.playWhenReady = false
-                    seekTo(currentPosition)
-                }
-            } else if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                abandonRequest()
+                player.playWhenReady = false
             }
+        } else if (!playWhenReady) {
+            abandonFocus()
         }
     }
 
-    override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: @PlaybackSuppressionReason Int) {
+    override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: Int) {
         if (playbackSuppressionReason == Player.PLAYBACK_SUPPRESSION_REASON_TRANSIENT_AUDIO_FOCUS_LOSS) {
-            player.apply {
-                setAudioAttributes(audioAttributes, false)
-                playWhenReady = false
-                seekTo(currentPosition)
-            }
             requestFocus()
         }
     }

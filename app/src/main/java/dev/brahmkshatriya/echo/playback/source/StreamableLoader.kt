@@ -62,8 +62,10 @@ class StreamableLoader(
     }
 
     private suspend fun loadTrack(item: MediaItem): MediaState.Loaded<Track> {
+        val state = item.state as? MediaState.Unloaded<Track>
+            ?: return error("Track not loaded")
         val track = withClient(item) {
-            Cached.loadMedia(app, it, item.state)
+            Cached.loadMedia<Track>(app, it, state)
         }
         return track.getOrThrow()
     }

@@ -57,7 +57,7 @@ class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
             binding.audioFxDescription.isVisible = mediaId != null
             val mediaSettings =
                 requireContext().getFxPrefs(settings, mediaId?.hashCode()) ?: settings
-            binding.audioFxFragment.bind(mediaSettings) { onEqualizerClicked() }
+            binding.audioFxFragment.bind(mediaSettings, viewModel.settings) { onEqualizerClicked() }
         }
         observe(viewModel.playerState.current) {
             mediaId = it?.mediaItem?.mediaId
@@ -82,7 +82,9 @@ class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
     companion object {
         @SuppressLint("SetTextI18n")
         fun FragmentAudioFxBinding.bind(
-            settings: SharedPreferences, onEqualizerClicked: () -> Unit
+            settings: SharedPreferences,
+            globalSettings: SharedPreferences,
+            onEqualizerClicked: () -> Unit
         ) {
             val currentSpeed = runCatching { settings.getFloat(PLAYBACK_SPEED, 1f) }
                 .getOrDefault(1f).coerceIn(0.25f, 4f)
@@ -113,6 +115,27 @@ class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
             bassBoostSlider.addOnChangeListener { _, value, _ ->
                 settings.edit { putInt(BASS_BOOST, value.toInt()) }
             }
+
+            trackFadeSlider.value = globalSettings.getInt(
+                dev.brahmkshatriya.echo.playback.PlayerService.Companion.TRACK_FADE_DURATION, 3
+            ).toFloat()
+            trackFadeSlider.addOnChangeListener { _, value, fromUser ->
+                if (fromUser) {
+                    val v = value.toInt().coerceIn(1, 12)
+                    trackFadeValue.text = "%ds".format(v)
+                    globalSettings.edit {
+                        putInt(
+                            dev.brahmkshatriya.echo.playback.PlayerService.Companion.TRACK_FADE_DURATION,
+                            v
+                        )
+                    }
+                }
+            }
+            val currentTf = globalSettings.getInt(
+                dev.brahmkshatriya.echo.playback.PlayerService.Companion.TRACK_FADE_DURATION, 3
+            )
+            trackFadeValue.text = "%ds".format(currentTf.coerceIn(1, 12))
+
             equalizer.setOnClickListener { onEqualizerClicked() }
         }
 

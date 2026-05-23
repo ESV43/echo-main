@@ -23,6 +23,8 @@ import dev.brahmkshatriya.echo.playback.exceptions.PlayerException
 import dev.brahmkshatriya.echo.utils.Serializer.rootCause
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -39,6 +41,26 @@ class PlayerEventListener(
 ) : Player.Listener {
 
     private val player get() = session.player
+
+    private var bufferingWatchdogJob: Job? = null
+
+    private fun startBufferingWatchdog() {
+        bufferingWatchdogJob?.cancel()
+        bufferingWatchdogJob = scope.launch(Dispatchers.Main) {
+            delay(8000)
+            runCatching {
+                val state = player.playbackState
+                if (state == Player.STATE_BUFFERING) {
+                    player.seekToNextMediaItem()
+                }
+            }
+        }
+    }
+
+    private fun cancelBufferingWatchdog() {
+        bufferingWatchdogJob?.cancel()
+        bufferingWatchdogJob = null
+    }
 
     private fun updateCustomLayout() = scope.launch(Dispatchers.Main) {
         val item = player.currentMediaItem ?: return@launch
@@ -61,6 +83,7 @@ class PlayerEventListener(
     }
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+        cancelBufferingWatchdog()
         updateCurrentFlow()
         updateCustomLayout()
         val index = player.currentMediaItemIndex
@@ -88,6 +111,10 @@ class PlayerEventListener(
 
     override fun onPlaybackStateChanged(playbackState: Int) {
         updateCurrentFlow()
+        when (playbackState) {
+            Player.STATE_BUFFERING -> startBufferingWatchdog()
+            Player.STATE_READY, Player.STATE_ENDED, Player.STATE_IDLE -> cancelBufferingWatchdog()
+        }
     }
 
     override fun onIsPlayingChanged(isPlaying: Boolean) {

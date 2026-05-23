@@ -214,12 +214,14 @@ object MediaItemUtils {
     private fun Bundle.indexes() =
         "${getInt("serverIndex")} ${getInt("sourceIndex")} ${getInt("backgroundIndex")} ${getInt("subtitleIndex")}"
 
+    private val TRACK_NONE = Track(id = "", title = "")
+
     private val Bundle?.stateNullable
         get() = this?.getSerialized<MediaState<Track>>("state")?.getOrNull()
-    val Bundle?.state get() = requireNotNull(stateNullable)
-    val Bundle?.track get() = state.item
+    val Bundle?.state get() = stateNullable
+    val Bundle?.track get() = state?.item ?: TRACK_NONE
     val Bundle?.isLoaded get() = this?.getBoolean("loaded") ?: false
-    val Bundle?.extensionId get() = state.extensionId
+    val Bundle?.extensionId get() = state?.extensionId ?: ""
     val Bundle?.context get() = this?.getSerialized<EchoMediaItem?>("context")?.getOrNull()
     val Bundle?.serverIndex get() = this?.getInt("serverIndex", -1) ?: -1
     val Bundle?.sourceIndex get() = this?.getInt("sourceIndex", -1) ?: -1

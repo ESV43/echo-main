@@ -20,13 +20,14 @@ class StreamableResolver(
     @OptIn(UnstableApi::class)
     override fun resolveDataSpec(dataSpec: DataSpec): DataSpec {
         val (id, index) = dataSpec.uri.toString().toKey().getOrNull() ?: return dataSpec
-        val streamable = runCatching { current[id]!!.getOrThrow().sources[index] }
-        val uri = streamable.map {
-            if (!it.isLive)
-                context.saveToCache(it.uri.toString(), dataSpec.uri.toString(), "player")
-            it.uri
-        }
-        return dataSpec.copy(uri = uri.getOrNull(), customData = streamable)
+        val server = runCatching {
+            current[id]?.getOrNull()?.sources?.getOrNull(index)
+        }.getOrNull() ?: return dataSpec
+        val uri = runCatching {
+            context.saveToCache(server.uri.toString(), dataSpec.uri.toString(), "player")
+            server.uri
+        }.getOrNull()
+        return dataSpec.copy(uri = uri, customData = Result.success(server))
     }
 
     companion object {
