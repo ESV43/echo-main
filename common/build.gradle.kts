@@ -28,7 +28,7 @@ kotlin {
     }
     jvm()
 
-    val xcf = XCFramework("common")
+    val xcf = XCFramework()
     listOf(
         iosX64(),
         iosArm64(),

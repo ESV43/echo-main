@@ -185,7 +185,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../common/build/bin/xcframework/release";
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../common/build/XCFrameworks/release";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Eko;
@@ -219,7 +219,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../common/build/bin/xcframework/release";
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../common/build/XCFrameworks/release";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Eko;
