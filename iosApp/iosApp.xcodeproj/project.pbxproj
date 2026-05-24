@@ -18,6 +18,23 @@
 		A1000009 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		A1000030 /* Embed KMP Framework */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Embed KMP Framework";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cd \"$SRCROOT/..\"\n./gradlew :common:embedAndSignAppleFrameworkForXcode\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		A100001F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -62,6 +79,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = A1000016 /* Build configuration list for PBXNativeTarget "iosApp" */;
 			buildPhases = (
+				A1000030 /* Embed KMP Framework */,
 				A100001E /* Sources */,
 				A100001F /* Frameworks */,
 				A1000020 /* Resources */,
@@ -185,9 +203,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../common/build/bin/xcframework/release";
+				FRAMEWORK_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/$(FRAMEWORKS_FOLDER_PATH)";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Eko;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -219,9 +237,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../common/build/bin/xcframework/release";
+				FRAMEWORK_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/$(FRAMEWORKS_FOLDER_PATH)";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Eko;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
