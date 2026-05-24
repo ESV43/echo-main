@@ -40,13 +40,11 @@ jobs:
                    archive \
                    CODE_SIGNING_ALLOWED=NO
 
-    - name: Export IPA
+    - name: Package IPA
       run: |
-        # Note: Exporting IPA without signing usually requires a dummy plist or Enterprise cert.
-        # For testing, we output the .app bundle inside the archive.
-        mkdir -p build/artifacts
-        cp -r build/iosApp.xcarchive/Products/Applications/iosApp.app build/artifacts/
-        zip -r build/artifacts/Echo_iOS.ipa build/artifacts/iosApp.app
+        mkdir -p build/artifacts Payload
+        cp -r build/iosApp.xcarchive/Products/Applications/iosApp.app Payload/
+        zip -r build/artifacts/Echo_iOS.ipa Payload
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4

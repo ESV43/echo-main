@@ -7,6 +7,9 @@ on:
         description: 'Version Name (e.g. 1.2.0)'
         required: true
         default: '1.0.0'
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   release:
@@ -29,13 +32,14 @@ jobs:
 
     - name: Set Version Numbers
       run: |
-        # Use the manual input for Version Name and GitHub Run Number for Build Number
         BUILD_NUMBER=${{ github.run_number }}
-        VERSION_NAME=${{ github.event.inputs.version_name }}
-        
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          VERSION_NAME="${{ github.event.inputs.version_name }}"
+        else
+          VERSION_NAME="${GITHUB_REF_NAME#v}"
+        fi
+        echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
         echo "Updating Info.plist with Version: $VERSION_NAME ($BUILD_NUMBER)"
-        
-        # Update Info.plist using PlistBuddy (Standard macOS tool)
         PLIST="iosApp/Info.plist"
         if [ -f "$PLIST" ]; then
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION_NAME" "$PLIST"
@@ -51,14 +55,14 @@ jobs:
                    -archivePath $PWD/build/Echo.xcarchive \
                    archive \
                    CODE_SIGNING_ALLOWED=NO \
-                   MARKETING_VERSION=${{ github.event.inputs.version_name }} \
+                   MARKETING_VERSION=$VERSION_NAME \
                    CURRENT_PROJECT_VERSION=${{ github.run_number }}
 
     - name: Package IPA
       run: |
         mkdir -p Payload
         cp -r build/Echo.xcarchive/Products/Applications/iosApp.app Payload/
-        zip -r Echo_v${{ github.event.inputs.version_name }}_b${{ github.run_number }}.ipa Payload
+        zip -r Echo_v${VERSION_NAME}_b${{ github.run_number }}.ipa Payload
         
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
@@ -72,5 +76,5 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Echo-iOS-Release-${{ github.event.inputs.version_name }}
+        name: Echo-iOS-Release-${{ env.VERSION_NAME }}
         path: "*.ipa"
