@@ -9,14 +9,12 @@
 /* Begin PBXBuildFile section */
 		A100001A /* iosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000005 /* iosApp.swift */; };
 		A100001B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000006 /* ContentView.swift */; };
-		A100001C /* common.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000008 /* common.xcframework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A1000005 /* iosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iosApp.swift; sourceTree = "<group>"; };
 		A1000006 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A1000007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A1000008 /* common.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = common.xcframework; path = "../common/build/bin/xcframework/release/common.xcframework"; sourceTree = "<group>"; };
 		A1000009 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -25,7 +23,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A100001C /* common.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -46,9 +43,8 @@
 				A1000005 /* iosApp.swift */,
 				A1000006 /* ContentView.swift */,
 				A1000007 /* Info.plist */,
-				A1000008 /* common.xcframework */,
 			);
-			path = iosApp;
+			name = iosApp;
 			sourceTree = "<group>";
 		};
 		A1000004 /* Products */ = {
