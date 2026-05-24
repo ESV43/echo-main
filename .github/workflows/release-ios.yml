@@ -27,8 +27,8 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
 
-    - name: Build KMP Shared Framework
-      run: ./gradlew :common:assembleCommonReleaseXCFramework --info
+    - name: Warm Gradle cache
+      run: ./gradlew --version
 
     - name: Set Version Numbers
       run: |

@@ -21,14 +21,8 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
 
-    - name: Build KMP Shared Framework
-      run: ./gradlew :common:assembleCommonReleaseXCFramework --info
-
-    - name: Install Apple Certificate (Optional - for real devices)
-      # This step requires setting up secrets for signing. 
-      # For feasibility testing, we can build for 'Simulator' which doesn't require signing.
-      run: |
-        echo "If building for real device, setup P12 and MobileProvision here."
+    - name: Warm Gradle cache
+      run: ./gradlew --version
 
     - name: Build Xcode Project
       run: |
