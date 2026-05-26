@@ -182,6 +182,11 @@
 
         <activity android:name=".playback.PlayerService$MainActivityOpener" />
 
+        <service
+            android:name=".utils.ui.FloatingLyricsService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

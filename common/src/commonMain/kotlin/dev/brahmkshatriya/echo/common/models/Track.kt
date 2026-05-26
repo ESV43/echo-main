@@ -122,7 +122,7 @@ data class Track(
         streamables.filter { it.type == Streamable.MediaType.Background }
     }
 
-    override val subtitleWithOutE = subtitle ?: buildString {
+    override val subtitleWithoutE = subtitle ?: buildString {
         if (duration != null) append(duration.toDurationString())
         val artists = artists.joinToString(", ") { it.name }
         if (artists.isNotBlank()) {
@@ -133,7 +133,7 @@ data class Track(
 
     override val subtitleWithE = buildString {
         if (isExplicit) append("\uD83C\uDD74 ")
-        append(subtitleWithOutE ?: "")
+        append(subtitleWithoutE ?: "")
     }.trim().ifBlank { null }
 
     companion object {

@@ -283,6 +283,11 @@
         <item>Album art immersive</item>
         <item>Compact driving</item>
         <item>AMOLED</item>
+        <item>Full-Screen Karaoke</item>
+        <item>Cinematic</item>
+        <item>Vinyl</item>
+        <item>Wave</item>
+        <item>Card</item>
     </string-array>
     <string-array name="v4_visual_player_values">
         <item>hifi</item>
@@ -290,6 +295,11 @@
         <item>immersive</item>
         <item>driving</item>
         <item>amoled</item>
+        <item>karaoke</item>
+        <item>cinematic</item>
+        <item>vinyl</item>
+        <item>wave</item>
+        <item>card</item>
     </string-array>
     <string name="v4_adaptive_audio_profiles">Adaptive Audio Profiles</string>
     <string name="v4_adaptive_audio_profiles_summary">Apply built-in EQ curves for speaker, headphones, and Bluetooth output.</string>
@@ -650,10 +660,71 @@
 
     <string name="v4_auto_gain">Auto-Gain Control</string>
     <string name="v4_auto_gain_summary">Smoothly normalize volume across tracks to prevent sudden loudness jumps</string>
+    <string name="v4_replay_gain">ReplayGain Normalization</string>
+    <string name="v4_replay_gain_summary">Normalize playback loudness to a consistent level using per-track analysis</string>
     <string name="v4_bpm_crossfade">BPM-Matched Crossfading</string>
     <string name="v4_bpm_crossfade_summary">Align crossfade durations dynamically to match 8 beats of the current song\'s tempo</string>
     <string name="v4_auto_skip">Smart Auto-Skip</string>
     <string name="v4_auto_skip_summary">Automatically skip tracks that you skip frequently (skip rate >= 80%)</string>
     <string name="v4_predictive_cache">Predictive Caching</string>
     <string name="v4_predictive_cache_summary">Pre-buffer the next track in the background when the current track is near completion</string>
+
+    <string name="v4_lyrics_style">Lyrics Display Style</string>
+    <string name="v4_lyrics_style_summary">Choose how lyrics are rendered</string>
+    <string-array name="v4_lyrics_styles">
+        <item>Classic</item>
+        <item>Karaoke</item>
+        <item>Scroll</item>
+        <item>Compact</item>
+        <item>Neon</item>
+    </string-array>
+    <string-array name="v4_lyrics_style_values">
+        <item>classic</item>
+        <item>karaoke</item>
+        <item>scroll</item>
+        <item>compact</item>
+        <item>neon</item>
+    </string-array>
+
+    <string name="v4_lyrics_fullscreen">Full-Screen Lyrics</string>
+    <string name="v4_lyrics_fullscreen_summary">Expand lyrics to full screen when the player is expanded</string>
+
+    <string name="v4_lyrics_visualizer">Lyrics Visualizer Combo</string>
+    <string name="v4_lyrics_visualizer_summary">Show animated visualizer behind lyrics when no album art is available</string>
+
+    <string name="v4_lyrics_translation">Side-by-Side Translation</string>
+    <string name="v4_lyrics_translation_summary">Show original lyrics and translated text in two columns</string>
+
+    <string name="v4_lyrics_font_size">Lyrics Font Size</string>
+    <string name="v4_lyrics_font_size_summary">Adjust the size of lyrics text</string>
+
+    <string name="v4_lyrics_bg_blur">Lyrics Background Blur</string>
+    <string name="v4_lyrics_bg_blur_summary">Apply blur effect behind the lyrics panel</string>
+
+    <string name="v4_lyrics_text_color">Lyrics Text Color</string>
+    <string name="v4_lyrics_text_color_summary">Choose a custom color for lyrics text</string>
+
+    <string name="v4_karaoke_fullscreen">Full-Screen Karaoke Mode</string>
+    <string name="v4_karaoke_fullscreen_summary">Expand lyrics to full screen with centered big text for karaoke effect</string>
+
+    <string name="v4_waveform_seekbar">Waveform Seekbar</string>
+    <string name="v4_waveform_seekbar_summary">Replace the player seekbar with an audio waveform visualization</string>
+
+    <string name="v4_album_art_swipe">Album Art Gallery</string>
+    <string name="v4_album_art_swipe_summary">Swipe left/right on the cover art to preview next and previous tracks</string>
+
+    <string name="v4_mood_colors">Mood-Based Adaptive Colors</string>
+    <string name="v4_mood_colors_summary">Automatically adjust the player accent color based on track mood (BPM and energy)</string>
+
+    <string name="v4_floating_lyrics_bubble">Floating Lyrics Bubble</string>
+    <string name="v4_floating_lyrics_bubble_summary">Show a small floating overlay above other apps with the current lyrics line</string>
+
+    <string name="v4_player_cinematic">Cinematic Mode</string>
+    <string name="v4_player_cinematic_summary">Widescreen cover with dimmed bottom panel, focus on art and fade controls</string>
+    <string name="v4_player_vinyl">Vinyl Mode</string>
+    <string name="v4_player_vinyl_summary">Spinning vinyl record animation behind the player controls</string>
+    <string name="v4_player_wave">Wave Mode</string>
+    <string name="v4_player_wave_summary">Audio waveform visualization fills the entire player background</string>
+    <string name="v4_player_card">Card Mode</string>
+    <string name="v4_player_card_summary">Album art as a floating card in the center with compact controls below</string>
 </resources>

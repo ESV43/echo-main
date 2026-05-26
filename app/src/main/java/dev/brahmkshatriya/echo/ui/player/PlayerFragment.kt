@@ -1,6 +1,7 @@
 package dev.brahmkshatriya.echo.ui.player
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Outline
@@ -79,6 +80,7 @@ import dev.brahmkshatriya.echo.ui.player.quality.QualitySelectionBottomSheet
 import dev.brahmkshatriya.echo.ui.player.sleep.SleepTimerBottomSheet
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FLUID_LYRICS
 import dev.brahmkshatriya.echo.ui.player.more.lyrics.LyricsViewModel
+import dev.brahmkshatriya.echo.ui.settings.Keys
 import dev.brahmkshatriya.echo.utils.ContextUtils.emit
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
@@ -86,7 +88,10 @@ import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadBlurred
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.animateVisibility
 import dev.brahmkshatriya.echo.utils.ui.AutoClearedValue.Companion.autoClearedNullable
 import dev.brahmkshatriya.echo.utils.ui.CheckBoxListener
+import dev.brahmkshatriya.echo.utils.ui.FloatingLyricsService
+import dev.brahmkshatriya.echo.utils.ui.MoodColorHelper
 import dev.brahmkshatriya.echo.utils.ui.SimpleItemSpan
+import dev.brahmkshatriya.echo.utils.ui.WaveformDrawable
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.dpToPx
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.hapticFeedback
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.hideSystemUi
@@ -137,9 +142,22 @@ class PlayerFragment : Fragment() {
         }
 
         updatePlayerMode()
-        observe(viewModel.settings) {
+        viewLifecycleOwner.observe(viewModel.settings) {
             if (!isAdded) return@observe
             updatePlayerMode(openLyrics = true)
+        }
+
+        if (viewModel.settings.getBoolean(Keys.LYRICS_FLOATING_BUBBLE, false)) {
+            try { FloatingLyricsService.init(requireContext()) } catch (_: Exception) {}
+        }
+        viewModel.settings.registerOnSharedPreferenceChangeListener { prefs, key ->
+            if (key == Keys.LYRICS_FLOATING_BUBBLE) {
+                if (prefs.getBoolean(key, false)) {
+                    try { FloatingLyricsService.init(requireContext()) } catch (_: Exception) {}
+                } else {
+                    try { FloatingLyricsService.hide(requireContext()) } catch (_: Exception) {}
+                }
+            }
         }
     }
 
@@ -156,18 +174,73 @@ class PlayerFragment : Fragment() {
         val isDriving = mode == "driving"
         val isHifi = mode == "hifi"
         val artMode = mode == "immersive" || mode == "lyrics"
+        val isKaraoke = mode == "karaoke"
+        val isCinematic = mode == "cinematic"
+        val isVinyl = mode == "vinyl"
+        val isWave = mode == "wave"
+        val isCard = mode == "card"
         val controlPadding = if (isDriving) 32.dpToPx(requireContext()) else 0
 
         binding.bgContainer.isVisible = !isAmoled
-        binding.visualizer.isVisible = isHifi
-        binding.bgImage.isVisible = artMode
-        binding.bgGradient.isVisible = !isAmoled && !isHifi
-        binding.viewPager.isVisible = !isDriving && !isHifi
-        binding.expandedToolbar.isVisible = !isDriving
+        binding.visualizer.isVisible = isHifi || isWave
+        binding.bgImage.isVisible = artMode || isKaraoke || isCinematic || isVinyl || isCard
+        binding.bgGradient.isVisible = !isAmoled && !isHifi && !isWave
+        binding.viewPager.isVisible = !isDriving && !isHifi && !isKaraoke && !isWave
+        binding.expandedToolbar.isVisible = !isDriving && !isKaraoke && !isCinematic
         binding.root.setBackgroundColor(
             if (isAmoled) Color.BLACK
             else uiViewModel.playerColors.value?.accent ?: requireContext().defaultPlayerColors().accent
         )
+
+        if (isKaraoke) {
+            binding.playerControls.root.alpha = 0.7f
+            binding.viewPager.isVisible = false
+            uiViewModel.lastMoreTab = R.id.lyrics
+            uiViewModel.changeMoreState(
+                com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+            )
+        }
+
+        if (isCinematic) {
+            binding.playerControls.run {
+                root.alpha = 0.85f
+                trackTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+                trackArtist.maxLines = 1
+                playerShortcutRow.isVisible = false
+                trackSubtitle.isVisible = false
+            }
+            binding.expandedToolbar.isVisible = true
+        }
+
+        if (isVinyl) {
+            binding.playerControls.run {
+                root.alpha = 0.9f
+                trackTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
+                trackArtist.maxLines = 2
+                playerShortcutRow.isVisible = true
+            }
+        }
+
+        if (isWave) {
+            binding.playerControls.run {
+                root.alpha = 0.88f
+                trackTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
+                trackArtist.maxLines = 2
+                playerShortcutRow.isVisible = false
+                trackSubtitle.isVisible = false
+            }
+            binding.expandedToolbar.isVisible = false
+        }
+
+        if (isCard) {
+            binding.playerControls.run {
+                root.alpha = 0.95f
+                trackTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
+                trackArtist.maxLines = 2
+                playerShortcutRow.isVisible = true
+                trackSubtitle.isVisible = true
+            }
+        }
 
         binding.playerControls.run {
             root.updatePadding(
@@ -176,14 +249,22 @@ class PlayerFragment : Fragment() {
                 right = controlPadding,
                 bottom = controlPadding
             )
-            root.alpha = if (isHifi) 0.92f else 1f
-            trackTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, if (isDriving) 24f else 20f)
-            trackArtist.maxLines = if (isDriving) 1 else 2
-            playerShortcutRow.isVisible = !isDriving && !isHifi
-            trackSubtitle.isVisible = !isDriving && !isHifi
+            if (!isKaraoke && !isCinematic && !isWave) {
+                root.alpha = if (isHifi) 0.92f else 1f
+                trackTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, if (isDriving) 24f else 20f)
+                trackArtist.maxLines = if (isDriving) 1 else 2
+                playerShortcutRow.isVisible = !isDriving && !isHifi
+                trackSubtitle.isVisible = !isDriving && !isHifi
+            }
         }
 
         applyPlayer()
+
+        uiViewModel.playerColors.value?.let { colors ->
+            if (isCinematic) {
+                binding.bgImage.alpha = 0.6f
+            }
+        }
 
         if (mode == "lyrics" && openLyrics) {
             uiViewModel.lastMoreTab = R.id.lyrics
@@ -212,7 +293,7 @@ class PlayerFragment : Fragment() {
             uiViewModel.lastMoreTab = R.id.lyrics
         }
 
-        observe(viewModel.progress) { (progress, _) ->
+        viewLifecycleOwner.observe(viewModel.progress) { (progress, _) ->
             val b = binding ?: return@observe
             if (!settings.getBoolean(FLUID_LYRICS, false)) {
                 b.playerControls.fluidLyricsContainer.isVisible = false
@@ -290,8 +371,18 @@ class PlayerFragment : Fragment() {
                 b.playerControls.fluidLyricsText.text = currentLine
                 b.playerControls.fluidLyricsNextText.text = nextLine
                 b.playerControls.fluidLyricsNextText.isVisible = !nextLine.isNullOrBlank()
+
+                if (settings.getBoolean(Keys.LYRICS_FLOATING_BUBBLE, false)) {
+                    val lineText = currentLine?.toString() ?: ""
+                    try {
+                        FloatingLyricsService.update(requireContext(), lineText)
+                    } catch (_: Exception) {}
+                }
             } else {
                 b.playerControls.fluidLyricsContainer.isVisible = false
+                if (settings.getBoolean(Keys.LYRICS_FLOATING_BUBBLE, false)) {
+                    try { FloatingLyricsService.hide(requireContext()) } catch (_: Exception) {}
+                }
             }
         }
     }
@@ -330,13 +421,13 @@ class PlayerFragment : Fragment() {
             currRound = max(padding * inv, padding * uiViewModel.playerBackProgress.value * 2)
             view.invalidateOutline()
         }
-        observe(uiViewModel.combined) {
+        viewLifecycleOwner.observe(uiViewModel.combined) {
             leftPadding = (if (view.context.isRTL()) it.end else it.start) + padding
             rightPadding = (if (view.context.isRTL()) it.start else it.end) + padding
             updateOutline()
         }
-        observe(uiViewModel.playerBackProgress) { updateOutline() }
-        observe(uiViewModel.playerSheetOffset) { updateOutline() }
+        viewLifecycleOwner.observe(uiViewModel.playerBackProgress) { updateOutline() }
+        viewLifecycleOwner.observe(uiViewModel.playerSheetOffset) { updateOutline() }
         view.doOnLayout { updateOutline() }
     }
 
@@ -410,7 +501,7 @@ class PlayerFragment : Fragment() {
         }
 
         view.doOnLayout { updateCollapsed() }
-        observe(uiViewModel.combined) {
+        viewLifecycleOwner.observe(uiViewModel.combined) {
             if (!isAdded) return@observe
             val b = binding ?: return@observe
             val system = uiViewModel.systemInsets.value
@@ -433,11 +524,11 @@ class PlayerFragment : Fragment() {
             adapter.insetsUpdated()
         }
 
-        observe(uiViewModel.moreSheetOffset) {
+        viewLifecycleOwner.observe(uiViewModel.moreSheetOffset) {
             updateCollapsed()
             adapter.moreOffsetUpdated()
         }
-        observe(uiViewModel.playerSheetOffset) {
+        viewLifecycleOwner.observe(uiViewModel.playerSheetOffset) {
             if (!isAdded) return@observe
             updateCollapsed()
             adapter.playerOffsetUpdated()
@@ -450,7 +541,7 @@ class PlayerFragment : Fragment() {
         }
 
         var lastPlayerSheetState = uiViewModel.playerSheetState.value
-        observe(uiViewModel.playerSheetState) {
+        viewLifecycleOwner.observe(uiViewModel.playerSheetState) {
             if (!isAdded) return@observe
             updateCollapsed()
             if (isFinalState(it)) adapter.playerSheetStateUpdated()
@@ -551,7 +642,7 @@ class PlayerFragment : Fragment() {
             btn.hapticFeedback()
             likeListener.onCheckedStateChanged(btn, state)
         }
-        observe(viewModel.playerState.current) {
+        viewLifecycleOwner.observe(viewModel.playerState.current) {
             val b = binding ?: return@observe
             if (!isAdded) return@observe
             uiViewModel.run {
@@ -567,7 +658,7 @@ class PlayerFragment : Fragment() {
             b.applyCurrent(it.mediaItem)
         }
 
-        observe(viewModel.queueFlow) { submit() }
+        viewLifecycleOwner.observe(viewModel.queueFlow) { submit() }
 
         val playPauseListener = CheckBoxListener {
             val b = binding ?: return@CheckBoxListener
@@ -581,7 +672,7 @@ class PlayerFragment : Fragment() {
                 btn.hapticFeedback()
                 playPauseListener.onCheckedStateChanged(btn, state)
             }
-        observe(viewModel.isPlaying) {
+        viewLifecycleOwner.observe(viewModel.isPlaying) {
             val b = binding ?: return@observe
             b.run {
                 playPauseListener.enabled = false
@@ -590,13 +681,13 @@ class PlayerFragment : Fragment() {
                 playPauseListener.enabled = true
             }
         }
-        observe(viewModel.buffering) {
+        viewLifecycleOwner.observe(viewModel.buffering) {
             val b = binding ?: return@observe
             b.playerControls.playingIndicator.alpha = if (it) 1f else 0f
             b.playerCollapsedContainer.collapsedPlayingIndicator.alpha = if (it) 1f else 0f
         }
 
-        observe(viewModel.progress) { (curr, buff) ->
+        viewLifecycleOwner.observe(viewModel.progress) { (curr, buff) ->
             val b = binding ?: return@observe
             b.playerCollapsedContainer.run {
                 collapsedBuffer.progress = buff.toInt()
@@ -608,10 +699,18 @@ class PlayerFragment : Fragment() {
                     seekBar.value = max(0f, min(curr.toFloat(), seekBar.valueTo))
                     trackCurrentTime.text = curr.toTimeString()
                 }
+                if (viewModel.settings.getBoolean(Keys.WAVEFORM_SEEKBAR, false)) {
+                    val duration = viewModel.totalDuration.value ?: 1L
+                    val progress = if (duration > 0) curr.toFloat() / duration else 0f
+                    val amplitude = viewModel.playerState.amplitude.value
+                    val drawable = seekBar.background as? WaveformDrawable
+                    drawable?.setProgress(progress)
+                    drawable?.setAmplitude(amplitude.coerceIn(0f, 1f))
+                }
             }
         }
 
-        observe(viewModel.totalDuration) {
+        viewLifecycleOwner.observe(viewModel.totalDuration) {
             val b = binding ?: return@observe
             val duration = it ?: viewModel.playerState.current.value?.track?.duration ?: 0
             b.playerCollapsedContainer.run {
@@ -662,6 +761,7 @@ class PlayerFragment : Fragment() {
 
         binding.playerControls.run {
             seekBar.apply {
+                setLabelFormatter { value -> value.toLong().toTimeString() }
                 addOnChangeListener { _, value, fromUser ->
                     if (fromUser) trackCurrentTime.text = value.toLong().toTimeString()
                 }
@@ -674,6 +774,14 @@ class PlayerFragment : Fragment() {
                         viewModel.seekTo(slider.value.toLong())
                     }
                 })
+                if (viewModel.settings.getBoolean(Keys.WAVEFORM_SEEKBAR, false)) {
+                    val color = uiViewModel.playerColors.value
+                        ?: requireContext().defaultPlayerColors()
+                    val waveform = WaveformDrawable(color.accent, Color.argb(60, Color.red(color.accent), Color.green(color.accent), Color.blue(color.accent)))
+                    waveform.setAmplitude(0.5f)
+                    waveform.setProgress(0f)
+                    background = waveform
+                }
             }
 
             trackNext.setOnClickListener {
@@ -681,14 +789,14 @@ class PlayerFragment : Fragment() {
                 viewModel.next()
                 (trackNext.icon as Animatable).start()
             }
-            observe(viewModel.nextEnabled) { trackNext.isEnabled = it }
+            viewLifecycleOwner.observe(viewModel.nextEnabled) { trackNext.isEnabled = it }
 
             trackPrevious.setOnClickListener {
                 it.hapticFeedback()
                 viewModel.previous()
                 (trackPrevious.icon as Animatable).start()
             }
-            observe(viewModel.previousEnabled) { trackPrevious.isEnabled = it }
+            viewLifecycleOwner.observe(viewModel.previousEnabled) { trackPrevious.isEnabled = it }
 
             val shuffleListener = CheckBoxListener {
                 val b = binding ?: return@CheckBoxListener
@@ -696,7 +804,7 @@ class PlayerFragment : Fragment() {
                 viewModel.setShuffle(it)
             }
             trackShuffle.addOnCheckedStateChangedListener(shuffleListener)
-            observe(viewModel.shuffleMode) {
+            viewLifecycleOwner.observe(viewModel.shuffleMode) {
                 shuffleListener.enabled = false
                 trackShuffle.isChecked = it
                 shuffleListener.enabled = true
@@ -712,7 +820,7 @@ class PlayerFragment : Fragment() {
                 changeRepeatDrawable(mode)
                 viewModel.setRepeat(mode)
             }
-            observe(viewModel.repeatMode) { changeRepeatDrawable(it) }
+            viewLifecycleOwner.observe(viewModel.repeatMode) { changeRepeatDrawable(it) }
 
             trackSubtitle.setOnClickListener {
                 it.hapticFeedback()
@@ -732,7 +840,7 @@ class PlayerFragment : Fragment() {
                 val enabled = crossfadeShortcut.isChecked
                 viewModel.settings.edit { putBoolean(CROSSFADE, enabled) }
             }
-            observe(viewModel.serverAndTracks) { (tracks, server, index) ->
+            viewLifecycleOwner.observe(viewModel.serverAndTracks) { (tracks, server, index) ->
                 if (!isAdded) return@observe
                 trackSubtitle.text = tracks?.getDetails(requireContext(), server, index)
                     ?.joinToString(" ⦿ ")?.takeIf { it.isNotBlank() }
@@ -743,7 +851,7 @@ class PlayerFragment : Fragment() {
     private val likeListener = CheckBoxListener { viewModel.likeCurrent(it) }
 
     private fun configureColors() {
-        observe(viewModel.playerState.current) { adapter.onCurrentUpdated() }
+        viewLifecycleOwner.observe(viewModel.playerState.current) { adapter.onCurrentUpdated() }
         var last: Drawable? = null
         adapter.currentDrawableListener = { drawable ->
             if (last != drawable) {
@@ -761,7 +869,7 @@ class PlayerFragment : Fragment() {
         }
         val bufferView =
             binding?.playerView?.findViewById<ProgressBar>(androidx.media3.ui.R.id.exo_buffering)
-        observe(uiViewModel.playerColors) {
+        viewLifecycleOwner.observe(uiViewModel.playerColors) {
             if (!isAdded) return@observe
             val context = requireContext()
             if (context.isPlayerColor() && context.isDynamic()) {
@@ -810,6 +918,14 @@ class PlayerFragment : Fragment() {
                 trackArtist.setTextColor(colors.onBackground)
             }
             updatePlayerMode()
+        }
+
+        viewLifecycleOwner.observe(viewModel.playerState.bpm) { bpm ->
+            if (!isAdded || !viewModel.settings.getBoolean(Keys.MOOD_COLORS, true)) return@observe
+            val baseColors = uiViewModel.playerColors.value
+                ?: requireContext().defaultPlayerColors()
+            val moodColors = MoodColorHelper.getPlayerColorsForBpm(bpm, baseColors)
+            uiViewModel.playerColors.value = moodColors
         }
     }
 
@@ -875,7 +991,7 @@ class PlayerFragment : Fragment() {
 
     private fun applyVideoVisibility(visible: Boolean) {
         val mode = currentPlayerMode()
-        val canShowMediaBackground = mode == "immersive" || mode == "lyrics"
+        val canShowMediaBackground = mode == "immersive" || mode == "lyrics" || mode == "karaoke" || mode == "cinematic" || mode == "vinyl" || mode == "card"
         val showVideo = visible && canShowMediaBackground
         binding?.playerView?.isVisible = showVideo
         binding?.bgImage?.isVisible = !showVideo && canShowMediaBackground
@@ -924,7 +1040,7 @@ class PlayerFragment : Fragment() {
                 EDGE_TYPE_OUTLINE, Color.BLACK, null
             )
         )
-        observe(viewModel.serverAndTracks) {
+        viewLifecycleOwner.observe(viewModel.serverAndTracks) {
             if (!isAdded) return@observe
             applyPlayer()
         }

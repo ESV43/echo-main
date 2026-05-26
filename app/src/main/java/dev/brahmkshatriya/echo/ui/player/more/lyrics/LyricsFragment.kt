@@ -3,6 +3,7 @@ package dev.brahmkshatriya.echo.ui.player.more.lyrics
 import android.annotation.SuppressLint
 import android.view.Choreographer
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -87,12 +88,65 @@ class LyricsFragment : Fragment() {
     private var currentLyricsPos = -1
     private var currentLyrics: Lyrics.Lyric? = null
     private var lyricsOffset: Long = 0
+    private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
+        when (key) {
+            Keys.LYRICS_STYLE -> {
+                val style = LyricsStyle.fromValue(prefs.getString(key, "classic"))
+                lyricAdapter.updateStyle(style)
+            }
+            Keys.LYRICS_FONT_SIZE -> {
+                val fontSize = prefs.getInt(key, 24).toFloat()
+                lyricAdapter.updateFontSize(fontSize)
+            }
+            Keys.LYRICS_TRANSLATION -> {
+                val show = prefs.getBoolean(key, false)
+                lyricAdapter.updateTranslation(show)
+            }
+            Keys.LYRICS_FULLSCREEN -> {
+                val fullscreen = prefs.getBoolean(key, false)
+                if (view != null && isAdded) {
+                    binding.lyricsRecyclerView.setPadding(
+                        binding.lyricsRecyclerView.paddingLeft,
+                        if (fullscreen) 200 else 72,
+                        binding.lyricsRecyclerView.paddingRight,
+                        if (fullscreen) 400 else 200
+                    )
+                }
+            }
+        }
+    }
     private val lyricAdapter by lazy {
         LyricAdapter(uiViewModel) { adapter, lyric ->
             if (adapter.itemCount <= 1) return@LyricAdapter
             currentLyricsPos = -1
             playerVM.seekTo((lyric.startTime - lyricsOffset).coerceAtLeast(0))
             updateLyrics(lyric.startTime - lyricsOffset)
+        }
+    }
+
+    private fun applyLyricsSettings() {
+        val style = LyricsStyle.fromValue(
+            playerVM.settings.getString(Keys.LYRICS_STYLE, "classic")
+        )
+        lyricAdapter.updateStyle(style)
+
+        val fontSize = playerVM.settings.getInt(Keys.LYRICS_FONT_SIZE, 24).toFloat()
+        lyricAdapter.updateFontSize(fontSize)
+
+        val showTranslation = playerVM.settings.getBoolean(Keys.LYRICS_TRANSLATION, false)
+        lyricAdapter.updateTranslation(showTranslation)
+
+        val fullscreen = playerVM.settings.getBoolean(Keys.LYRICS_FULLSCREEN, false)
+        binding.lyricsRecyclerView.setPadding(
+            binding.lyricsRecyclerView.paddingLeft,
+            if (fullscreen) 200 else 72,
+            binding.lyricsRecyclerView.paddingRight,
+            if (fullscreen) 400 else 200
+        )
+
+        val visualizerMode = playerVM.settings.getBoolean(Keys.LYRICS_VISUALIZER, false)
+        if (visualizerMode) {
+            binding.root.setBackgroundColor(android.graphics.Color.parseColor("#1A000000"))
         }
     }
 
@@ -281,6 +335,9 @@ class LyricsFragment : Fragment() {
             lastUpdateSystemTime = System.currentTimeMillis()
             updateLyrics(it.first + lyricsOffset)
         }
+
+        applyLyricsSettings()
+        playerVM.settings.registerOnSharedPreferenceChangeListener(settingsListener)
         configureMiniPlayer()
     }
 
@@ -362,6 +419,11 @@ class LyricsFragment : Fragment() {
         setTitle(lyrics.title)
         setSubtitle(lyrics.subtitle)
         setBackgroundResource(R.color.amoled_bg)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        playerVM.settings.unregisterOnSharedPreferenceChangeListener(settingsListener)
     }
 
     override fun onResume() {

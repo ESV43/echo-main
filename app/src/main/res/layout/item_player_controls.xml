@@ -140,7 +140,7 @@
                 android:contentDescription="@string/seekbar"
                 android:paddingVertical="38dp"
                 android:value="0.5"
-                app:labelBehavior="gone"
+                app:labelBehavior="visible"
                 app:minTouchTargetSize="90dp"
                 app:thumbColor="?attr/colorTertiary"
                 app:thumbHeight="20dp"

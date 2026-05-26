@@ -48,5 +48,5 @@ data class Artist(
 ) : EchoMediaItem {
     override val title = name
     override val description = bio
-    override val subtitleWithOutE = subtitle
+    override val subtitleWithoutE = subtitle
 }

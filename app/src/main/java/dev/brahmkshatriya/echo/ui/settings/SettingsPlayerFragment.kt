@@ -25,6 +25,7 @@ import dev.brahmkshatriya.echo.playback.PlayerService.Companion.STREAM_QUALITY
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.UNMETERED_STREAM_QUALITY
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.streamQualities
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.AUTO_GAIN
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.REPLAY_GAIN
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.BPM_CROSSFADE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.AUTO_SKIP
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.PREDICTIVE_CACHE
@@ -113,6 +114,16 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     key = AUTO_GAIN
                     title = getString(R.string.v4_auto_gain)
                     summary = getString(R.string.v4_auto_gain_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = REPLAY_GAIN
+                    title = getString(R.string.v4_replay_gain)
+                    summary = getString(R.string.v4_replay_gain_summary)
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(false)
@@ -279,6 +290,46 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     setDefaultValue(false)
                     addPreference(this)
                 }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.MOOD_COLORS
+                    title = getString(R.string.v4_mood_colors)
+                    summary = getString(R.string.v4_mood_colors_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.WAVEFORM_SEEKBAR
+                    title = getString(R.string.v4_waveform_seekbar)
+                    summary = getString(R.string.v4_waveform_seekbar_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.ALBUM_ART_SWIPE
+                    title = getString(R.string.v4_album_art_swipe)
+                    summary = getString(R.string.v4_album_art_swipe_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.LYRICS_FLOATING_BUBBLE
+                    title = getString(R.string.v4_floating_lyrics_bubble)
+                    summary = getString(R.string.v4_floating_lyrics_bubble_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
             }
 
             PreferenceCategory(context).apply {
@@ -379,6 +430,18 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 layoutResource = R.layout.preference_category
                 screen.addPreference(this)
 
+                MaterialListPreference(context).apply {
+                    key = Keys.LYRICS_STYLE
+                    title = getString(R.string.v4_lyrics_style)
+                    summary = getString(R.string.v4_lyrics_style_summary)
+                    entries = context.resources.getStringArray(R.array.v4_lyrics_styles)
+                    entryValues = context.resources.getStringArray(R.array.v4_lyrics_style_values)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    setDefaultValue("classic")
+                    addPreference(this)
+                }
+
                 SwitchPreferenceCompat(context).apply {
                     key = FLUID_LYRICS
                     title = getString(R.string.fluid_lyrics)
@@ -386,6 +449,64 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.LYRICS_FULLSCREEN
+                    title = getString(R.string.v4_lyrics_fullscreen)
+                    summary = getString(R.string.v4_lyrics_fullscreen_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.KARAOKE_FULLSCREEN
+                    title = getString(R.string.v4_karaoke_fullscreen)
+                    summary = getString(R.string.v4_karaoke_fullscreen_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.LYRICS_VISUALIZER
+                    title = getString(R.string.v4_lyrics_visualizer)
+                    summary = getString(R.string.v4_lyrics_visualizer_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = Keys.LYRICS_TRANSLATION
+                    title = getString(R.string.v4_lyrics_translation)
+                    summary = getString(R.string.v4_lyrics_translation_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                MaterialSliderPreference(context, 12, 36, steps = 1).apply {
+                    key = Keys.LYRICS_FONT_SIZE
+                    title = getString(R.string.v4_lyrics_font_size)
+                    summary = getString(R.string.v4_lyrics_font_size_summary)
+                    isIconSpaceReserved = false
+                    setDefaultValue(24)
+                    addPreference(this)
+                }
+
+                MaterialSliderPreference(context, 0, 25, steps = 1).apply {
+                    key = Keys.LYRICS_BG_BLUR
+                    title = getString(R.string.v4_lyrics_bg_blur)
+                    summary = getString(R.string.v4_lyrics_bg_blur_summary)
+                    isIconSpaceReserved = false
+                    setDefaultValue(0)
                     addPreference(this)
                 }
 

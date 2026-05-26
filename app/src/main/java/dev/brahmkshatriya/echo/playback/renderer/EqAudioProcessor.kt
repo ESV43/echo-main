@@ -27,6 +27,12 @@ class EqAudioProcessor : BaseAudioProcessor() {
     @Volatile
     var autoGainEnabled: Boolean = false
 
+    @Volatile
+    var replayGainEnabled: Boolean = false
+
+    @Volatile
+    var replayGainDb: Float = 0f
+
     val beatDetector = BeatDetector()
 
     private var currentGain = 1.0f
@@ -82,15 +88,19 @@ class EqAudioProcessor : BaseAudioProcessor() {
         val buffer = replaceOutputBuffer(remaining)
         val channelCount = inputAudioFormat.channelCount
 
+        val replayGainLinear = if (replayGainEnabled) {
+            (10.0f.pow(replayGainDb / 20f)).coerceIn(0.1f, 3.0f)
+        } else 1.0f
+
         if (autoGainEnabled) {
             val rms = calculateRms(inputBuffer)
             targetGain = if (rms > 0.005f) {
-                (0.22f / rms).coerceIn(0.1f, 3.0f)
+                (0.22f / rms).coerceIn(0.1f, 3.0f) * replayGainLinear
             } else {
-                1.0f
+                replayGainLinear
             }
         } else {
-            targetGain = 1.0f
+            targetGain = replayGainLinear
         }
 
         while (inputBuffer.hasRemaining()) {

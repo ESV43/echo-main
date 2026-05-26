@@ -43,10 +43,19 @@ object FragmentUtils {
         bundle: Bundle? = null,
     ) {
         viewModel.collapsePlayer()
+        val transitionName = view?.transitionName
         manager.commit {
             setReorderingAllowed(true)
             addToBackStack(null)
-            val fragment = createFragment<T>(bundle)
+            val fragment = createFragment<T>(bundle?.apply {
+                transitionName?.let { putString("transitionName", it) }
+            })
+            if (transitionName != null && view != null) {
+                fragment.enterTransition = com.google.android.material.transition.MaterialSharedAxis(
+                    com.google.android.material.transition.MaterialSharedAxis.Z, true
+                )
+                addSharedElement(view, transitionName)
+            }
             val old = manager.findFragmentById(cont)
             if (old != null) hide(old)
             add(cont, fragment)

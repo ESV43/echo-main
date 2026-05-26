@@ -73,6 +73,7 @@ class MediaViewHolder(
 
     override fun bind(feed: FeedType.Media) {
         this.feed = feed
+        binding.root.transitionName = "media_${feed.item.id}"
         binding.bind(feed.item, feed.number?.toInt())
     }
 

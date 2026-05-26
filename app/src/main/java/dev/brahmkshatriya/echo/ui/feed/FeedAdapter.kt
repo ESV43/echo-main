@@ -2,14 +2,14 @@ package dev.brahmkshatriya.echo.ui.feed
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import dev.brahmkshatriya.echo.common.models.Track
-import dev.brahmkshatriya.echo.databinding.ItemLoadingBinding
+import dev.brahmkshatriya.echo.databinding.ItemSkeletonLoadingBinding
+import dev.brahmkshatriya.echo.utils.ui.ShimmerDrawable
 import dev.brahmkshatriya.echo.playback.PlayerState
 import dev.brahmkshatriya.echo.ui.common.GridAdapter
 import dev.brahmkshatriya.echo.ui.feed.FeedData.FeedTab
@@ -32,7 +32,6 @@ import dev.brahmkshatriya.echo.ui.feed.viewholders.VideoHorizontalViewHolder
 import dev.brahmkshatriya.echo.ui.feed.viewholders.VideoViewHolder
 import dev.brahmkshatriya.echo.ui.player.PlayerViewModel
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
-import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.animatedWithAlpha
 import dev.brahmkshatriya.echo.utils.ui.scrolling.ScrollAnimPagingAdapter
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
@@ -128,17 +127,25 @@ class FeedAdapter(
 
     class LoadingViewHolder(
         parent: ViewGroup,
-        val binding: ItemLoadingBinding = ItemLoadingBinding.inflate(
+        val binding: ItemSkeletonLoadingBinding = ItemSkeletonLoadingBinding.inflate(
             LayoutInflater.from(parent.context), parent, false
         ),
     ) : FeedLoadingAdapter.ViewHolder(binding.root) {
-        init {
-            binding.textView.isVisible = false
-        }
+        private var shimmer: ShimmerDrawable? = null
 
         override fun bind(loadState: LoadState) {
-            binding.root.alpha = 0f
-            binding.root.animatedWithAlpha(500)
+            if (shimmer == null) {
+                shimmer = ShimmerDrawable().also { drawable ->
+                    binding.root.background = drawable
+                    drawable.start()
+                }
+            }
+        }
+
+        fun stopShimmer() {
+            shimmer?.stop()
+            shimmer = null
+            binding.root.background = null
         }
     }
 

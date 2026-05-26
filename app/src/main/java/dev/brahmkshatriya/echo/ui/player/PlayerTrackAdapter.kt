@@ -142,6 +142,7 @@ class PlayerTrackAdapter(
         private var coverDrawable: Drawable? = null
         fun applyDrawable() {
             val index = bindingAdapterPosition.takeIf { it != RecyclerView.NO_POSITION } ?: return
+            if (index < 0 || index >= itemCount) return
             val item = getItem(index) ?: return
             val curr = current.value?.mediaItem
             if (curr != item) return

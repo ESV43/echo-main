@@ -83,7 +83,15 @@ class PredictiveCacheManager(
                         null
                     )
                     
-                    cacheWriter.cache()
+                    val job = coroutineContext[Job]
+                    val completionHandler = job?.invokeOnCompletion {
+                        cacheWriter.cancel()
+                    }
+                    try {
+                        cacheWriter.cache()
+                    } finally {
+                        completionHandler?.dispose()
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

@@ -70,19 +70,19 @@ sealed interface EchoMediaItem {
         val label: String? get() = null
         val type: Album.Type? get() = null
 
-        override val subtitleWithOutE
+        override val subtitleWithoutE
             get() = subtitle ?: buildString {
                 append(artists.joinToString(", ") { it.name })
             }.trim().ifBlank { null }
     }
 
 
-    val subtitleWithOutE: String?
+    val subtitleWithoutE: String?
 
     val subtitleWithE
         get() = buildString {
             if (isExplicit) append("\uD83C\uDD74 ")
-            append(subtitleWithOutE ?: "")
+            append(subtitleWithoutE ?: "")
         }.trim().ifBlank { null }
 
     fun sameAs(other: EchoMediaItem): Boolean {

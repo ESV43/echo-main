@@ -34,6 +34,7 @@ import dev.brahmkshatriya.echo.download.Downloader
 import dev.brahmkshatriya.echo.extensions.ExtensionLoader
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.extensionPrefId
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.prefs
+import kotlin.math.log10
 import dev.brahmkshatriya.echo.playback.listener.AudioFocusListener
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener
 import dev.brahmkshatriya.echo.playback.listener.MediaSessionServiceListener
@@ -96,6 +97,7 @@ class PlayerService : MediaLibraryService() {
                     .build()
             EQ_GAINS -> updateEqGains(prefs)
             AUTO_GAIN -> eqAudioProcessor.autoGainEnabled = prefs.getBoolean(key, false)
+            REPLAY_GAIN -> eqAudioProcessor.replayGainEnabled = prefs.getBoolean(key, false)
             Keys.ADAPTIVE_AUDIO -> {
                 if (prefs.getBoolean(key, true)) adaptiveAudioProfileManager.updateProfile()
                 else updateEqGains(prefs)
@@ -133,6 +135,8 @@ class PlayerService : MediaLibraryService() {
         
         val aiAutoEqManager by lazy { AiAutoEqManager(this, eqAudioProcessor) }
         eqAudioProcessor.autoGainEnabled = app.settings.getBoolean(AUTO_GAIN, false)
+        eqAudioProcessor.replayGainEnabled = app.settings.getBoolean(REPLAY_GAIN, false)
+        val replayGainAnalyzedTracks = mutableSetOf<String>()
         eqAudioProcessor.pcmCallback = { pcm ->
             if (app.settings.getBoolean(KEY_AI_AUTO_EQ, false)) {
                 aiAutoEqManager.classifyAndApplyEq(pcm)
@@ -143,6 +147,23 @@ class PlayerService : MediaLibraryService() {
             }
             val rms = kotlin.math.sqrt(sum / pcm.size).toFloat() / Short.MAX_VALUE
             state.amplitude.value = rms
+
+            val currentId = state.current.value?.mediaItem?.mediaId
+            if (currentId != null && eqAudioProcessor.replayGainEnabled
+                && currentId !in replayGainAnalyzedTracks
+            ) {
+                replayGainAnalyzedTracks.add(currentId)
+                var cachedGain = state.replayGains[currentId]
+                if (cachedGain == null) {
+                    val targetRms = 0.22f
+                    val gainDb = if (rms > 0.001f) {
+                        (20f * kotlin.math.log10(targetRms / rms)).coerceIn(-10f, 10f)
+                    } else 0f
+                    state.replayGains[currentId] = gainDb
+                    cachedGain = gainDb
+                }
+                eqAudioProcessor.replayGainDb = cachedGain
+            }
         }
 
         setListener(MediaSessionServiceListener(this, getPendingIntent(this)))
@@ -342,6 +363,7 @@ class PlayerService : MediaLibraryService() {
         const val EQ_GAINS = "eq_gains"
         const val KEY_AI_AUTO_EQ = "ai_auto_eq"
         const val AUTO_GAIN = "v4_auto_gain"
+        const val REPLAY_GAIN = "v4_replay_gain"
         const val BPM_CROSSFADE = "v4_bpm_crossfade"
         const val AUTO_SKIP = "v4_auto_skip"
         const val PREDICTIVE_CACHE = "v4_predictive_cache"

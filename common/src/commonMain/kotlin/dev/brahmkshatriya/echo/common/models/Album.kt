@@ -68,7 +68,7 @@ data class Album(
 
     override val date = releaseDate
 
-    override val subtitleWithOutE = subtitle ?: buildString {
+    override val subtitleWithoutE = subtitle ?: buildString {
         append(artists.joinToString(", ") { it.name })
     }.trim().ifBlank { null }
 

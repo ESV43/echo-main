@@ -1,15 +1,7 @@
 package dev.brahmkshatriya.echo.common.models
 
 import dev.brahmkshatriya.echo.common.models.NetworkRequest.Companion.toGetRequest
-import dev.brahmkshatriya.echo.common.models.NetworkRequest.Method.CONNECT
-import dev.brahmkshatriya.echo.common.models.NetworkRequest.Method.DELETE
 import dev.brahmkshatriya.echo.common.models.NetworkRequest.Method.GET
-import dev.brahmkshatriya.echo.common.models.NetworkRequest.Method.HEAD
-import dev.brahmkshatriya.echo.common.models.NetworkRequest.Method.OPTIONS
-import dev.brahmkshatriya.echo.common.models.NetworkRequest.Method.PATCH
-import dev.brahmkshatriya.echo.common.models.NetworkRequest.Method.POST
-import dev.brahmkshatriya.echo.common.models.NetworkRequest.Method.PUT
-import dev.brahmkshatriya.echo.common.models.NetworkRequest.Method.TRACE
 import kotlinx.serialization.Serializable
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi

@@ -24,6 +24,7 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.motion.MotionUtils
 import com.google.android.material.navigation.NavigationBarView
+import com.google.android.material.transition.MaterialContainerTransform
 import com.google.android.material.transition.MaterialSharedAxis
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.utils.ContextUtils.SETTINGS_NAME
@@ -168,27 +169,30 @@ object AnimationUtils {
     fun Fragment.setupTransition(
         view: View, applyBackground: Boolean = true, axis: Int = MaterialSharedAxis.Z
     ) {
+        val bgColor = MaterialColors.getColor(view, R.attr.echoBackground, 0)
         if (applyBackground) {
-            val color = MaterialColors.getColor(view, R.attr.echoBackground, 0)
-            view.setBackgroundColor(color)
+            view.setBackgroundColor(bgColor)
         }
 
         if (view.animations) {
-//        val transitionName = arguments?.getString("transitionName")
-//        if (transitionName != null) {
-//            view.transitionName = transitionName
-//            val transition = MaterialContainerTransform().apply {
-//                drawingViewId = id
-//                setAllContainerColors(color)
-//                duration = view.animationDuration
-//            }
-//            sharedElementEnterTransition = transition
-//        }
+            val transitionName = arguments?.getString("transitionName")
+            if (transitionName != null) {
+                view.transitionName = transitionName
+                val transition = MaterialContainerTransform().apply {
+                    drawingViewId = id
+                    setAllContainerColors(bgColor)
+                    duration = view.animationDuration
+                }
+                sharedElementEnterTransition = transition
+                sharedElementReturnTransition = transition
+            }
             (view as? ViewGroup)?.isTransitionGroup = true
-            exitTransition = MaterialSharedAxis(axis, true)
-            reenterTransition = MaterialSharedAxis(axis, false)
-            enterTransition = MaterialSharedAxis(axis, true)
-            returnTransition = MaterialSharedAxis(axis, false)
+            if (transitionName == null) {
+                exitTransition = MaterialSharedAxis(axis, true)
+                reenterTransition = MaterialSharedAxis(axis, false)
+                enterTransition = MaterialSharedAxis(axis, true)
+                returnTransition = MaterialSharedAxis(axis, false)
+            }
 
             postponeEnterTransition()
             view.doOnPreDraw { startPostponedEnterTransition() }

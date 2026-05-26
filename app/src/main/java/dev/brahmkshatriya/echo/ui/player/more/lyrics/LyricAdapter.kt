@@ -1,11 +1,15 @@
 package dev.brahmkshatriya.echo.ui.player.more.lyrics
 
+import android.graphics.BlurMaskFilter
 import android.graphics.Color
 import android.text.Spannable
 import android.text.SpannableString
-import android.text.style.ForegroundColorSpan
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.widget.TextViewCompat
+import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.DiffUtil
 import dev.brahmkshatriya.echo.common.models.Lyrics
 import dev.brahmkshatriya.echo.databinding.ItemLoadingBinding
@@ -25,7 +29,8 @@ class LyricAdapter(
         val text: String?,
         val startTime: Long,
         val endTime: Long,
-        val words: List<Lyrics.Item>? = null
+        val words: List<Lyrics.Item>? = null,
+        val translation: String? = null
     )
 
     fun interface Listener {
@@ -40,16 +45,104 @@ class LyricAdapter(
             oldItem == newItem
     }
 
+    private var currentStyle: LyricsStyle = LyricsStyle.CLASSIC
+    private var fontSizeSp = 24f
+    private var showTranslation = false
+
+    private fun getSettings() =
+        uiViewModel.playerColors.value?.let { null }?.let { null }
+            ?: runCatching {
+                androidx.preference.PreferenceManager.getDefaultSharedPreferences(
+                    uiViewModel.playerColors.value?.let { null }
+                        ?: return@runCatching null
+                )
+            }.getOrNull()
+
+    private fun getSettingsSafe() =
+        runCatching {
+            val ctx = uiViewModel.playerColors.value?.let { null } ?: return@runCatching null
+            null
+        }.getOrNull()
+
+    fun updateStyle(style: LyricsStyle) {
+        currentStyle = style
+        onEachViewHolder { applyStyle() }
+    }
+
+    fun updateFontSize(sp: Float) {
+        fontSizeSp = sp
+        onEachViewHolder { applyStyle() }
+    }
+
+    fun updateTranslation(show: Boolean) {
+        showTranslation = show
+        onEachViewHolder { applyStyle() }
+    }
+
     inner class ViewHolder(val binding: ItemLyricBinding) : ScrollAnimViewHolder(binding.root) {
         init {
             binding.root.setOnClickListener {
-                val lyrics = getItem(bindingAdapterPosition) ?: return@setOnClickListener
+                val pos = bindingAdapterPosition
+                if (pos == RecyclerView.NO_POSITION || pos < 0 || pos >= itemCount) return@setOnClickListener
+                val lyrics = getItem(pos) ?: return@setOnClickListener
                 listener.onLyricSelected(this@LyricAdapter, lyrics)
             }
         }
     }
 
+    private fun ViewHolder.applyStyle() {
+        binding.root.apply {
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSizeSp)
+            when (currentStyle) {
+                LyricsStyle.CLASSIC -> {
+                    gravity = Gravity.START
+                    setTextColor(Color.WHITE)
+                    paint.maskFilter = null
+                    setTypeface(null, android.graphics.Typeface.BOLD)
+                    TextViewCompat.setLineHeight(this, (fontSizeSp * 1.4f).toInt())
+                    translationX = 0f
+                }
+                LyricsStyle.KARAOKE -> {
+                    gravity = Gravity.CENTER
+                    setTextColor(Color.WHITE)
+                    paint.maskFilter = null
+                    setTypeface(null, android.graphics.Typeface.BOLD)
+                    TextViewCompat.setLineHeight(this, (fontSizeSp * 1.6f).toInt())
+                    translationX = 0f
+                }
+                LyricsStyle.SCROLL -> {
+                    gravity = Gravity.START
+                    setTextColor(Color.WHITE)
+                    paint.maskFilter = null
+                    setTypeface(null, android.graphics.Typeface.NORMAL)
+                    TextViewCompat.setLineHeight(this, (fontSizeSp * 1.2f).toInt())
+                    translationX = 0f
+                }
+                LyricsStyle.COMPACT -> {
+                    gravity = Gravity.START
+                    setTextColor(Color.WHITE)
+                    paint.maskFilter = null
+                    setTypeface(null, android.graphics.Typeface.NORMAL)
+                    val compactSize = fontSizeSp * 0.75f
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, compactSize)
+                    TextViewCompat.setLineHeight(this, (compactSize * 1.2f).toInt())
+                    setPadding(paddingLeft, paddingTop / 3, paddingRight, paddingBottom / 3)
+                    translationX = 0f
+                }
+                LyricsStyle.NEON -> {
+                    gravity = Gravity.CENTER
+                    setTextColor(Color.WHITE)
+                    setTypeface(null, android.graphics.Typeface.BOLD)
+                    paint.maskFilter = BlurMaskFilter(8f, BlurMaskFilter.Blur.NORMAL)
+                    TextViewCompat.setLineHeight(this, (fontSizeSp * 1.5f).toInt())
+                    translationX = 0f
+                }
+            }
+        }
+    }
+
     private fun ViewHolder.updateColors() {
+        applyStyle()
         binding.root.run {
             val colors = uiViewModel.playerColors.value ?: context.defaultPlayerColors()
             val activeColor = colors.onBackground or -0x1000000
@@ -101,7 +194,14 @@ class LyricAdapter(
 
         if (pos == currentPos) {
             binding.root.alpha = 1f
-            binding.root.animate().scaleX(1.12f).scaleY(1.12f).setDuration(200).start()
+            when (currentStyle) {
+                LyricsStyle.KARAOKE, LyricsStyle.NEON -> {
+                    binding.root.animate().scaleX(1.2f).scaleY(1.2f).setDuration(200).start()
+                }
+                else -> {
+                    binding.root.animate().scaleX(1.12f).scaleY(1.12f).setDuration(200).start()
+                }
+            }
             val text = binding.root.text
             if (text is Spannable) {
                 val spans = text.getSpans(0, text.length, WordHighlightSpan::class.java)
@@ -113,7 +213,14 @@ class LyricAdapter(
                 binding.root.setTextColor(activeColor)
             }
         } else {
-            binding.root.animate().scaleX(0.9f).scaleY(0.9f).setDuration(200).start()
+            when (currentStyle) {
+                LyricsStyle.KARAOKE, LyricsStyle.NEON -> {
+                    binding.root.animate().scaleX(0.85f).scaleY(0.85f).setDuration(200).start()
+                }
+                else -> {
+                    binding.root.animate().scaleX(0.9f).scaleY(0.9f).setDuration(200).start()
+                }
+            }
             binding.root.alpha = if (pos < currentPos) 0.7f else 0.3f
             val text = binding.root.text
             if (text is Spannable) {
@@ -136,6 +243,7 @@ class LyricAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         getItem(position) ?: return
+        holder.applyStyle()
         holder.updateColors()
         holder.updateCurrent()
         holder.itemView.applyTranslationYAnimation(scrollY)

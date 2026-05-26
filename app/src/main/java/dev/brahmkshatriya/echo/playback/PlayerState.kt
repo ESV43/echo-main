@@ -22,6 +22,7 @@ data class PlayerState(
 
     val servers = ConcurrentHashMap<String, Result<Streamable.Media.Server>>()
     val serverChanged = MutableSharedFlow<Unit>()
+    val replayGains = ConcurrentHashMap<String, Float>()
 
     data class Current(
         val index: Int,
