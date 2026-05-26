@@ -83,7 +83,7 @@ class FeedFragment : Fragment(R.layout.fragment_generic_collapsable) {
         applyPlayerBg(view) {
             mainBgDrawable.combine(feedData.backgroundImageFlow) { a, b -> b ?: a }
         }
-        if (savedInstanceState == null) childFragmentManager.commit {
+        if (savedInstanceState == null) childFragmentManager.commit(allowStateLoss = true) {
             replace<Actual>(R.id.genericFragmentContainer, null, arguments)
         }
     }

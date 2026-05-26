@@ -16,22 +16,23 @@ class MaterialMultipleChoicePreference(context: Context) : MultiSelectListPrefer
     }
 
     override fun onClick() {
+        val currentValues = values.toMutableSet()
         val selectedIndices = BooleanArray(entries.size) { index ->
-            values.contains(entryValues.getOrNull(index))
+            currentValues.contains(entryValues.getOrNull(index))
         }
 
         MaterialAlertDialogBuilder(context)
             .setMultiChoiceItems(entries, selectedIndices) { _, which, isChecked ->
                 val value = entryValues.getOrNull(which)
                 if (isChecked && value != null) {
-                    values.add(value.toString())
+                    currentValues.add(value.toString())
                 } else {
-                    values.remove(value)
+                    currentValues.remove(value?.toString())
                 }
             }
             .setPositiveButton(R.string.okay) { dialog, _ ->
-                if (callChangeListener(values)) {
-                    setValues(values.toSet())
+                if (callChangeListener(currentValues)) {
+                    setValues(currentValues)
                     updateSummary()
                 }
                 dialog.dismiss()

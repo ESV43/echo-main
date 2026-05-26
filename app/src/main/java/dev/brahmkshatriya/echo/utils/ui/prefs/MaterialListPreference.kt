@@ -16,15 +16,20 @@ class MaterialListPreference(context: Context) : ListPreference(context) {
     }
 
     override fun onClick() {
+        val currentEntryValues = entryValues ?: emptyArray()
+        val currentEntries = entries ?: emptyArray()
+        val selectedIndex = currentEntryValues.indexOf(value)
         MaterialAlertDialogBuilder(context)
-            .setSingleChoiceItems(entries, entryValues.indexOf(value)) { dialog, index ->
-                if (callChangeListener(entryValues[index].toString())) runCatching {
+            .setSingleChoiceItems(currentEntries, selectedIndex) { dialog, index ->
+                val newValue = currentEntryValues.getOrNull(index)?.toString()
+                if (newValue != null && callChangeListener(newValue)) runCatching {
                     setValueIndex(index)
                     updateSummary()
                 }
                 dialog.dismiss()
             }
-            .setNegativeButton(R.string.cancel) { dialog, _ -> dialog.dismiss() }.setTitle(title)
+            .setNegativeButton(R.string.cancel) { dialog, _ -> dialog.dismiss() }
+            .setTitle(title)
             .create()
             .show()
     }

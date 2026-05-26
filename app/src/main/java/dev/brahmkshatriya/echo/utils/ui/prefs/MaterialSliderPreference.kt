@@ -36,11 +36,23 @@ class MaterialSliderPreference(
         val slider = holder.itemView.findViewById<Slider>(R.id.preferences_slider)
         val current = getPersistedInt(defaultValue ?: from)
         val min = if (allowOverride) min(from, current) else from
+        var max = if (allowOverride) max(to, current) else to
+        if (max <= min) {
+            max = min + 1
+        }
         slider.valueFrom = min.toFloat()
-        val max = if (allowOverride) max(to, current) else to
         slider.valueTo = max.toFloat()
         slider.value = min(max(current, min), max).toFloat()
-        slider.stepSize = steps?.toFloat() ?: 1f
+
+        val step = steps?.toFloat() ?: 1f
+        if (step > 0f) {
+            val range = max - min
+            if (range % step == 0f) {
+                slider.stepSize = step
+            } else {
+                slider.stepSize = 1f
+            }
+        }
 
         slider.addOnChangeListener { _, value, byUser ->
             persistInt(value.toInt())

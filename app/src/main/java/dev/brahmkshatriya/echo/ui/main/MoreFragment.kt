@@ -21,7 +21,7 @@ class MoreFragment : Fragment(R.layout.fragment_more) {
         if (savedInstanceState == null) {
             childFragmentManager.beginTransaction()
                 .replace(R.id.settings_container, SettingsFragment())
-                .commit()
+                .commitAllowingStateLoss()
         }
 
         applyBackPressCallback()

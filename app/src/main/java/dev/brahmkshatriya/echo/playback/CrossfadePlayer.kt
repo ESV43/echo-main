@@ -163,8 +163,10 @@ class CrossfadePlayer(
             }
             fadeVolume(secondaryPlayer, 1f, 0f, durationMs) {
                 if (!isReleased) {
-                    secondaryPlayer.pause()
-                    secondaryPlayer.clearMediaItems()
+                    runCatching {
+                        secondaryPlayer.pause()
+                        secondaryPlayer.clearMediaItems()
+                    }
                 }
             }
         }.onFailure {

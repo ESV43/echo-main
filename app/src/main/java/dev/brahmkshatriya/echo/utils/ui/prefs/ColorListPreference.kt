@@ -93,10 +93,16 @@ class ColorListPreference(val fragment: Fragment, var listener: Listener? = null
             RecyclerView.ViewHolder(binding.root) {
             init {
                 binding.root.setOnClickListener {
-                    listener.onColorSelected(colors[bindingAdapterPosition].second)
+                    val pos = bindingAdapterPosition
+                    if (pos != RecyclerView.NO_POSITION && pos in colors.indices) {
+                        listener.onColorSelected(colors[pos].second)
+                    }
                 }
                 binding.root.setOnLongClickListener {
-                    listener.onColorRemoved(colors[bindingAdapterPosition].second)
+                    val pos = bindingAdapterPosition
+                    if (pos != RecyclerView.NO_POSITION && pos in colors.indices) {
+                        listener.onColorRemoved(colors[pos].second)
+                    } else false
                 }
             }
         }

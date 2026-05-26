@@ -315,7 +315,7 @@ object WebViewUtils {
         val wrapper = webViewClient.requests[id] ?: return
         createSnack(Message(getString(R.string.opening_webview_x, wrapper.reason)))
         if (wrapper.showWebView) openFragment<WithAppbar>(null, getBundle(id))
-        else supportFragmentManager.commit {
+        else supportFragmentManager.commit(allowStateLoss = true) {
             add<Hidden>(R.id.hiddenWebViewContainer, null, getBundle(id))
         }
     }

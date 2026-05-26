@@ -76,27 +76,26 @@ class FloatingLyricsService : Service() {
         return START_STICKY
     }
 
-    private val layoutParams: WindowManager.LayoutParams
-        get() {
-            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            } else {
-                WindowManager.LayoutParams.TYPE_PHONE
-            }
-            return WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                flags,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                    WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS,
-                PixelFormat.TRANSLUCENT
-            ).apply {
-                gravity = Gravity.TOP or Gravity.START
-                x = 100
-                y = 200
-            }
+    private val overlayParams by lazy {
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        } else {
+            WindowManager.LayoutParams.TYPE_PHONE
         }
+        WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            flags,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            x = 100
+            y = 200
+        }
+    }
 
     private fun showOverlay(lyrics: String) {
         if (overlayView != null) return
@@ -106,7 +105,7 @@ class FloatingLyricsService : Service() {
         lyricsText?.text = lyrics
 
         overlayView?.setOnTouchListener { _, event ->
-            val params = layoutParams
+            val params = overlayParams
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     isDragging = false
@@ -122,7 +121,11 @@ class FloatingLyricsService : Service() {
                     if (Math.abs(dx) > 10 || Math.abs(dy) > 10) isDragging = true
                     params.x = initialX + dx
                     params.y = initialY + dy
-                    windowManager?.updateViewLayout(overlayView, params)
+                    try {
+                        windowManager?.updateViewLayout(overlayView, params)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                     true
                 }
                 MotionEvent.ACTION_UP -> !isDragging
@@ -131,7 +134,7 @@ class FloatingLyricsService : Service() {
         }
 
         try {
-            windowManager?.addView(overlayView, layoutParams)
+            windowManager?.addView(overlayView, overlayParams)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -163,36 +166,44 @@ class FloatingLyricsService : Service() {
         private const val NOTIFICATION_ID = 1001
 
         fun show(context: android.content.Context, lyrics: String) {
-            val intent = Intent(context, FloatingLyricsService::class.java).apply {
-                action = ACTION_SHOW
-                putExtra(EXTRA_LYRICS, lyrics)
+            runCatching {
+                val intent = Intent(context, FloatingLyricsService::class.java).apply {
+                    action = ACTION_SHOW
+                    putExtra(EXTRA_LYRICS, lyrics)
+                }
+                context.startService(intent)
             }
-            context.startService(intent)
         }
 
         fun update(context: android.content.Context, lyrics: String) {
-            val intent = Intent(context, FloatingLyricsService::class.java).apply {
-                action = ACTION_UPDATE
-                putExtra(EXTRA_LYRICS, lyrics)
+            runCatching {
+                val intent = Intent(context, FloatingLyricsService::class.java).apply {
+                    action = ACTION_UPDATE
+                    putExtra(EXTRA_LYRICS, lyrics)
+                }
+                context.startService(intent)
             }
-            context.startService(intent)
         }
 
         fun hide(context: android.content.Context) {
-            val intent = Intent(context, FloatingLyricsService::class.java).apply {
-                action = ACTION_HIDE
+            runCatching {
+                val intent = Intent(context, FloatingLyricsService::class.java).apply {
+                    action = ACTION_HIDE
+                }
+                context.startService(intent)
             }
-            context.startService(intent)
         }
 
         fun init(context: android.content.Context) {
-            val intent = Intent(context, FloatingLyricsService::class.java).apply {
-                action = ACTION_INIT
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
+            runCatching {
+                val intent = Intent(context, FloatingLyricsService::class.java).apply {
+                    action = ACTION_INIT
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
             }
         }
     }

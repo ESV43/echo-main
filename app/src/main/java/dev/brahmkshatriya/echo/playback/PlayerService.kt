@@ -145,7 +145,10 @@ class PlayerService : MediaLibraryService() {
             for (s in pcm) {
                 sum += s.toDouble() * s.toDouble()
             }
-            val rms = kotlin.math.sqrt(sum / pcm.size).toFloat() / Short.MAX_VALUE
+            val rms = if (pcm.isNotEmpty()) {
+                val calculated = kotlin.math.sqrt(sum / pcm.size).toFloat() / Short.MAX_VALUE
+                if (calculated.isNaN() || calculated.isInfinite()) 0f else calculated
+            } else 0f
             state.amplitude.value = rms
 
             val currentId = state.current.value?.mediaItem?.mediaId

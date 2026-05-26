@@ -44,7 +44,7 @@ object FragmentUtils {
     ) {
         viewModel.collapsePlayer()
         val transitionName = view?.transitionName
-        manager.commit {
+        manager.commit(allowStateLoss = true) {
             setReorderingAllowed(true)
             addToBackStack(null)
             val fragment = createFragment<T>(bundle?.apply {
@@ -81,7 +81,7 @@ object FragmentUtils {
         id: Int, tag: String, args: Bundle? = null
     ) {
         childFragmentManager.run {
-            if (findFragmentByTag(tag) == null) commit {
+            if (findFragmentByTag(tag) == null) commit(allowStateLoss = true) {
                 val fragment = createFragment<F>(args)
                 add(id, fragment, tag)
             }

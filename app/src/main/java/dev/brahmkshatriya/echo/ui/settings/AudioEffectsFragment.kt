@@ -38,7 +38,7 @@ class AudioEffectsFragment : Fragment() {
         binding.extensionIcon.isVisible = false
         binding.toolBar.title = getString(R.string.audio_fx)
         childFragmentManager.beginTransaction().replace(R.id.genericFragmentContainer, fragment)
-            .commit()
+            .commitAllowingStateLoss()
 
         binding.toolBar.inflateMenu(R.menu.refresh_menu)
         binding.toolBar.setOnMenuItemClickListener {

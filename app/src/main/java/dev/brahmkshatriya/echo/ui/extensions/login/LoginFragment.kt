@@ -104,7 +104,7 @@ class LoginFragment : Fragment() {
         if (!isAdded) return
         childFragmentManager.run {
             loginViewModel.loading.value = false
-            commit {
+            commit(allowStateLoss = true) {
                 setReorderingAllowed(true)
                 if (fragments.isNotEmpty()) addToBackStack(null)
                 replace<T>(R.id.genericFragmentContainer, null, args)

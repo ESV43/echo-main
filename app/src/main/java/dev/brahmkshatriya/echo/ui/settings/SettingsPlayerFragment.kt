@@ -545,7 +545,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
         }
 
         override fun onPreferenceTreeClick(preference: Preference): Boolean {
-            val view = listView.findViewById<View>(preference.key.hashCode())
+            val view = preference.key?.hashCode()?.let { listView.findViewById<View>(it) }
             return when (preference.key) {
                 AUDIO_FX -> {
                     requireActivity().openFragment<AudioEffectsFragment>(view)
