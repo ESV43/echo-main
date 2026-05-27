@@ -5,9 +5,7 @@ import android.content.Context
 import android.widget.EditText
 import androidx.core.content.edit
 import androidx.preference.Preference
-import androidx.preference.PreferenceViewHolder
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.slider.Slider
 import dev.brahmkshatriya.echo.R
 import kotlin.math.max
 import kotlin.math.min
@@ -21,7 +19,7 @@ class MaterialSliderPreference(
     private val allowOverride: Boolean = false
 ) : Preference(context) {
     init {
-        layoutResource = R.layout.preference_slider
+        layoutResource = R.layout.preference
     }
 
     private var customSummary: CharSequence? = null
@@ -33,9 +31,7 @@ class MaterialSliderPreference(
         updateSummary()
     }
 
-    override fun onBindViewHolder(holder: PreferenceViewHolder) {
-        super.onBindViewHolder(holder)
-        val slider = holder.itemView.findViewById<Slider>(R.id.preferences_slider)
+    override fun onClick() {
         val current = getPersistedIntSafely(defaultValue ?: from)
         val min = if (allowOverride) min(from, current) else from
         var max = if (allowOverride) max(to, current) else to
@@ -51,28 +47,11 @@ class MaterialSliderPreference(
                 1f
             }
         } else 0f
-        configureRange(slider, min, max)
-        slider.stepSize = stepSize
-        slider.value = alignToStep(current, min, max, stepSize).toFloat()
-
-        slider.addOnChangeListener { _, value, byUser ->
-            persistInt(value.toInt())
-            slider.post {
-                runCatching {
-                    updateSummary()
-                    if (allowOverride && !dialogOpened && byUser && value == slider.valueTo)
-                        showOverrideDialog(slider, value)
-                }
-            }
-        }
-
-        if (allowOverride) holder.itemView.setOnClickListener {
-            showOverrideDialog(slider, slider.value)
-        }
+        showValueDialog(alignToStep(current, min, max, stepSize), min, max, stepSize)
     }
 
     private var dialogOpened = false
-    private fun showOverrideDialog(slider: Slider, value: Float) {
+    private fun showValueDialog(value: Int, min: Int, max: Int, step: Float) {
         dialogOpened = true
         val dialog = MaterialAlertDialogBuilder(context)
             .setView(R.layout.item_edit_text)
@@ -84,17 +63,17 @@ class MaterialSliderPreference(
         dialog.setOnShowListener {
             val editText = dialog.findViewById<EditText>(R.id.edit_text)
             editText?.inputType = android.text.InputType.TYPE_CLASS_NUMBER
-            editText?.setText(value.toInt().toString())
+            editText?.setText(value.toString())
             editText?.hint = customSummary
 
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val newMaxValue = editText?.text?.toString()?.toIntOrNull()
-                if (newMaxValue != null && (allowOverride || newMaxValue in from..to)) {
-                    slider.valueTo = newMaxValue.toFloat()
-                    slider.value = newMaxValue.toFloat()
+                val newValue = editText?.text?.toString()?.toIntOrNull()
+                if (newValue != null && newValue in min..max) {
+                    persistInt(alignToStep(newValue, min, max, step))
+                    updateSummary()
                     dialog.dismiss()
                 } else {
-                    editText?.error = context.getString(R.string.error_x, if (!allowOverride) "$from - $to" else "")
+                    editText?.error = context.getString(R.string.error_x, "$min - $max")
 
                 }
             }
@@ -127,19 +106,5 @@ class MaterialSliderPreference(
         if (step <= 0f) return coerced
         val offset = ((coerced - min) / step).roundToInt()
         return (min + offset * step.toInt()).coerceIn(min, max)
-    }
-
-    private fun configureRange(slider: Slider, min: Int, max: Int) {
-        val valueFrom = min.toFloat()
-        val valueTo = max.toFloat()
-        val current = runCatching { slider.value }.getOrDefault(slider.valueFrom)
-        val tempFrom = minOf(slider.valueFrom, valueFrom, current)
-        val tempTo = maxOf(slider.valueTo, valueTo, current)
-        slider.stepSize = 0f
-        slider.valueFrom = tempFrom
-        slider.valueTo = tempTo
-        slider.value = valueFrom
-        slider.valueFrom = valueFrom
-        slider.valueTo = valueTo
     }
 }
