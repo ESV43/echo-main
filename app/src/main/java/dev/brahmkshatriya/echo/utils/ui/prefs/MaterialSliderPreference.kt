@@ -42,9 +42,6 @@ class MaterialSliderPreference(
         if (max <= min) {
             max = min + 1
         }
-        slider.valueFrom = min.toFloat()
-        slider.valueTo = max.toFloat()
-
         val step = if (allowOverride) 0f else steps?.toFloat() ?: 1f
         val stepSize = if (step > 0f) {
             val range = max - min
@@ -54,6 +51,7 @@ class MaterialSliderPreference(
                 1f
             }
         } else 0f
+        configureRange(slider, min, max)
         slider.stepSize = stepSize
         slider.value = alignToStep(current, min, max, stepSize).toFloat()
 
@@ -129,5 +127,19 @@ class MaterialSliderPreference(
         if (step <= 0f) return coerced
         val offset = ((coerced - min) / step).roundToInt()
         return (min + offset * step.toInt()).coerceIn(min, max)
+    }
+
+    private fun configureRange(slider: Slider, min: Int, max: Int) {
+        val valueFrom = min.toFloat()
+        val valueTo = max.toFloat()
+        val current = runCatching { slider.value }.getOrDefault(slider.valueFrom)
+        val tempFrom = minOf(slider.valueFrom, valueFrom, current)
+        val tempTo = maxOf(slider.valueTo, valueTo, current)
+        slider.stepSize = 0f
+        slider.valueFrom = tempFrom
+        slider.valueTo = tempTo
+        slider.value = valueFrom
+        slider.valueFrom = valueFrom
+        slider.valueTo = valueTo
     }
 }
