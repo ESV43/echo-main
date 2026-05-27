@@ -54,7 +54,7 @@ abstract class BaseSettingsFragment : Fragment() {
         }
 
         childFragmentManager.beginTransaction().replace(R.id.genericFragmentContainer, creator())
-            .commitNowAllowingStateLoss()
+            .commitAllowingStateLoss()
     }
 
     companion object {
