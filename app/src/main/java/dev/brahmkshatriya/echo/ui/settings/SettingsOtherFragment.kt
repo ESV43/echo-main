@@ -8,7 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.SwitchPreferenceCompat
+import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSwitchPreference
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceImageHolder
@@ -54,7 +54,7 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                 layoutResource = R.layout.preference_category
                 screen.addPreference(this)
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.SOURCE_FUSION
                     title = getString(R.string.v4_source_fusion)
                     summary = getString(R.string.v4_source_fusion_summary)
@@ -64,7 +64,7 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.AUDIO_FINGERPRINT
                     title = getString(R.string.v4_audio_fingerprint)
                     summary = getString(R.string.v4_audio_fingerprint_summary)
@@ -87,7 +87,7 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.LIBRARY_HEALTH
                     title = getString(R.string.v4_library_health)
                     summary = getString(R.string.v4_library_health_summary)
@@ -105,7 +105,7 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                 layoutResource = R.layout.preference_category
                 screen.addPreference(this)
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.OFFLINE_DISCOVERY
                     title = getString(R.string.v4_offline_discovery)
                     summary = getString(R.string.v4_offline_discovery_summary)
@@ -141,7 +141,7 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                 }
             }
 
-            SwitchPreferenceCompat(context).apply {
+            MaterialSwitchPreference(context).apply {
                 title = getString(R.string.check_for_updates)
                 summary = getString(R.string.check_for_updates_summary)
                 key = "check_for_updates"

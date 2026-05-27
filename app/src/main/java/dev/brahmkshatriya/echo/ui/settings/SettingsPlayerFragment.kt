@@ -7,7 +7,7 @@ import android.view.View
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.SwitchPreferenceCompat
+import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSwitchPreference
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceImageHolder
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CACHE_SIZE
@@ -100,7 +100,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = KEY_AI_AUTO_EQ
                     title = getString(R.string.ai_auto_eq)
                     summary = getString(R.string.ai_auto_eq_summary)
@@ -110,7 +110,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = AUTO_GAIN
                     title = getString(R.string.v4_auto_gain)
                     summary = getString(R.string.v4_auto_gain_summary)
@@ -120,7 +120,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = REPLAY_GAIN
                     title = getString(R.string.v4_replay_gain)
                     summary = getString(R.string.v4_replay_gain_summary)
@@ -142,7 +142,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.ADAPTIVE_AUDIO
                     title = getString(R.string.v4_adaptive_audio_profiles)
                     summary = getString(R.string.v4_adaptive_audio_profiles_summary)
@@ -160,7 +160,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 layoutResource = R.layout.preference_category
                 screen.addPreference(this)
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = KEEP_QUEUE
                     title = getString(R.string.keep_queue)
                     summary = getString(R.string.keep_queue_summary)
@@ -170,7 +170,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = CLOSE_PLAYER
                     title = getString(R.string.stop_player)
                     summary = getString(R.string.stop_player_summary)
@@ -180,7 +180,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = SKIP_SILENCE
                     title = getString(R.string.skip_silence)
                     summary = getString(R.string.skip_silence_summary)
@@ -190,7 +190,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = FADE_CONTROLS
                     title = getString(R.string.fade_controls)
                     summary = getString(R.string.fade_controls_summary)
@@ -211,7 +211,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                         addPreference(this)
                     }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = CROSSFADE
                     title = getString(R.string.crossfade)
                     summary = getString(R.string.crossfade_summary)
@@ -231,7 +231,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = BPM_CROSSFADE
                     title = getString(R.string.v4_bpm_crossfade)
                     summary = getString(R.string.v4_bpm_crossfade_summary)
@@ -242,7 +242,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = MORE_BRAIN_CAPACITY
                     title = getString(R.string.more_brain_capacity)
                     summary = getString(R.string.more_brain_capacity_summary)
@@ -252,7 +252,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = AUTO_START_RADIO
                     title = getString(R.string.auto_start_radio)
                     summary = getString(R.string.auto_start_radio_summary)
@@ -262,7 +262,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = AUTO_SKIP
                     title = getString(R.string.v4_auto_skip)
                     summary = getString(R.string.v4_auto_skip_summary)
@@ -281,7 +281,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = PREDICTIVE_CACHE
                     title = getString(R.string.v4_predictive_cache)
                     summary = getString(R.string.v4_predictive_cache_summary)
@@ -291,7 +291,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.MOOD_COLORS
                     title = getString(R.string.v4_mood_colors)
                     summary = getString(R.string.v4_mood_colors_summary)
@@ -301,7 +301,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.WAVEFORM_SEEKBAR
                     title = getString(R.string.v4_waveform_seekbar)
                     summary = getString(R.string.v4_waveform_seekbar_summary)
@@ -311,7 +311,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.ALBUM_ART_SWIPE
                     title = getString(R.string.v4_album_art_swipe)
                     summary = getString(R.string.v4_album_art_swipe_summary)
@@ -321,7 +321,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.LYRICS_FLOATING_BUBBLE
                     title = getString(R.string.v4_floating_lyrics_bubble)
                     summary = getString(R.string.v4_floating_lyrics_bubble_summary)
@@ -339,7 +339,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 layoutResource = R.layout.preference_category
                 screen.addPreference(this)
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.LOCAL_INTELLIGENCE
                     title = getString(R.string.v4_local_music_intelligence)
                     summary = getString(R.string.v4_local_music_intelligence_summary)
@@ -362,7 +362,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.CONTEXTUAL_HOME
                     title = getString(R.string.v4_contextual_home)
                     summary = getString(R.string.v4_contextual_home_summary)
@@ -402,7 +402,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.COMMAND_PALETTE
                     title = getString(R.string.v4_command_palette)
                     summary = getString(R.string.v4_command_palette_summary)
@@ -412,7 +412,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.MULTI_SOURCE_SEARCH
                     title = getString(R.string.v4_multi_source_search)
                     summary = getString(R.string.v4_multi_source_search_summary)
@@ -442,7 +442,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = FLUID_LYRICS
                     title = getString(R.string.fluid_lyrics)
                     summary = getString(R.string.fluid_lyrics_summary)
@@ -452,7 +452,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.LYRICS_FULLSCREEN
                     title = getString(R.string.v4_lyrics_fullscreen)
                     summary = getString(R.string.v4_lyrics_fullscreen_summary)
@@ -462,7 +462,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.KARAOKE_FULLSCREEN
                     title = getString(R.string.v4_karaoke_fullscreen)
                     summary = getString(R.string.v4_karaoke_fullscreen_summary)
@@ -472,7 +472,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.LYRICS_VISUALIZER
                     title = getString(R.string.v4_lyrics_visualizer)
                     summary = getString(R.string.v4_lyrics_visualizer_summary)
@@ -482,7 +482,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.LYRICS_TRANSLATION
                     title = getString(R.string.v4_lyrics_translation)
                     summary = getString(R.string.v4_lyrics_translation_summary)
@@ -522,7 +522,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.LYRICS_STUDIO
                     title = getString(R.string.v4_lyrics_studio)
                     summary = getString(R.string.v4_lyrics_studio_summary)
@@ -532,7 +532,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.EXTENSION_INSPECTOR
                     title = getString(R.string.v4_extension_inspector)
                     summary = getString(R.string.v4_extension_inspector_summary)

@@ -10,7 +10,7 @@ import android.view.View
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.SwitchPreferenceCompat
+import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSwitchPreference
 import dev.brahmkshatriya.echo.MainActivity
 import dev.brahmkshatriya.echo.MainActivity.Companion.AMOLED_KEY
 import dev.brahmkshatriya.echo.MainActivity.Companion.BACK_ANIM
@@ -72,7 +72,7 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = CUSTOM_THEME_KEY
                     title = getString(R.string.custom_theme_color)
                     summary = getString(R.string.custom_theme_color_summary)
@@ -93,7 +93,7 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = AMOLED_KEY
                     title = getString(R.string.amoled)
                     summary = getString(R.string.amoled_summary)
@@ -103,7 +103,7 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = NAVBAR_GRADIENT
                     title = getString(R.string.navbar_gradient)
                     summary = getString(R.string.navbar_gradient_summary)
@@ -113,7 +113,7 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = BACKGROUND_GRADIENT
                     title = getString(R.string.background_gradient)
                     summary = getString(R.string.background_gradient_summary)
@@ -123,7 +123,7 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = DYNAMIC_PLAYER
                     title = getString(R.string.dynamic_player)
                     summary = getString(R.string.dynamic_player_summary)
@@ -141,7 +141,7 @@ class SettingsLookFragment : BaseSettingsFragment() {
                 layoutResource = R.layout.preference_category
                 screen.addPreference(this)
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = BIG_COVER
                     title = getString(R.string.big_cover)
                     summary = getString(R.string.big_cover_summary)
@@ -151,7 +151,7 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = SCROLL_BAR
                     title = getString(R.string.scroll_bar)
                     summary = getString(R.string.scroll_bar_summary)
@@ -161,7 +161,7 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = SHOW_BACKGROUND
                     title = getString(R.string.show_background)
                     summary = getString(R.string.show_background_summary)
@@ -179,7 +179,7 @@ class SettingsLookFragment : BaseSettingsFragment() {
                 layoutResource = R.layout.preference_category
                 screen.addPreference(this)
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = BACK_ANIM
                     title = getString(R.string.back_animations)
                     summary = getString(R.string.back_animations_summary)
@@ -189,7 +189,7 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = ANIMATIONS_KEY
                     title = getString(R.string.animations)
                     summary = getString(R.string.animations_summary)
@@ -199,7 +199,7 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                SwitchPreferenceCompat(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = SCROLL_ANIMATIONS_KEY
                     title = getString(R.string.scroll_animations)
                     summary = getString(R.string.scroll_animations_summary)
@@ -220,7 +220,7 @@ class SettingsLookFragment : BaseSettingsFragment() {
                 }
 
                 BACK_ANIM -> {
-                    val pref = preferenceScreen.findPreference<SwitchPreferenceCompat>(key)
+                    val pref = preferenceScreen.findPreference<MaterialSwitchPreference>(key)
                     val enabled = pref?.isChecked == true
                     val backActivity = MainActivity.Back::class.java.name
                     val mainActivity = MainActivity::class.java.name

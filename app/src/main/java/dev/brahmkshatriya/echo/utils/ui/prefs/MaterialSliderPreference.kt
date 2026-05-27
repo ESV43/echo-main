@@ -3,6 +3,7 @@ package dev.brahmkshatriya.echo.utils.ui.prefs
 import android.app.AlertDialog
 import android.content.Context
 import android.widget.EditText
+import androidx.core.content.edit
 import androidx.preference.Preference
 import androidx.preference.PreferenceViewHolder
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -10,6 +11,7 @@ import com.google.android.material.slider.Slider
 import dev.brahmkshatriya.echo.R
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 class MaterialSliderPreference(
     context: Context,
@@ -34,7 +36,7 @@ class MaterialSliderPreference(
     override fun onBindViewHolder(holder: PreferenceViewHolder) {
         super.onBindViewHolder(holder)
         val slider = holder.itemView.findViewById<Slider>(R.id.preferences_slider)
-        val current = getPersistedInt(defaultValue ?: from)
+        val current = getPersistedIntSafely(defaultValue ?: from)
         val min = if (allowOverride) min(from, current) else from
         var max = if (allowOverride) max(to, current) else to
         if (max <= min) {
@@ -42,17 +44,18 @@ class MaterialSliderPreference(
         }
         slider.valueFrom = min.toFloat()
         slider.valueTo = max.toFloat()
-        slider.value = min(max(current, min), max).toFloat()
 
-        val step = steps?.toFloat() ?: 1f
-        if (step > 0f) {
+        val step = if (allowOverride) 0f else steps?.toFloat() ?: 1f
+        val stepSize = if (step > 0f) {
             val range = max - min
             if (range % step == 0f) {
-                slider.stepSize = step
+                step
             } else {
-                slider.stepSize = 1f
+                1f
             }
-        }
+        } else 0f
+        slider.stepSize = stepSize
+        slider.value = alignToStep(current, min, max, stepSize).toFloat()
 
         slider.addOnChangeListener { _, value, byUser ->
             persistInt(value.toInt())
@@ -108,8 +111,23 @@ class MaterialSliderPreference(
 
     private fun updateSummary() {
         val value = context.getString(R.string.value)
-        val entry = getPersistedInt(defaultValue ?: 0)
+        val entry = getPersistedIntSafely(defaultValue ?: 0)
         val sum = customSummary?.let { "\n\n$it" } ?: ""
         summary = "$value : $entry$sum".trimIndent()
+    }
+
+    private fun getPersistedIntSafely(default: Int): Int {
+        return runCatching { getPersistedInt(default) }
+            .getOrElse {
+                sharedPreferences?.edit { remove(key) }
+                default
+            }
+    }
+
+    private fun alignToStep(value: Int, min: Int, max: Int, step: Float): Int {
+        val coerced = value.coerceIn(min, max)
+        if (step <= 0f) return coerced
+        val offset = ((coerced - min) / step).roundToInt()
+        return (min + offset * step.toInt()).coerceIn(min, max)
     }
 }

@@ -12,7 +12,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceGroup
-import androidx.preference.SwitchPreferenceCompat
+import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSwitchPreference
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.Extension
@@ -357,7 +357,7 @@ class ExtensionInfoFragment : BaseSettingsFragment() {
                 }
 
                 is SettingSwitch -> {
-                    SwitchPreferenceCompat(context).also {
+                    MaterialSwitchPreference(context).also {
                         it.title = this.title
                         it.key = this.key
                         it.summary = this.summary

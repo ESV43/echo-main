@@ -56,7 +56,7 @@ class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) 
         binding.closeButton.setOnClickListener { dismiss() }
         binding.logoImage.setOnClickListener {
             binding.logoImage.setImageResource(R.drawable.art_splash_anim)
-            (binding.logoImage.drawable as Animatable).start()
+            (binding.logoImage.drawable as? Animatable)?.start()
             when (Random.nextInt(5)) {
                 0 -> Toast.makeText(it.context, "Ooo what do we have here?", Toast.LENGTH_SHORT)
                     .show()
@@ -64,7 +64,7 @@ class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) 
                 2 -> Toast.makeText(it.context, "Nothing to see here.", Toast.LENGTH_SHORT).show()
             }
         }
-        (binding.logoImage.drawable as Animatable).start()
+        (binding.logoImage.drawable as? Animatable)?.start()
 
         binding.player.setOnClickListener {
             dismiss()

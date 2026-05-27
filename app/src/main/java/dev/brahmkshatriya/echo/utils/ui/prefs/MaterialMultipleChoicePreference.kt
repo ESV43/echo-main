@@ -1,6 +1,7 @@
 package dev.brahmkshatriya.echo.utils.ui.prefs
 
 import android.content.Context
+import androidx.core.content.edit
 import androidx.preference.MultiSelectListPreference
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.brahmkshatriya.echo.R
@@ -10,7 +11,11 @@ class MaterialMultipleChoicePreference(context: Context) : MultiSelectListPrefer
     private var customSummary: CharSequence? = null
 
     override fun onSetInitialValue(defaultValue: Any?) {
-        super.onSetInitialValue(defaultValue)
+        runCatching { super.onSetInitialValue(defaultValue) }
+            .onFailure {
+                sharedPreferences?.edit { remove(key) }
+                values = (defaultValue as? Set<*>)?.filterIsInstance<String>()?.toSet() ?: emptySet()
+            }
         customSummary = summary
         updateSummary()
     }
