@@ -200,16 +200,16 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                MaterialSliderPreference(context, 100, 1500, steps = 100, allowOverride = true)
+                val fadeDurationPref = MaterialSliderPreference(context, 100, 1500, steps = 100, allowOverride = true)
                     .apply {
                         key = FADE_DURATION
                         title = getString(R.string.fade_duration)
                         summary = getString(R.string.fade_duration_summary)
-                        dependency = FADE_CONTROLS
                         isIconSpaceReserved = false
                         setDefaultValue(300)
-                        addPreference(this)
                     }
+                fadeDurationPref.dependency = FADE_CONTROLS
+                addPreference(fadeDurationPref)
 
                 MaterialSwitchPreference(context).apply {
                     key = CROSSFADE
@@ -221,26 +221,26 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                 MaterialSliderPreference(context, 1, 12, allowOverride = true).apply {
+                val crossfadeDurationPref = MaterialSliderPreference(context, 1, 12, allowOverride = true).apply {
                     key = CROSSFADE_DURATION
                     title = getString(R.string.crossfade_duration)
                     summary = getString(R.string.crossfade_duration_summary)
-                    dependency = CROSSFADE
                     isIconSpaceReserved = false
                     setDefaultValue(5)
-                    addPreference(this)
                 }
+                crossfadeDurationPref.dependency = CROSSFADE
+                addPreference(crossfadeDurationPref)
 
-                MaterialSwitchPreference(context).apply {
+                val bpmCrossfadePref = MaterialSwitchPreference(context).apply {
                     key = BPM_CROSSFADE
                     title = getString(R.string.v4_bpm_crossfade)
                     summary = getString(R.string.v4_bpm_crossfade_summary)
-                    dependency = CROSSFADE
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(false)
-                    addPreference(this)
                 }
+                bpmCrossfadePref.dependency = CROSSFADE
+                addPreference(bpmCrossfadePref)
 
                 MaterialSwitchPreference(context).apply {
                     key = MORE_BRAIN_CAPACITY
@@ -349,29 +349,29 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                MaterialListPreference(context).apply {
+                val soundProfilePref = MaterialListPreference(context).apply {
                     key = Keys.SOUND_PROFILE
                     title = getString(R.string.v4_sound_profile)
                     summary = getString(R.string.v4_sound_profile_summary)
                     entries = context.resources.getStringArray(R.array.v4_sound_profiles)
                     entryValues = context.resources.getStringArray(R.array.v4_sound_profile_values)
-                    dependency = Keys.LOCAL_INTELLIGENCE
                     layoutResource = R.layout.preference
                     isIconSpaceReserved = false
                     setDefaultValue("balanced")
-                    addPreference(this)
                 }
+                soundProfilePref.dependency = Keys.LOCAL_INTELLIGENCE
+                addPreference(soundProfilePref)
 
-                MaterialSwitchPreference(context).apply {
+                val contextualHomePref = MaterialSwitchPreference(context).apply {
                     key = Keys.CONTEXTUAL_HOME
                     title = getString(R.string.v4_contextual_home)
                     summary = getString(R.string.v4_contextual_home_summary)
-                    dependency = Keys.LOCAL_INTELLIGENCE
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(true)
-                    addPreference(this)
                 }
+                contextualHomePref.dependency = Keys.LOCAL_INTELLIGENCE
+                addPreference(contextualHomePref)
             }
 
             PreferenceCategory(context).apply {
