@@ -64,16 +64,15 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                val audioFingerprintPref = MaterialSwitchPreference(context).apply {
+                MaterialSwitchPreference(context).apply {
                     key = Keys.AUDIO_FINGERPRINT
                     title = getString(R.string.v4_audio_fingerprint)
                     summary = getString(R.string.v4_audio_fingerprint_summary)
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(false)
+                    addPreference(this)
                 }
-                audioFingerprintPref.dependency = Keys.SOURCE_FUSION
-                addPreference(audioFingerprintPref)
 
                 MaterialMultipleChoicePreference(context).apply {
                     key = Keys.PLAYLIST_ALCHEMIST
@@ -199,6 +198,8 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                     true
                 }
             }
+
+            screen.findPreference<Preference>(Keys.AUDIO_FINGERPRINT)?.dependency = Keys.SOURCE_FUSION
         }
 
         private fun showStatusDialog() {
