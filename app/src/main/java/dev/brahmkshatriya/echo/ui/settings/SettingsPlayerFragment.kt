@@ -544,8 +544,18 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
             }
         }
 
+        private fun findViewWithTransitionName(name: String?): View? {
+            val lv = listView ?: return null
+            name ?: return null
+            for (i in 0 until lv.childCount) {
+                val child = lv.getChildAt(i)
+                if (child.transitionName == name) return child
+            }
+            return null
+        }
+
         override fun onPreferenceTreeClick(preference: Preference): Boolean {
-            val view = preference.key?.hashCode()?.and(Int.MAX_VALUE)?.let { listView?.findViewById<View>(it) }
+            val view = findViewWithTransitionName(preference.key)
             return when (preference.key) {
                 AUDIO_FX -> {
                     requireActivity().openFragment<AudioEffectsFragment>(view)

@@ -119,6 +119,7 @@ class PlayerFragment : Fragment() {
         PlayerTrackAdapter(uiViewModel, viewModel.playerState.current, adapterListener)
     }
     private var speedListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
+    private var settingsListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
@@ -165,15 +166,17 @@ class PlayerFragment : Fragment() {
         if (viewModel.settings.getBoolean(Keys.LYRICS_FLOATING_BUBBLE, false)) {
             try { FloatingLyricsService.init(requireContext()) } catch (_: Exception) {}
         }
-        viewModel.settings.registerOnSharedPreferenceChangeListener { prefs, key ->
+        settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
             if (key == Keys.LYRICS_FLOATING_BUBBLE) {
+                val ctx = context ?: return@OnSharedPreferenceChangeListener
                 if (prefs.getBoolean(key, false)) {
-                    try { FloatingLyricsService.init(requireContext()) } catch (_: Exception) {}
+                    try { FloatingLyricsService.init(ctx) } catch (_: Exception) {}
                 } else {
-                    try { FloatingLyricsService.hide(requireContext()) } catch (_: Exception) {}
+                    try { FloatingLyricsService.hide(ctx) } catch (_: Exception) {}
                 }
             }
         }
+        viewModel.settings.registerOnSharedPreferenceChangeListener(settingsListener)
     }
 
     private fun currentPlayerMode() =
@@ -293,6 +296,8 @@ class PlayerFragment : Fragment() {
         val fxPrefs = context?.globalFx()
         speedListener?.let { fxPrefs?.unregisterOnSharedPreferenceChangeListener(it) }
         speedListener = null
+        settingsListener?.let { viewModel.settings.unregisterOnSharedPreferenceChangeListener(it) }
+        settingsListener = null
         backgroundPlayer?.release()
         backgroundPlayer = null
         oldBg = null
@@ -612,14 +617,14 @@ class PlayerFragment : Fragment() {
             val binding = binding ?: return
             binding.root.hapticFeedback()
             viewModel.seekToAdd(-10000)
-            binding.playerSeekStartOverlay.let { showSeekOverlay(it!!) }
+            binding.playerSeekStartOverlay?.let { showSeekOverlay(it) }
         }
 
         override fun onEndDoubleClick() {
             val binding = binding ?: return
             binding.root.hapticFeedback()
             viewModel.seekToAdd(10000)
-            binding.playerSeekEndOverlay.let { showSeekOverlay(it!!) }
+            binding.playerSeekEndOverlay?.let { showSeekOverlay(it) }
         }
 
         private fun showSeekOverlay(view: View) {
@@ -734,7 +739,7 @@ class PlayerFragment : Fragment() {
 
         viewLifecycleOwner.observe(viewModel.totalDuration) {
             val b = binding ?: return@observe
-            val duration = it ?: viewModel.playerState.current.value?.track?.duration ?: 0
+            val duration = (it ?: viewModel.playerState.current.value?.track?.duration ?: 0L).coerceAtLeast(0L)
             b.playerCollapsedContainer.run {
                 collapsedSeekbar.max = duration.toInt()
                 collapsedBuffer.max = duration.toInt()
@@ -753,7 +758,7 @@ class PlayerFragment : Fragment() {
         val repeatModes = listOf(REPEAT_MODE_OFF, REPEAT_MODE_ALL, REPEAT_MODE_ONE)
         val animatedVectorDrawables = requireContext().run {
             fun asAnimated(id: Int) =
-                AppCompatResources.getDrawable(this, id) as AnimatedVectorDrawable
+                AppCompatResources.getDrawable(this, id) as Drawable
             listOf(
                 asAnimated(R.drawable.ic_repeat_one_to_repeat_off_40dp),
                 asAnimated(R.drawable.ic_repeat_off_to_repeat_40dp),
@@ -777,7 +782,7 @@ class PlayerFragment : Fragment() {
             b.playerControls.trackRepeat.run {
                 val index = repeatModes.indexOf(repeatMode)
                 icon = animatedVectorDrawables[index]
-                (icon as Animatable).start()
+                (icon as? Animatable)?.start()
             }
         }
 

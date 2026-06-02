@@ -46,6 +46,15 @@ class DownloadFragment : Fragment(R.layout.fragment_download) {
             binding.toolbarOutline.alpha = offset
         }
 
+        Filter.entries.forEach {
+            val title = when (it) {
+                Filter.Active -> getString(R.string.active)
+                Filter.Completed -> getString(R.string.completed)
+                Filter.Failed -> getString(R.string.failed)
+            }
+            binding.downloadTabs.addTab(binding.downloadTabs.newTab().setText(title))
+        }
+
         binding.downloadTabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
                 filter = Filter.entries[tab.position]
