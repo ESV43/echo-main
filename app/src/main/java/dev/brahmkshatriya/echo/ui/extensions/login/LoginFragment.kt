@@ -244,8 +244,8 @@ class LoginFragment : Fragment() {
                     val input = ItemInputBinding.inflate(
                         layoutInflater, customInput, false
                     )
-                    input.root.id = field.key.hashCode()
-                    input.editText.id = "${field.key}_input".hashCode()
+                    input.root.id = field.key.hashCode().and(Int.MAX_VALUE)
+                    input.editText.id = "${field.key}_input".hashCode().and(Int.MAX_VALUE)
                     input.root.hint = field.label
                     input.root.setStartIconDrawable(getIcon(field.type))
                     @Suppress("DEPRECATION")

@@ -61,6 +61,7 @@ class EqAudioProcessor : BaseAudioProcessor() {
         beatEnergySum = 0.0f
         currentGain = 1.0f
         targetGain = 1.0f
+        sampleCount = 0
     }
 
     private fun updateFilters() {

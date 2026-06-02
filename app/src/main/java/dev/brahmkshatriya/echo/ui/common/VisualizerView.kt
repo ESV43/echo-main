@@ -18,6 +18,7 @@ class VisualizerView @JvmOverloads constructor(
     private var shader: RuntimeShader? = null
     private var time = 0f
     private var amplitude = 0.5f
+    var playbackSpeed: Float = 1.0f
 
     private val AGSL_SHADER = """
         uniform float2 iResolution;
@@ -48,7 +49,7 @@ class VisualizerView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        time += 0.05f
+        time += 0.05f * playbackSpeed
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && shader != null) {
             shader?.apply {

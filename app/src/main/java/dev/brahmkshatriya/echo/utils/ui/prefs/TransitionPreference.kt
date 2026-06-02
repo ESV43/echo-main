@@ -1,6 +1,7 @@
 package dev.brahmkshatriya.echo.utils.ui.prefs
 
 import android.content.Context
+import android.view.View
 import androidx.preference.Preference
 import androidx.preference.PreferenceViewHolder
 
@@ -9,7 +10,7 @@ class TransitionPreference(
 ) : Preference(context) {
     override fun onBindViewHolder(holder: PreferenceViewHolder) {
         super.onBindViewHolder(holder)
-        holder.itemView.id = key.hashCode()
+        holder.itemView.id = key?.hashCode()?.and(Int.MAX_VALUE) ?: View.generateViewId()
         holder.itemView.transitionName = key
     }
 }

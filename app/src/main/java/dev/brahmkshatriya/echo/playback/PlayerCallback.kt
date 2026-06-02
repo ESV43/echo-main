@@ -150,11 +150,46 @@ class PlayerCallback(
 
     private var timerJob: Job? = null
     private var tickerJob: Job? = null
+    private var sensorManager: android.hardware.SensorManager? = null
+    private var shakeDetector: android.hardware.SensorEventListener? = null
+
+    private class ShakeDetector(private val onShake: () -> Unit) : android.hardware.SensorEventListener {
+        private var lastShakeTime = 0L
+
+        override fun onSensorChanged(event: android.hardware.SensorEvent) {
+            if (event.sensor.type != android.hardware.Sensor.TYPE_ACCELEROMETER) return
+            val x = event.values[0]
+            val y = event.values[1]
+            val z = event.values[2]
+
+            val gX = x / android.hardware.SensorManager.GRAVITY_EARTH
+            val gY = y / android.hardware.SensorManager.GRAVITY_EARTH
+            val gZ = z / android.hardware.SensorManager.GRAVITY_EARTH
+
+            val gForce = kotlin.math.sqrt(gX * gX + gY * gY + gZ * gZ)
+
+            if (gForce > 2.5f) {
+                val now = System.currentTimeMillis()
+                if (now - lastShakeTime > 1500) {
+                    lastShakeTime = now
+                    onShake()
+                }
+            }
+        }
+
+        override fun onAccuracyChanged(sensor: android.hardware.Sensor, accuracy: Int) {}
+    }
+
     private fun onSleepTimer(player: Player, ms: Long): ListenableFuture<SessionResult> {
         timerJob?.cancel()
         tickerJob?.cancel()
+        
         if (ms == 0L) {
+            sensorManager?.unregisterListener(shakeDetector)
             state.sleepTimerMillis.value = null
+            scope.launch(Dispatchers.Main) {
+                player.volume = 1f
+            }
             return Futures.immediateFuture(SessionResult(RESULT_SUCCESS))
         }
 
@@ -163,7 +198,41 @@ class PlayerCallback(
                 player.with { (duration - currentPosition).coerceAtLeast(0) }
             } else ms
 
+            player.with { volume = 1f }
+
             state.sleepTimerMillis.value = time
+            
+            if (sensorManager == null) {
+                sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? android.hardware.SensorManager
+            }
+            if (shakeDetector == null) {
+                shakeDetector = ShakeDetector {
+                    scope.launch(Dispatchers.Main) {
+                        val vibrator = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                            val vm = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? android.os.VibratorManager
+                            vm?.defaultVibrator
+                        } else {
+                            @Suppress("DEPRECATION")
+                            context.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+                        }
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                            vibrator?.vibrate(android.os.VibrationEffect.createOneShot(200, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                        } else {
+                            @Suppress("DEPRECATION")
+                            vibrator?.vibrate(200)
+                        }
+                        
+                        android.widget.Toast.makeText(context, context.getString(R.string.sleep_timer_extended), android.widget.Toast.LENGTH_SHORT).show()
+                        onSleepTimer(player, 10 * 60 * 1000L)
+                    }
+                }
+            }
+            sensorManager?.unregisterListener(shakeDetector)
+            val sensor = sensorManager?.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER)
+            if (sensor != null) {
+                sensorManager?.registerListener(shakeDetector, sensor, android.hardware.SensorManager.SENSOR_DELAY_UI)
+            }
+
             tickerJob = scope.launch {
                 while (state.sleepTimerMillis.value != null && state.sleepTimerMillis.value!! > 0) {
                     delay(1000)
@@ -174,8 +243,30 @@ class PlayerCallback(
             }
 
             timerJob = scope.launch {
-                delay(time)
-                player.with { pause() }
+                val fadeWindow = 15000L
+                if (time > fadeWindow) {
+                    delay(time - fadeWindow)
+                    val steps = 30
+                    val stepDelay = fadeWindow / steps
+                    for (i in 0..steps) {
+                        val vol = 1f - (i.toFloat() / steps)
+                        player.with { volume = vol }
+                        delay(stepDelay)
+                    }
+                } else {
+                    val steps = 10
+                    val stepDelay = time / steps
+                    for (i in 0..steps) {
+                        val vol = 1f - (i.toFloat() / steps)
+                        player.with { volume = vol }
+                        delay(stepDelay)
+                    }
+                }
+                player.with {
+                    pause()
+                    volume = 1f
+                }
+                sensorManager?.unregisterListener(shakeDetector)
             }
             SessionResult(RESULT_SUCCESS)
         }

@@ -79,6 +79,8 @@ import dev.brahmkshatriya.echo.ui.player.quality.FormatUtils.getDetails
 import dev.brahmkshatriya.echo.ui.player.quality.QualitySelectionBottomSheet
 import dev.brahmkshatriya.echo.ui.player.sleep.SleepTimerBottomSheet
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FLUID_LYRICS
+import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.globalFx
+import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.PLAYBACK_SPEED
 import dev.brahmkshatriya.echo.ui.player.more.lyrics.LyricsViewModel
 import dev.brahmkshatriya.echo.ui.settings.Keys
 import dev.brahmkshatriya.echo.utils.ContextUtils.emit
@@ -116,6 +118,7 @@ class PlayerFragment : Fragment() {
     private val adapter by lazy {
         PlayerTrackAdapter(uiViewModel, viewModel.playerState.current, adapterListener)
     }
+    private var speedListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
@@ -128,6 +131,18 @@ class PlayerFragment : Fragment() {
         val binding = binding!!
         binding.viewPager.supportBottomSheetBehavior()
         setupPlayerMoreBehavior(uiViewModel, binding.playerMoreContainer)
+
+        val fxPrefs = requireContext().globalFx()
+        val initialSpeed = fxPrefs.getFloat(PLAYBACK_SPEED, 1.0f)
+        binding.visualizer.playbackSpeed = initialSpeed
+
+        speedListener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
+            if (key == PLAYBACK_SPEED) {
+                val speed = prefs.getFloat(key, 1.0f)
+                binding.visualizer.playbackSpeed = speed
+            }
+        }
+        fxPrefs.registerOnSharedPreferenceChangeListener(speedListener)
         configureOutline(binding.root)
         configureCollapsing(binding)
         configureColors()
@@ -275,6 +290,9 @@ class PlayerFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        val fxPrefs = context?.globalFx()
+        speedListener?.let { fxPrefs?.unregisterOnSharedPreferenceChangeListener(it) }
+        speedListener = null
         backgroundPlayer?.release()
         backgroundPlayer = null
         oldBg = null
@@ -646,7 +664,11 @@ class PlayerFragment : Fragment() {
             val b = binding ?: return@observe
             if (!isAdded) return@observe
             uiViewModel.run {
-                if (it == null) return@run changePlayerState(STATE_HIDDEN)
+                if (it == null) {
+                    if (playerSheetState.value != STATE_HIDDEN)
+                        changePlayerState(STATE_HIDDEN)
+                    return@observe
+                }
                 if (!isFinalState(playerSheetState.value)) return@run
                 changePlayerState(
                     if (playerSheetState.value != STATE_EXPANDED) STATE_COLLAPSED
