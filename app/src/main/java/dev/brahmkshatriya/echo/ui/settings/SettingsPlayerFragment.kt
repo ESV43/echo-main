@@ -1,15 +1,16 @@
 package dev.brahmkshatriya.echo.ui.settings
 
-
 import android.content.Context
 import android.os.Bundle
 import android.view.View
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
-import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSwitchPreference
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceImageHolder
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.AUTO_GAIN
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.AUTO_SKIP
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.BPM_CROSSFADE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CACHE_SIZE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CLOSE_PLAYER
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CROSSFADE
@@ -19,25 +20,21 @@ import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FADE_DURATION
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.FLUID_LYRICS
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.KEY_AI_AUTO_EQ
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.MORE_BRAIN_CAPACITY
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.PREDICTIVE_CACHE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.PREFERRED_LYRICS_SOURCE
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.REPLAY_GAIN
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.SKIP_SILENCE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.STREAM_QUALITY
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.UNMETERED_STREAM_QUALITY
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.streamQualities
-import dev.brahmkshatriya.echo.playback.PlayerService.Companion.AUTO_GAIN
-import dev.brahmkshatriya.echo.playback.PlayerService.Companion.REPLAY_GAIN
-import dev.brahmkshatriya.echo.playback.PlayerService.Companion.BPM_CROSSFADE
-import dev.brahmkshatriya.echo.playback.PlayerService.Companion.AUTO_SKIP
-import dev.brahmkshatriya.echo.playback.PlayerService.Companion.PREDICTIVE_CACHE
 import dev.brahmkshatriya.echo.playback.listener.PlayerRadio.Companion.AUTO_START_RADIO
 import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
 import dev.brahmkshatriya.echo.ui.player.PlayerViewModel.Companion.KEEP_QUEUE
 import dev.brahmkshatriya.echo.ui.settings.AudioEffectsFragment.Companion.AUDIO_FX
 import dev.brahmkshatriya.echo.utils.ContextUtils.SETTINGS_NAME
-import dev.brahmkshatriya.echo.ui.settings.Keys
 import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialListPreference
-import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialMultipleChoicePreference
 import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSliderPreference
+import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSwitchPreference
 import dev.brahmkshatriya.echo.utils.ui.prefs.TransitionPreference
 
 class SettingsPlayerFragment : BaseSettingsFragment() {
@@ -59,6 +56,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
             val screen = preferenceManager.createPreferenceScreen(context)
             preferenceScreen = screen
 
+            // ── Playback ──────────────────────────────────────────────
             PreferenceCategory(context).apply {
                 title = getString(R.string.playback)
                 key = "playback"
@@ -130,18 +128,6 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                MaterialListPreference(context).apply {
-                    key = Keys.VISUAL_PLAYER
-                    title = getString(R.string.v4_visual_player_modes)
-                    summary = getString(R.string.v4_visual_player_modes_summary)
-                    entries = context.resources.getStringArray(R.array.v4_visual_player_modes)
-                    entryValues = context.resources.getStringArray(R.array.v4_visual_player_values)
-                    layoutResource = R.layout.preference
-                    isIconSpaceReserved = false
-                    setDefaultValue("immersive")
-                    addPreference(this)
-                }
-
                 MaterialSwitchPreference(context).apply {
                     key = Keys.ADAPTIVE_AUDIO
                     title = getString(R.string.v4_adaptive_audio_profiles)
@@ -153,6 +139,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 }
             }
 
+            // ── Behavior ──────────────────────────────────────────────
             PreferenceCategory(context).apply {
                 title = getString(R.string.behavior)
                 key = "behavior"
@@ -191,54 +178,6 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 }
 
                 MaterialSwitchPreference(context).apply {
-                    key = FADE_CONTROLS
-                    title = getString(R.string.fade_controls)
-                    summary = getString(R.string.fade_controls_summary)
-                    layoutResource = R.layout.preference_switch
-                    isIconSpaceReserved = false
-                    setDefaultValue(true)
-                    addPreference(this)
-                }
-
-                MaterialSliderPreference(context, 100, 1500, steps = 100, allowOverride = true).apply {
-                    key = FADE_DURATION
-                    title = getString(R.string.fade_duration)
-                    summary = getString(R.string.fade_duration_summary)
-                    isIconSpaceReserved = false
-                    setDefaultValue(300)
-                    addPreference(this)
-                }
-
-                MaterialSwitchPreference(context).apply {
-                    key = CROSSFADE
-                    title = getString(R.string.crossfade)
-                    summary = getString(R.string.crossfade_summary)
-                    layoutResource = R.layout.preference_switch
-                    isIconSpaceReserved = false
-                    setDefaultValue(false)
-                    addPreference(this)
-                }
-
-                MaterialSliderPreference(context, 1, 12, allowOverride = true).apply {
-                    key = CROSSFADE_DURATION
-                    title = getString(R.string.crossfade_duration)
-                    summary = getString(R.string.crossfade_duration_summary)
-                    isIconSpaceReserved = false
-                    setDefaultValue(5)
-                    addPreference(this)
-                }
-
-                MaterialSwitchPreference(context).apply {
-                    key = BPM_CROSSFADE
-                    title = getString(R.string.v4_bpm_crossfade)
-                    summary = getString(R.string.v4_bpm_crossfade_summary)
-                    layoutResource = R.layout.preference_switch
-                    isIconSpaceReserved = false
-                    setDefaultValue(false)
-                    addPreference(this)
-                }
-
-                MaterialSwitchPreference(context).apply {
                     key = MORE_BRAIN_CAPACITY
                     title = getString(R.string.more_brain_capacity)
                     summary = getString(R.string.more_brain_capacity_summary)
@@ -267,23 +206,92 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     setDefaultValue(false)
                     addPreference(this)
                 }
+            }
 
-                MaterialSliderPreference(context, 200, 1000, allowOverride = true).apply {
-                    key = CACHE_SIZE
-                    title = getString(R.string.cache_size)
-                    summary = getString(R.string.cache_size_summary)
+            // ── Crossfade & Transitions ───────────────────────────────
+            PreferenceCategory(context).apply {
+                title = getString(R.string.crossfade_and_transitions)
+                key = "crossfade_and_transitions"
+                isIconSpaceReserved = false
+                layoutResource = R.layout.preference_category
+                screen.addPreference(this)
+
+                MaterialSwitchPreference(context).apply {
+                    key = FADE_CONTROLS
+                    title = getString(R.string.fade_controls)
+                    summary = getString(R.string.fade_controls_summary)
+                    layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
-                    setDefaultValue(250)
+                    setDefaultValue(true)
+                    onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, newValue ->
+                        screen.findPreference<Preference>(FADE_DURATION)?.isEnabled = newValue as Boolean
+                        true
+                    }
+                    addPreference(this)
+                }
+
+                MaterialSliderPreference(context, 100, 1500, steps = 100, allowOverride = true).apply {
+                    key = FADE_DURATION
+                    title = getString(R.string.fade_duration)
+                    summary = getString(R.string.fade_duration_summary)
+                    isIconSpaceReserved = false
+                    setDefaultValue(300)
                     addPreference(this)
                 }
 
                 MaterialSwitchPreference(context).apply {
-                    key = PREDICTIVE_CACHE
-                    title = getString(R.string.v4_predictive_cache)
-                    summary = getString(R.string.v4_predictive_cache_summary)
+                    key = CROSSFADE
+                    title = getString(R.string.crossfade)
+                    summary = getString(R.string.crossfade_summary)
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(false)
+                    onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, newValue ->
+                        val enabled = newValue as Boolean
+                        screen.findPreference<Preference>(CROSSFADE_DURATION)?.isEnabled = enabled
+                        screen.findPreference<Preference>(BPM_CROSSFADE)?.isEnabled = enabled
+                        true
+                    }
+                    addPreference(this)
+                }
+
+                MaterialSliderPreference(context, 1, 12, allowOverride = true).apply {
+                    key = CROSSFADE_DURATION
+                    title = getString(R.string.crossfade_duration)
+                    summary = getString(R.string.crossfade_duration_summary)
+                    isIconSpaceReserved = false
+                    setDefaultValue(5)
+                    addPreference(this)
+                }
+
+                MaterialSwitchPreference(context).apply {
+                    key = BPM_CROSSFADE
+                    title = getString(R.string.v4_bpm_crossfade)
+                    summary = getString(R.string.v4_bpm_crossfade_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+            }
+
+            // ── Player Appearance ─────────────────────────────────────
+            PreferenceCategory(context).apply {
+                title = getString(R.string.player_appearance)
+                key = "player_appearance"
+                isIconSpaceReserved = false
+                layoutResource = R.layout.preference_category
+                screen.addPreference(this)
+
+                MaterialListPreference(context).apply {
+                    key = Keys.VISUAL_PLAYER
+                    title = getString(R.string.v4_visual_player_modes)
+                    summary = getString(R.string.v4_visual_player_modes_summary)
+                    entries = context.resources.getStringArray(R.array.v4_visual_player_modes)
+                    entryValues = context.resources.getStringArray(R.array.v4_visual_player_values)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    setDefaultValue("immersive")
                     addPreference(this)
                 }
 
@@ -326,8 +334,28 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     setDefaultValue(false)
                     addPreference(this)
                 }
+
+                MaterialSliderPreference(context, 200, 1000, allowOverride = true).apply {
+                    key = CACHE_SIZE
+                    title = getString(R.string.cache_size)
+                    summary = getString(R.string.cache_size_summary)
+                    isIconSpaceReserved = false
+                    setDefaultValue(250)
+                    addPreference(this)
+                }
+
+                MaterialSwitchPreference(context).apply {
+                    key = PREDICTIVE_CACHE
+                    title = getString(R.string.v4_predictive_cache)
+                    summary = getString(R.string.v4_predictive_cache_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
             }
 
+            // ── Local Intelligence ────────────────────────────────────
             PreferenceCategory(context).apply {
                 title = getString(R.string.v4_local_intelligence)
                 key = "v4_local_intelligence"
@@ -342,6 +370,12 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(true)
+                    onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, newValue ->
+                        val enabled = newValue as Boolean
+                        screen.findPreference<Preference>(Keys.SOUND_PROFILE)?.isEnabled = enabled
+                        screen.findPreference<Preference>(Keys.CONTEXTUAL_HOME)?.isEnabled = enabled
+                        true
+                    }
                     addPreference(this)
                 }
 
@@ -368,6 +402,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 }
             }
 
+            // ── Queue & Search ────────────────────────────────────────
             PreferenceCategory(context).apply {
                 title = getString(R.string.v4_queue_and_search)
                 key = "v4_queue_and_search"
@@ -417,6 +452,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 }
             }
 
+            // ── Lyrics ────────────────────────────────────────────────
             PreferenceCategory(context).apply {
                 title = getString(R.string.lyrics)
                 key = "lyrics_category"
@@ -525,23 +561,20 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     setDefaultValue(true)
                     addPreference(this)
                 }
-
-                MaterialSwitchPreference(context).apply {
-                    key = Keys.EXTENSION_INSPECTOR
-                    title = getString(R.string.v4_extension_inspector)
-                    summary = getString(R.string.v4_extension_inspector_summary)
-                    layoutResource = R.layout.preference_switch
-                    isIconSpaceReserved = false
-                    setDefaultValue(true)
-                    addPreference(this)
-                }
             }
 
-            screen.findPreference<Preference>(FADE_DURATION)?.dependency = FADE_CONTROLS
-            screen.findPreference<Preference>(CROSSFADE_DURATION)?.dependency = CROSSFADE
-            screen.findPreference<Preference>(BPM_CROSSFADE)?.dependency = CROSSFADE
-            screen.findPreference<Preference>(Keys.SOUND_PROFILE)?.dependency = Keys.LOCAL_INTELLIGENCE
-            screen.findPreference<Preference>(Keys.CONTEXTUAL_HOME)?.dependency = Keys.LOCAL_INTELLIGENCE
+            // ── Initial enabled states ────────────────────────────────
+            val prefs = preferenceManager.sharedPreferences
+            val fadeControls = prefs?.getBoolean(FADE_CONTROLS, true) ?: true
+            screen.findPreference<Preference>(FADE_DURATION)?.isEnabled = fadeControls
+
+            val crossfade = prefs?.getBoolean(CROSSFADE, false) ?: false
+            screen.findPreference<Preference>(CROSSFADE_DURATION)?.isEnabled = crossfade
+            screen.findPreference<Preference>(BPM_CROSSFADE)?.isEnabled = crossfade
+
+            val localIntel = prefs?.getBoolean(Keys.LOCAL_INTELLIGENCE, true) ?: true
+            screen.findPreference<Preference>(Keys.SOUND_PROFILE)?.isEnabled = localIntel
+            screen.findPreference<Preference>(Keys.CONTEXTUAL_HOME)?.isEnabled = localIntel
         }
 
         private fun findViewWithTransitionName(name: String?): View? {

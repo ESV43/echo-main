@@ -133,6 +133,9 @@
     <string name="ai_auto_eq_summary">Automatically adjust equalizer settings based on music genre using AI.</string>
 
     <string name="behavior">Behavior</string>
+    <string name="crossfade_and_transitions">Crossfade &amp; Transitions</string>
+    <string name="player_appearance">Player Appearance</string>
+    <string name="advanced">Advanced</string>
 
     <string name="keep_queue">Keep Player Queue</string>
     <string name="keep_queue_summary">Recover the player queue, when you reopen the app.</string>

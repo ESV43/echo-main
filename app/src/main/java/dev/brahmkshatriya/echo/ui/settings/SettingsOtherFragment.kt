@@ -61,6 +61,10 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(true)
+                    onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, newValue ->
+                        screen.findPreference<Preference>(Keys.AUDIO_FINGERPRINT)?.isEnabled = newValue as Boolean
+                        true
+                    }
                     addPreference(this)
                 }
 
@@ -127,79 +131,109 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                 }
             }
 
-            TransitionPreference(context).apply {
-                key = Keys.STATUS
-                title = getString(R.string.v4_release_dashboard)
-                summary = getString(R.string.v4_release_dashboard_summary)
-                layoutResource = R.layout.preference
-                isIconSpaceReserved = false
-                screen.addPreference(this)
-                setOnPreferenceClickListener {
-                    showStatusDialog()
-                    true
-                }
-            }
-
-            MaterialSwitchPreference(context).apply {
+            // ── Updates ────────────────────────────────────────────
+            PreferenceCategory(context).apply {
                 title = getString(R.string.check_for_updates)
-                summary = getString(R.string.check_for_updates_summary)
-                key = "check_for_updates"
-                layoutResource = R.layout.preference_switch
+                key = "updates_category"
                 isIconSpaceReserved = false
-                setDefaultValue(true)
+                layoutResource = R.layout.preference_category
                 screen.addPreference(this)
-            }
 
-            TransitionPreference(context).apply {
-                key = "check_now"
-                title = getString(R.string.check_now)
-                summary = getString(R.string.check_now_summary)
-                layoutResource = R.layout.preference
-                isIconSpaceReserved = false
-                screen.addPreference(this)
-                setOnPreferenceClickListener {
-                    val viewModel by activityViewModel<ExtensionsViewModel>()
-                    viewModel.update(requireActivity(), true)
-                    true
+                MaterialSwitchPreference(context).apply {
+                    title = getString(R.string.check_for_updates)
+                    summary = getString(R.string.check_for_updates_summary)
+                    key = "check_for_updates"
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                TransitionPreference(context).apply {
+                    key = "check_now"
+                    title = getString(R.string.check_now)
+                    summary = getString(R.string.check_now_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    addPreference(this)
+                    setOnPreferenceClickListener {
+                        val viewModel by activityViewModel<ExtensionsViewModel>()
+                        viewModel.update(requireActivity(), true)
+                        true
+                    }
                 }
             }
 
-            TransitionPreference(context).apply {
-                key = "export"
-                title = getString(R.string.export_settings)
-                summary = getString(R.string.export_settings_summary)
-                layoutResource = R.layout.preference
+            // ── Advanced ──────────────────────────────────────────────
+            PreferenceCategory(context).apply {
+                title = getString(R.string.advanced)
+                key = "advanced_category"
                 isIconSpaceReserved = false
+                layoutResource = R.layout.preference_category
                 screen.addPreference(this)
-                setOnPreferenceClickListener {
-                    val contract = ActivityResultContracts.CreateDocument("application/json")
-                    requireActivity().registerActivityResultLauncher(contract) { uri ->
-                        uri?.let { context.exportSettings(it) }
-                    }.launch("echo-settings.json")
-                    true
+
+                TransitionPreference(context).apply {
+                    key = Keys.STATUS
+                    title = getString(R.string.v4_release_dashboard)
+                    summary = getString(R.string.v4_release_dashboard_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    addPreference(this)
+                    setOnPreferenceClickListener {
+                        showStatusDialog()
+                        true
+                    }
+                }
+
+                MaterialSwitchPreference(context).apply {
+                    key = Keys.EXTENSION_INSPECTOR
+                    title = getString(R.string.v4_extension_inspector)
+                    summary = getString(R.string.v4_extension_inspector_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                TransitionPreference(context).apply {
+                    key = "export"
+                    title = getString(R.string.export_settings)
+                    summary = getString(R.string.export_settings_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    addPreference(this)
+                    setOnPreferenceClickListener {
+                        val contract = ActivityResultContracts.CreateDocument("application/json")
+                        requireActivity().registerActivityResultLauncher(contract) { uri ->
+                            uri?.let { context.exportSettings(it) }
+                        }.launch("echo-settings.json")
+                        true
+                    }
+                }
+
+                TransitionPreference(context).apply {
+                    key = "import"
+                    title = getString(R.string.import_settings)
+                    summary = getString(R.string.import_settings_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    addPreference(this)
+                    setOnPreferenceClickListener {
+                        val contract = ActivityResultContracts.OpenDocument()
+                        requireActivity().registerActivityResultLauncher(contract) {
+                            it?.let {
+                                context.importSettings(it)
+                                requireActivity().recreate()
+                            }
+                        }.launch(arrayOf("application/json"))
+                        true
+                    }
                 }
             }
 
-            TransitionPreference(context).apply {
-                key = "import"
-                title = getString(R.string.import_settings)
-                summary = getString(R.string.import_settings_summary)
-                layoutResource = R.layout.preference
-                isIconSpaceReserved = false
-                screen.addPreference(this)
-                setOnPreferenceClickListener {
-                    val contract = ActivityResultContracts.OpenDocument()
-                    requireActivity().registerActivityResultLauncher(contract) {
-                        it?.let {
-                            context.importSettings(it)
-                            requireActivity().recreate()
-                        }
-                    }.launch(arrayOf("application/json"))
-                    true
-                }
-            }
-
-            screen.findPreference<Preference>(Keys.AUDIO_FINGERPRINT)?.dependency = Keys.SOURCE_FUSION
+            val prefs = preferenceManager.sharedPreferences
+            val sourceFusion = prefs?.getBoolean(Keys.SOURCE_FUSION, true) ?: true
+            screen.findPreference<Preference>(Keys.AUDIO_FINGERPRINT)?.isEnabled = sourceFusion
         }
 
         private fun showStatusDialog() {
